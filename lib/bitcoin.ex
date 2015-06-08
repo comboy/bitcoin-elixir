@@ -1,0 +1,2 @@
+defmodule Bitcoin do
+end

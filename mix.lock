@@ -1,0 +1,6 @@
+%{"exlager": {:git, "https://github.com/khia/exlager.git", "dca404300b04d2ad8f42e9ecc6f4c757e169071f", [branch: "master"]},
+  "exts": {:hex, :exts, "0.2.2"},
+  "goldrush": {:git, "git://github.com/DeadZen/goldrush.git", "71e63212f12c25827e0c1b4198d37d5d018a7fec", [tag: "0.1.6"]},
+  "lager": {:git, "https://github.com/basho/lager.git", "d33ccf3b69de09a628fe38b4d7981bb8671b8a4f", []},
+  "reagent": {:hex, :reagent, "0.1.5"},
+  "socket": {:hex, :socket, "0.2.8"}}
