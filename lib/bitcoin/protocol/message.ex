@@ -26,11 +26,11 @@ defmodule Bitcoin.Protocol.Message do
   end
 
   defstruct header: Bitcoin.Protocol.Message.Header,
-            payload: Bitcoin.Protocol.Message.Payload
+            message: Bitcoin.Protocol.Message.Payload
 
   @type t :: %{
     header: Bitcoin.Protocol.Message.Header.t,
-    payload: Bitcoin.Protocol.Message.Payload.t
+    message: Bitcoin.Protocol.Message.Payload.t
   }
 
   defmodule Payload do
@@ -40,7 +40,7 @@ defmodule Bitcoin.Protocol.Message do
       def to_string(data) do
         """
           parsed data:
-            #{data.parsed_data |> String.Chars.to_string()}
+            #{data.payload |> String.Chars.to_string()}
           raw data:
             #{"0x" <> Base.encode16(data.raw_data)}
         """ |> String.strip()
@@ -48,23 +48,147 @@ defmodule Bitcoin.Protocol.Message do
     end
 
     defstruct raw_data: <<>>,
-              parsed_data: <<>>
+              message: <<>>
 
     @type t :: %Payload{
       raw_data: binary,
-      parsed_data: binary
+      message: binary
     }
 
-    # Alert Messages
-    def parse(<<97, 108, 101, 114, 116, 0, 0, 0, 0, 0, 0, 0>>, data) do
-      Bitcoin.Protocol.Messages.Alert.parse(data)
+    # 'addr' Messages
+    def parse(<<97, 100, 100, 114, 0, 0, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Addr.parse(data)
+      }
     end
 
+    # 'alert' Messages
+    def parse(<<97, 108, 101, 114, 116, 0, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Alert.parse(data)
+      }
+    end
+
+    # 'block' Messages
+    def parse(<<98, 108, 111, 99, 107, 0, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Block.parse(data)
+      }
+    end
+
+    # 'getaddr' Messages
+    def parse(<<103, 101, 116, 97, 100, 100, 114, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.GetAddr.parse(data)
+      }
+    end
+
+    # 'getblocks' Messages
+    def parse(<<103, 101, 116, 98, 108, 111, 99, 107, 115, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.GetBlocks.parse(data)
+      }
+    end
+
+    # 'getdata' Messages
+    def parse(<<103, 101, 116, 100, 97, 116, 97, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.GetData.parse(data)
+      }
+    end
+
+    # 'getheaders' Messages
+    def parse(<<103, 101, 116, 104, 101, 97, 100, 101, 114, 115, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.GetHeaders.parse(data)
+      }
+    end
+
+    # 'headers' Messages
+    def parse(<<104, 101, 97, 100, 101, 114, 115, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Headers.parse(data)
+      }
+    end
+
+    # 'inv' Messages
+    def parse(<<105, 110, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Inv.parse(data)
+      }
+    end
+
+    # 'notfound' Messages
+    def parse(<<110, 111, 116, 102, 111, 117, 110, 100, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.NotFound.parse(data)
+      }
+    end
+
+    # 'ping' Messages
+    def parse(<<112, 105, 110, 103, 0, 0, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Ping.parse(data)
+      }
+    end
+
+    # 'pong' Messages
+    def parse(<<112, 111, 110, 103, 0, 0, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Pong.parse(data)
+      }
+    end
+
+    # 'reject' Messages
+    def parse(<<114, 101, 106, 101, 99, 116, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Reject.parse(data)
+      }
+    end
+
+    # 'tx' Messages
+    def parse(<<116, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Tx.parse(data)
+      }
+    end
+
+    # 'verack' Messages
+    def parse(<<118, 101, 114, 97, 99, 107, 0, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Verack.parse(data)
+      }
+    end
+
+    # 'version' Messages
+    def parse(<<118, 101, 114, 115, 105, 111, 110, 0, 0, 0, 0, 0>>, data) do
+      %Payload{
+        raw_data: data,
+        message: Bitcoin.Protocol.Messages.Version.parse(data)
+      }
+    end
+
+    # all other unrecognised messages
     def parse(_, _, data) do
 
       %Payload{
         raw_data: data,
-        parsed_data: <<>>
+        message: <<>>
       }
 
     end

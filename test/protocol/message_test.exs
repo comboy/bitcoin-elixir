@@ -28,7 +28,7 @@ defmodule BitcoinTest.Protocol.MessageTest do
                       246, 0, 0, 0, # payload length, in this case, one byte
                       0, 0, 0, 0, # checksum, in this case, invalid, sha256(sha256(payload)) first four bytes
                    >> <> alert_payload
-    assert parsed_alert == Message.parse(message_data).payload
+    assert parsed_alert == Message.parse(message_data).payload.message
   end
 
 end
