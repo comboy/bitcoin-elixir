@@ -1,4 +1,4 @@
-# Bitcoin
+#Bitcoin-Ex (Bitcoin Elixir)
 
 A Bitcoin protocol parser library and full node implementation written in Elixir.
 
@@ -14,7 +14,15 @@ See the LICENCE file in the project root.
 Please fork this repository to your own account, create a feature/{short but descriptive name} branch on your own
 repository and submit a pull request back to develop.
 
-##Component Status
+##Features (Planned)
+
+* Complete Bitcoin Parsing Library
+* Complete Bitcoin Node Implementation
+  * OTP Clustering/Distribution Support for Non-Stop Operation including Hot Code Reloading w/o Node Restart in Production
+  * Suitable for Elixir/Erlang Application Embedding (for creating a [Toshi](https://github.com/coinbase/toshi) compatible API or web interface for example)
+  * Abstract Blockchain Bulk Data and Index Storage Backend Interface (Mnesia, Postgres, etc...)
+
+##Feature Status (Current)
 
 ### It Works (sort of)
 
@@ -22,14 +30,14 @@ repository and submit a pull request back to develop.
   * Message Interface
     * Message Header Parsing
     * Message Type Detection and Parsing
-  * Common Structures
+  * Common Structure Deserialisation
     * varint/varint[]
     * varstring/varstring[]
     * inventory vector
     * network address
     * txin/txout/outpoint
     * block header
-  * Message Parsing (Individual Messages and their representations)
+  * Message Deserialisation (Individual Messages and their representations)
     * addr
     * alert
     * block
@@ -45,7 +53,6 @@ repository and submit a pull request back to develop.
     * reject
     * tx
     * version
-
 * OTP Application / Full Node
   * Peer
     * Connection Pool/Acceptor and Handler
@@ -56,7 +63,21 @@ repository and submit a pull request back to develop.
 ### Not Yet (In Progress)
 
 * Protocol Library
-  * Message Emission
+  * High Level Domain Objects and Actor Representations
+    * Peer
+    * Blockchain
+    * Block
+    * Transaction Queues
+  * Event Model
+  * Logging Strategy
+  * Common Structure Serialisation
+    * varint/varint[]
+    * varstring/varstring[]
+    * inventory vector
+    * network address
+    * txin/txout/outpoint
+    * block header  
+  * Message Serialisation
     * addr
     * alert
     * block
@@ -72,8 +93,15 @@ repository and submit a pull request back to develop.
     * reject
     * tx
     * version
-
 * OTP Application / Full Node
   * Server Layout and Deployment
+  * Blockchain Bulk Storage and Index API
+  * Transaction Script Engine
+    * Script Parsing (Compression for Serialisation?)
+    * Virtual Machine for Script Evaluation/Execution (base on GenServer and Callback State System for near-native speed execution of stack machines)
   * Peer Connectivity
     * Message Exchange / Configuration
+
+### Compliance Tests Not Yet Passing but for which Compliance is a Goal
+
+* TheBlueMatt's [regression test suite](https://github.com/TheBlueMatt/test-scripts)
