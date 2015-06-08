@@ -5,7 +5,7 @@ A Bitcoin protocol parser library and full node implementation written in Elixir
 Current Status: Not even beta quality. Unstable Interfaces.
 Not recommended for any use except gross curiosity.
 
-This is my first Elixir/OTP Project and your improvements and constructive criticisms are highly appreciated.
+This is a weekend hack, your improvements and constructive criticisms are highly appreciated.
 
 ##Licence
 See the LICENCE file in the project root.
