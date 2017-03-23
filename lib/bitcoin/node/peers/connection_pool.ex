@@ -1,5 +1,5 @@
 defmodule Bitcoin.Node.Peers.ConnectionPool do
-  use Reagent.Behaviour
+  use Reagent
 
   def start(connection) do
     GenServer.start(__MODULE__, connection, name: __MODULE__)

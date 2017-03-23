@@ -15,7 +15,7 @@ defmodule Bitcoin.Node do
         supervisor(@peer_subsystem_name, [[name: @peer_subsystem_name]])
       ]
 
-      supervise(children, strategy: :one_for_one)
+      supervise([], strategy: :one_for_one)
     end
 
   end
