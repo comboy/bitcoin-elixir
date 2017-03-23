@@ -1,4 +1,4 @@
-#Bitcoin-Ex (Bitcoin Elixir)
+# Bitcoin-Ex (Bitcoin Elixir)
 
 A Bitcoin protocol parser library and full node implementation written in Elixir.
 
@@ -7,14 +7,14 @@ Not recommended for any use except gross curiosity.
 
 This is a weekend hack, your improvements and constructive criticisms are highly appreciated.
 
-##Licence
+## Licence
 See the LICENCE file in the project root.
 
-##Contributing
+## Contributing
 Please fork this repository to your own account, create a feature/{short but descriptive name} branch on your own
 repository and submit a pull request back to develop.
 
-##Features (Planned)
+## Features (Planned)
 
 * Complete Bitcoin Parsing Library
 * Complete Bitcoin Node Implementation
@@ -22,7 +22,7 @@ repository and submit a pull request back to develop.
   * Suitable for Elixir/Erlang Application Embedding (for creating a [Toshi](https://github.com/coinbase/toshi) compatible API or web interface for example)
   * Abstract Blockchain Bulk Data and Index Storage Backend Interface (Mnesia, Postgres, etc...)
 
-##Feature Status (Current)
+## Feature Status (Current)
 
 ### It Works (sort of)
 
