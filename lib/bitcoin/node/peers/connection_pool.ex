@@ -24,18 +24,18 @@ defmodule Bitcoin.Node.Peers.ConnectionPool do
   # when implementing handle because it's internally handled
   def handle_info({ Reagent, :ack }, connection) do
     Lager.info "New Peer Connection"
-    connection |> Socket.active!
+    connection |> Socket.active!()
     { :noreply, connection }
   end
 
   def handle_info({ :tcp, _, data }, connection) do
-    connection |> Socket.Stream.send! data
+    connection |> Socket.Stream.send!(data)
     { :noreply, connection }
   end
 
-  def handle_info({ :tcp_closed, _ }, _connection) do
+  def handle_info({ :tcp_closed, _ }, connection) do
     Lager.info "Closed Peer Connection"
-    { :stop, :normal, _connection }
+    { :stop, :normal, connection }
   end
 
 end

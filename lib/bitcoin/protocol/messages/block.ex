@@ -45,10 +45,10 @@ defmodule Bitcoin.Protocol.Messages.Block do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, payload] = Integer.parse_stream(payload)
+    [transaction_count, payload] = Integer.parse(payload)
 
     [transactions, _] = Enum.reduce(1..transaction_count, [[], payload], fn (_, [collection, payload]) ->
-      [element, payload] = Transaction.parse_stream(payload)
+      [element, payload] = Tx.parse(payload)
       [collection ++ [element], payload]
     end)
 

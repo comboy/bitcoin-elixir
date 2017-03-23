@@ -11,7 +11,7 @@ defmodule Bitcoin.Protocol.Messages.GetAddr do
     https://en.bitcoin.it/wiki/Protocol_specification#getaddr
   """
 
-  def parse(data) do
+  def parse(_data) do
     %{}
   end
 

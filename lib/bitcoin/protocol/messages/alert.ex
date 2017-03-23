@@ -5,6 +5,7 @@ defmodule Bitcoin.Protocol.Messages.Alert do
     https://en.bitcoin.it/wiki/Protocol_documentation#alert
   """
 
+
   @known_valid_alert_signing_pubkeys %{
     satoshi_client: Base.decode16!("04FC9702847840AAF195DE8442EBECEDF5B095CDBB9BC716BDA9110971B28A49E0EAD8564FF0DB22209E0374782C093BB899692D524E9D6A6956E7C5ECBCD68284")
   }

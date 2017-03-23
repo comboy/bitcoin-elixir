@@ -19,16 +19,18 @@ defmodule Bitcoin.Protocol.Messages.Addr do
 
     [count, payload] = Integer.parse_stream(data)
 
-    if count > 0 do
+    address_list = if count > 0 do
 
-      [address_list, _] = Enum.reduce(1..count, [[], payload], fn (_, [addr_collection, payload]) ->
+      [addrs, _] = Enum.reduce(1..count, [[], payload], fn (_, [addr_collection, payload]) ->
         [element, payload] = NetworkAddress.parse_stream(payload)
         [addr_collection ++ [element], payload]
       end)
 
+      addrs
+
     else
 
-      address_list = []
+      []
 
     end
 

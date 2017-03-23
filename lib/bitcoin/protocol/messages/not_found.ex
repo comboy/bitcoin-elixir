@@ -20,16 +20,18 @@ defmodule Bitcoin.Protocol.Messages.NotFound do
 
     [count, payload] = Integer.parse_stream(data)
 
-    if count > 0 do
+    inventory_vectors = if count > 0 do
 
-      [inventory_vectors, _] = Enum.reduce(1..count, [[], payload], fn (_, [collection, payload]) ->
+      [vects, _] = Enum.reduce(1..count, [[], payload], fn (_, [collection, payload]) ->
         [element, payload] = InventoryVector.parse_stream(payload)
         [collection ++ [element], payload]
       end)
 
+      vects
+
     else
 
-      inventory_vectors = []
+      []
 
     end
 

@@ -55,11 +55,7 @@ defmodule Bitcoin.Protocol.Messages.Version do
       relay :: binary
     >> = remaining
 
-    if relay == <<1>> do # Relay may be absent, see https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki
-      relay = true
-    else
-      relay = false
-    end
+    relay = relay == <<1>> # Relay may be absent, see https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki
 
     %Bitcoin.Protocol.Messages.Version{
       version: version,

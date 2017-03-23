@@ -7,7 +7,7 @@ defmodule Bitcoin.Protocol.Messages.Verack do
     https://en.bitcoin.it/wiki/Protocol_specification#verack
   """
 
-  def parse(data) do
+  def parse(_data) do
     %{}
   end
 

@@ -27,7 +27,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, _] = Integer.parse_stream(payload)
+    [transaction_count, _] = Bitcoin.Protocol.Types.Integer.parse_stream(payload)
 
     %Bitcoin.Protocol.Types.BlockHeader{
       version: version,
@@ -49,7 +49,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, payload] = Integer.parse_stream(payload)
+    [transaction_count, payload] = Bitcoin.Protocol.Types.Integer.parse_stream(payload)
 
     [%Bitcoin.Protocol.Types.BlockHeader{
         version: version,
