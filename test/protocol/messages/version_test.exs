@@ -68,4 +68,40 @@ defmodule Bitcoin.Protocol.Messages.VersionTest do
              Version.parse(payload)
   end
 
+  test "parses the version payload for protocol version 70002" do
+    # Hexdump source: https://bitcoin.org/en/developer-reference#version
+    payload = Base.decode16!("72110100" <> # Protocol version: 70002
+                             "0100000000000000" <> # Services: NODE_NETWORK
+                             "BC8F5E5400000000" <> # Epoch time: 1415483324
+                             "0100000000000000" <> # Receiving node's services
+                             "00000000000000000000FFFFC61B6409" <> #  Receiving node's IPv6 address
+                             "208D" <>  # Receiving node's port number
+                             "0100000000000000" <> # Transmitting node's services
+                             "00000000000000000000FFFFCB0071C0" <> # Transmitting node's IPv6 address
+                             "208D" <> # Transmitting node's port number
+                             "128035CBC97953F8" <> # Nonce
+                             "0F" <> # Bytes in user agent string: 15
+                             "2F5361746F7368693A302E392E332F" <> # User agent: /Satoshi:0.9.2.1/
+                             "CF050500" <> # Start height: 329167
+                             "01") # Relay flag: true
+    assert %Bitcoin.Protocol.Messages.Version{
+      address_of_receiving_node: %Bitcoin.Protocol.Types.NetworkAddress{
+        address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 198, 27, 100, 9>>,
+        port: 8333,
+        services: <<1, 0, 0, 0, 0, 0, 0, 0>>
+        },
+      address_of_sending_node: %Bitcoin.Protocol.Types.NetworkAddress{
+        address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 203, 0, 113, 192>>,
+        port: 8333,
+        services: <<1, 0, 0, 0, 0, 0, 0, 0>>
+        },
+      nonce: 17893779652077781010,
+      relay: true,
+      services: <<1, 0, 0, 0, 0, 0, 0, 0>>,
+      start_height: 329167,
+      timestamp: 1415483324,
+      user_agent: "/Satoshi:0.9.3/",
+      version: 70002} == Version.parse(payload)
+  end
+
 end
