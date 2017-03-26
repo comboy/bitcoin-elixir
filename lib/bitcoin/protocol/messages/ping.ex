@@ -9,16 +9,22 @@ defmodule Bitcoin.Protocol.Messages.Ping do
 
   defstruct nonce: 0 # random nonce
 
-  @type t :: %Bitcoin.Protocol.Messages.Ping{
+  @type t :: %__MODULE__{
     nonce: non_neg_integer
   }
 
   def parse(<<nonce::unsigned-little-integer-size(64)>>) do
 
-    %Bitcoin.Protocol.Messages.Ping{
+    %__MODULE__{
       nonce: nonce
     }
 
+  end
+
+  def serialize(%__MODULE__{} = s) do
+    <<
+      s.nonce :: unsigned-little-integer-size(64)
+    >>
   end
 
 end

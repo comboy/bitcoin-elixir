@@ -10,13 +10,16 @@ defmodule Bitcoin.Protocol.Messages.GetBlocksTest do
                              "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855" <>
                              "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B835") # stop hash
 
-    assert %Bitcoin.Protocol.Messages.GetBlocks{
+    struct = %GetBlocks{
              block_locator_hashes: [
                Base.decode16!("E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855")
                ],
              hash_stop: Base.decode16!("E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B835"),
              version: 31900
-           } == GetBlocks.parse(payload)
+           }
+
+    assert GetBlocks.parse(payload) == struct
+    assert GetBlocks.serialize(struct) == payload
 
   end
 
@@ -28,14 +31,16 @@ defmodule Bitcoin.Protocol.Messages.GetBlocksTest do
                              "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855" <>
                              "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B835") # stop hash
 
-    assert %Bitcoin.Protocol.Messages.GetBlocks{
+    struct = %GetBlocks{
              block_locator_hashes: [
                Base.decode16!("E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B815"),
                Base.decode16!("E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855")
                ],
              hash_stop: Base.decode16!("E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B835"),
              version: 31900
-           } == GetBlocks.parse(payload)
+           }
+    assert GetBlocks.parse(payload) == struct
+    assert GetBlocks.serialize(struct) == payload
   end
 
 end

@@ -11,7 +11,7 @@ defmodule Bitcoin.Protocol.Messages.Addr do
 
   defstruct address_list: []
 
-  @type t :: %Bitcoin.Protocol.Messages.Addr{
+  @type t :: %__MODULE__{
     address_list: [NetworkAddress]
   }
 
@@ -34,10 +34,20 @@ defmodule Bitcoin.Protocol.Messages.Addr do
 
     end
 
-    %Bitcoin.Protocol.Messages.Addr{
+    %__MODULE__{
       address_list: address_list
     }
 
+  end
+
+  def serialize(%__MODULE__{} = s) do
+    Integer.serialize(s.address_list |> Enum.count)
+    <> (
+      s.address_list
+        |> Enum.map(&NetworkAddress.serialize/1)
+        |> Enum.reverse # we are appending to the beginning of the list in reduce
+        |> Enum.reduce(<<>>, &Kernel.<>/2)
+    )
   end
 
 end
