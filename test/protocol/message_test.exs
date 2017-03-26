@@ -13,7 +13,7 @@ defmodule BitcoinTest.Protocol.MessageTest do
 
     assert %Bitcoin.Protocol.Message.Header{
                checksum: 0,
-               command: "alert" <> <<0, 0, 0, 0, 0, 0, 0>>,
+               command: "alert",
                network_identifier: 3652501241,
                payload_size_bytes: 246
            } ==
