@@ -75,4 +75,22 @@ defmodule BitcoinTest.Protocol.Types.IntegerTest do
 
   end
 
+  test "serialize 8-bit" do
+    assert Integer.serialize(0xF0) == <<0xF0>>
+  end
+
+  test "serialize 16-bit" do
+    assert Integer.serialize(56619) == <<253, 43, 221>>
+    assert Integer.serialize(0xFFFF) == <<253, 255, 255>>
+  end
+
+  test "serialize 32-bit" do
+    assert Integer.serialize(1305992491) == <<254, 43, 221, 215, 77>>
+    assert Integer.serialize(0xFFFF_FFFF) == <<254, 255, 255, 255, 255>>
+  end
+
+  test "serialize 64-bit" do
+    assert Integer.serialize(0xFFFF_FFFF + 1) == <<255, 0, 0, 0, 0, 1, 0, 0, 0>>
+  end
+
 end
