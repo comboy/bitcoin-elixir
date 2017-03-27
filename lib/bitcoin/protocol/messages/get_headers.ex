@@ -19,7 +19,7 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
             block_locator_hashes: [], # block locator object; newest back to genesis block (dense to start, but then sparse)
             hash_stop: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>> # hash of the last desired block; set to zero to get as many headers as possible (up to 2000)
 
-  @type t :: %Bitcoin.Protocol.Messages.GetHeaders{
+  @type t :: %__MODULE__{
     version: non_neg_integer,
     block_locator_hashes: list,
     hash_stop: bitstring
@@ -38,12 +38,25 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
 
     << hash_stop :: bytes-size(32) >> = payload
 
-    %Bitcoin.Protocol.Messages.GetHeaders{
+    %__MODULE__{
       version: version,
       block_locator_hashes: block_locator_hashes,
       hash_stop: hash_stop
     }
 
+  end
+
+  def serialize(%__MODULE__{} = s) do
+    << 
+      s.version :: unsigned-little-integer-size(32),
+    >> <>
+      Integer.serialize(s.block_locator_hashes |> Enum.count)
+    <> (
+      s.block_locator_hashes |> Enum.reduce(<<>>, &(&2 <> &1))
+    ) <>
+    <<
+      s.hash_stop :: bytes-size(32)
+    >>
   end
 
 end

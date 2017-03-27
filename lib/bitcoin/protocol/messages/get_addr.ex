@@ -15,4 +15,6 @@ defmodule Bitcoin.Protocol.Messages.GetAddr do
     %{}
   end
 
+  def serialize(_), do: <<>>
+
 end

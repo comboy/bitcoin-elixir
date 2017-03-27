@@ -11,4 +11,6 @@ defmodule Bitcoin.Protocol.Messages.Verack do
     %{}
   end
 
+  def serialize(_), do: <<>>
+
 end

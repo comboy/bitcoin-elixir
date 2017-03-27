@@ -41,4 +41,12 @@ defmodule Bitcoin.Protocol.Messages.NotFound do
 
   end
 
+  def serialize(%__MODULE__{} = s) do
+    Integer.serialize(s.inventory_vectors |> Enum.count)
+    <> (
+      s.inventory_vectors
+        |> Enum.map(&InventoryVector.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    )
+  end
 end

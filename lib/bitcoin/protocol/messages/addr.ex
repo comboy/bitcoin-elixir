@@ -45,8 +45,7 @@ defmodule Bitcoin.Protocol.Messages.Addr do
     <> (
       s.address_list
         |> Enum.map(&NetworkAddress.serialize/1)
-        |> Enum.reverse # we are appending to the beginning of the list in reduce
-        |> Enum.reduce(<<>>, &Kernel.<>/2)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
     )
   end
 

@@ -31,7 +31,7 @@ defmodule Bitcoin.Protocol.Messages.TxTest do
                              "FDA0B78B4ECC5288AC" <>               #-
                              "00000000")                           # lock_time
 
-    assert %Bitcoin.Protocol.Messages.Tx{
+    struct = %Tx{
              inputs: [
                %Bitcoin.Protocol.Types.TransactionInput{
                  previous_output: %Bitcoin.Protocol.Types.Outpoint{
@@ -62,8 +62,9 @@ defmodule Bitcoin.Protocol.Messages.TxTest do
                  }
                ],
              version: 1
-           } ==
-             Tx.parse(payload)
+           }
+    assert Tx.parse(payload) == struct
+    assert Tx.serialize(struct) == payload
   end
 
 end

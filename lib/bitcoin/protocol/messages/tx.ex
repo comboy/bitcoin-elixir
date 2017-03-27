@@ -20,7 +20,7 @@ defmodule Bitcoin.Protocol.Messages.Tx do
                          # If all TxIn inputs have final (0xffffffff) sequence numbers then lock_time is irrelevant.
                          # Otherwise, the transaction may not be added to a block until after lock_time (see NLockTime).
 
-  @type t :: %Bitcoin.Protocol.Messages.Tx{
+  @type t :: %__MODULE__{
     version: non_neg_integer,
     inputs: [],
     outputs: [],
@@ -47,13 +47,32 @@ defmodule Bitcoin.Protocol.Messages.Tx do
 
     <<lock_time::unsigned-little-integer-size(32)>> = payload
 
-    %Bitcoin.Protocol.Messages.Tx{
+    %__MODULE__{
       version: version,
       inputs: transaction_inputs,
       outputs: transaction_outputs,
       lock_time: lock_time
     }
 
+  end
+
+  def serialize(%__MODULE__{} = s) do
+    <<
+      s.version :: unsigned-little-integer-size(32),
+    >> <>
+      Integer.serialize(s.inputs |> Enum.count)
+    <> (
+      s.inputs
+        |> Enum.map(&TransactionInput.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    ) <>
+      Integer.serialize(s.outputs |> Enum.count)
+    <> (
+      s.outputs
+        |> Enum.map(&TransactionOutput.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    ) <>
+    << s.lock_time :: unsigned-little-integer-size(32) >>
   end
 
 end

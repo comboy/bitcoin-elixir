@@ -43,10 +43,9 @@ defmodule Bitcoin.Protocol.Messages.Inv do
   def serialize(%__MODULE__{} = s) do
     Integer.serialize(s.inventory_vectors |> Enum.count)
     <> (
-      s.inventory_vectors 
+      s.inventory_vectors
         |> Enum.map(&InventoryVector.serialize/1)
-        |> Enum.reverse # we are appending to the beginning of the list in reduce
-        |> Enum.reduce(<<>>, &Kernel.<>/2)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
     )
   end
 

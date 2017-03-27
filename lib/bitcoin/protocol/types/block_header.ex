@@ -8,7 +8,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
             nonce: 0, # uint32_t, The nonce used to generate this block… to allow variations of the header and compute different hashes
             transaction_count: 0 # count - Bitcoin.Protocol.Types.Integer, number of transaction entries in this block
 
-  @type t :: %Bitcoin.Protocol.Types.BlockHeader{
+  @type t :: %__MODULE__{
     version: non_neg_integer,
     previous_block: bitstring,
     merkle_root: bitstring,
@@ -29,7 +29,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
 
     [transaction_count, _] = Bitcoin.Protocol.Types.Integer.parse_stream(payload)
 
-    %Bitcoin.Protocol.Types.BlockHeader{
+    %__MODULE__{
       version: version,
       previous_block: previous_block,
       merkle_root: merkle_root,
@@ -51,7 +51,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
 
     [transaction_count, payload] = Bitcoin.Protocol.Types.Integer.parse_stream(payload)
 
-    [%Bitcoin.Protocol.Types.BlockHeader{
+    [%__MODULE__{
         version: version,
         previous_block: previous_block,
         merkle_root: merkle_root,
@@ -61,5 +61,22 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
         transaction_count: transaction_count
      }, payload]
   end
+
+  def serialize(%__MODULE__{} = s) do
+    <<
+      s.version :: unsigned-little-integer-size(32),
+      s.previous_block :: bytes-size(32),
+      s.merkle_root :: bytes-size(32),
+      s.timestamp :: unsigned-little-integer-size(32),
+      s.bits :: unsigned-little-integer-size(32),
+      s.nonce :: unsigned-little-integer-size(32),
+    >> <>
+      # https://en.bitcoin.it/wiki/Protocol_documentation#headers says tx_count can be > 0
+      # https://bitcoin.org/en/developer-reference#headers says it's always 0x00
+      # ¯\_(ツ)_/¯
+      Bitcoin.Protocol.Types.Integer.serialize(s.transaction_count)
+  end
+
+
 
 end

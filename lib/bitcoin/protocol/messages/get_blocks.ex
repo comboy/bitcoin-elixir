@@ -62,9 +62,7 @@ defmodule Bitcoin.Protocol.Messages.GetBlocks do
     >> <>
       Integer.serialize(s.block_locator_hashes |> Enum.count)
     <> (
-      s.block_locator_hashes
-        |> Enum.reverse # we are appending to the beginning of the list in reduce
-        |> Enum.reduce(<<>>, &Kernel.<>/2)
+      s.block_locator_hashes |> Enum.reduce(<<>>, &(&2 <> &1))
     ) <>
     <<
       s.hash_stop :: bytes-size(32)
