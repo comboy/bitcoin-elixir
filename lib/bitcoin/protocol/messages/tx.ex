@@ -21,7 +21,7 @@ defmodule Bitcoin.Protocol.Messages.Tx do
                          # Otherwise, the transaction may not be added to a block until after lock_time (see NLockTime).
 
   @type t :: %__MODULE__{
-    version: non_neg_integer,
+    version: integer, # note, this is signed
     inputs: [],
     outputs: [],
     lock_time: non_neg_integer
@@ -29,7 +29,7 @@ defmodule Bitcoin.Protocol.Messages.Tx do
 
   def parse(data) do
 
-    <<version :: unsigned-little-integer-size(32), payload :: binary>> = data
+    <<version :: little-integer-size(32), payload :: binary>> = data
 
     [tx_in_count, payload] = Integer.parse_stream(payload)
 
@@ -58,7 +58,7 @@ defmodule Bitcoin.Protocol.Messages.Tx do
 
   def serialize(%__MODULE__{} = s) do
     <<
-      s.version :: unsigned-little-integer-size(32),
+      s.version :: little-integer-size(32),
     >> <>
       Integer.serialize(s.inputs |> Enum.count)
     <> (

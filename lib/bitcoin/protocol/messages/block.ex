@@ -26,7 +26,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
             transactions: [] # count - Bitcoin.Protocol.Types.Integer, number of transaction entries in this block, [Transaction]
 
   @type t :: %Bitcoin.Protocol.Messages.Block{
-    version: non_neg_integer,
+    version: integer,
     previous_block: bitstring,
     merkle_root: bitstring,
     timestamp: non_neg_integer,
@@ -37,7 +37,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
 
   def parse(data) do
 
-    <<version::unsigned-little-integer-size(32),
+    <<version::little-integer-size(32),
       previous_block::bytes-size(32),
       merkle_root::bytes-size(32),
       timestamp::unsigned-little-integer-size(32),

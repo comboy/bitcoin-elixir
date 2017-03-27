@@ -9,7 +9,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
             transaction_count: 0 # count - Bitcoin.Protocol.Types.Integer, number of transaction entries in this block
 
   @type t :: %__MODULE__{
-    version: non_neg_integer,
+    version: integer,
     previous_block: bitstring,
     merkle_root: bitstring,
     timestamp: non_neg_integer,
@@ -19,7 +19,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
   }
 
   def parse(data) do
-    <<version::unsigned-little-integer-size(32),
+    <<version::little-integer-size(32),
       previous_block::bytes-size(32),
       merkle_root::bytes-size(32),
       timestamp::unsigned-little-integer-size(32),
@@ -41,7 +41,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
   end
 
   def parse_stream(data) do
-    <<version::unsigned-little-integer-size(32),
+    <<version::little-integer-size(32),
       previous_block::bytes-size(32),
       merkle_root::bytes-size(32),
       timestamp::unsigned-little-integer-size(32),
@@ -64,7 +64,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
 
   def serialize(%__MODULE__{} = s) do
     <<
-      s.version :: unsigned-little-integer-size(32),
+      s.version :: little-integer-size(32),
       s.previous_block :: bytes-size(32),
       s.merkle_root :: bytes-size(32),
       s.timestamp :: unsigned-little-integer-size(32),
