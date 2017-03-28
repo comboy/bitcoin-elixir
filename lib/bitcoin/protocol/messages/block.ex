@@ -64,4 +64,21 @@ defmodule Bitcoin.Protocol.Messages.Block do
 
   end
 
+  def serialize(%__MODULE__{} = s) do
+    <<
+      s.version :: little-integer-size(32),
+      s.previous_block :: bytes-size(32),
+      s.merkle_root :: bytes-size(32),
+      s.timestamp :: unsigned-little-integer-size(32),
+      s.bits :: unsigned-little-integer-size(32),
+      s.nonce :: unsigned-little-integer-size(32),
+    >> <>
+      Bitcoin.Protocol.Types.Integer.serialize(s.transactions |> Enum.count)
+    <> (
+      s.transactions
+        |> Enum.map(&Tx.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    )
+  end
+
 end

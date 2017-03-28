@@ -99,5 +99,6 @@ defmodule Bitcoin.Protocol.Messages.BlockTest do
       }
 
     assert Block.parse(payload) == struct
+    assert Block.serialize(struct) == payload
   end
 end
