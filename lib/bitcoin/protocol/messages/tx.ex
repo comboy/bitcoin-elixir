@@ -27,7 +27,7 @@ defmodule Bitcoin.Protocol.Messages.Tx do
     lock_time: non_neg_integer
   }
 
-  def parse(data) do
+  def parse_stream(data) do
 
     <<version :: little-integer-size(32), payload :: binary>> = data
 
@@ -45,15 +45,22 @@ defmodule Bitcoin.Protocol.Messages.Tx do
       [collection ++ [element], payload]
     end)
 
-    <<lock_time::unsigned-little-integer-size(32)>> = payload
+    <<lock_time::unsigned-little-integer-size(32), remaining :: binary>> = payload
 
-    %__MODULE__{
+    struct = %__MODULE__{
       version: version,
       inputs: transaction_inputs,
       outputs: transaction_outputs,
       lock_time: lock_time
     }
 
+    [struct, remaining]
+
+  end
+
+  def parse(data) do
+    [struct, ""] = parse_stream(data)
+    struct
   end
 
   def serialize(%__MODULE__{} = s) do

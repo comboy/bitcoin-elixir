@@ -25,7 +25,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
             nonce: 0, # uint32_t, The nonce used to generate this block… to allow variations of the header and compute different hashes
             transactions: [] # count - Bitcoin.Protocol.Types.Integer, number of transaction entries in this block, [Transaction]
 
-  @type t :: %Bitcoin.Protocol.Messages.Block{
+  @type t :: %__MODULE__{
     version: integer,
     previous_block: bitstring,
     merkle_root: bitstring,
@@ -45,14 +45,14 @@ defmodule Bitcoin.Protocol.Messages.Block do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, payload] = Integer.parse(payload)
+    [transaction_count, payload] = Integer.parse_stream(payload)
 
     [transactions, _] = Enum.reduce(1..transaction_count, [[], payload], fn (_, [collection, payload]) ->
-      [element, payload] = Tx.parse(payload)
+      [element, payload] = Tx.parse_stream(payload)
       [collection ++ [element], payload]
     end)
 
-    %Bitcoin.Protocol.Messages.Block{
+    %__MODULE__{
       version: version,
       previous_block: previous_block,
       merkle_root: merkle_root,
