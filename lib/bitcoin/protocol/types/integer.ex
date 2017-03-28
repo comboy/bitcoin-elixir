@@ -32,4 +32,9 @@ defmodule Bitcoin.Protocol.Types.Integer do
     [data, remaining]
   end
 
+  def serialize(int) when is_integer(int) and int  < 0xFD,        do: << int :: unsigned-little-integer-size(8) >>
+  def serialize(int) when is_integer(int) and int <= 0xFFFF,      do: << 0xFD, int :: unsigned-little-integer-size(16) >>
+  def serialize(int) when is_integer(int) and int <= 0xFFFF_FFFF, do: << 0xFE, int :: unsigned-little-integer-size(32) >>
+  def serialize(int) when is_integer(int) and int  > 0xFFFF_FFFF, do: << 0xFF, int :: unsigned-little-integer-size(64) >>
+
 end

@@ -30,4 +30,13 @@ defmodule BitcoinTest.Protocol.Types.StringTest do
 
   end
 
+  test "serialization" do
+    assert String.serialize("ab") ==  << 2, 97, 98 >>
+  end
+
+  test "serialization > 255" do
+    str = "a" |> Elixir.String.duplicate(255) 
+    assert String.serialize(str) == << 253, 255, 0 >> <> str
+  end
+
 end

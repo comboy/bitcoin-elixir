@@ -25,8 +25,8 @@ defmodule Bitcoin.Protocol.Messages.Block do
             nonce: 0, # uint32_t, The nonce used to generate this block… to allow variations of the header and compute different hashes
             transactions: [] # count - Bitcoin.Protocol.Types.Integer, number of transaction entries in this block, [Transaction]
 
-  @type t :: %Bitcoin.Protocol.Messages.Block{
-    version: non_neg_integer,
+  @type t :: %__MODULE__{
+    version: integer,
     previous_block: bitstring,
     merkle_root: bitstring,
     timestamp: non_neg_integer,
@@ -37,7 +37,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
 
   def parse(data) do
 
-    <<version::unsigned-little-integer-size(32),
+    <<version::little-integer-size(32),
       previous_block::bytes-size(32),
       merkle_root::bytes-size(32),
       timestamp::unsigned-little-integer-size(32),
@@ -45,14 +45,14 @@ defmodule Bitcoin.Protocol.Messages.Block do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, payload] = Integer.parse(payload)
+    [transaction_count, payload] = Integer.parse_stream(payload)
 
     [transactions, _] = Enum.reduce(1..transaction_count, [[], payload], fn (_, [collection, payload]) ->
-      [element, payload] = Tx.parse(payload)
+      [element, payload] = Tx.parse_stream(payload)
       [collection ++ [element], payload]
     end)
 
-    %Bitcoin.Protocol.Messages.Block{
+    %__MODULE__{
       version: version,
       previous_block: previous_block,
       merkle_root: merkle_root,
@@ -62,6 +62,23 @@ defmodule Bitcoin.Protocol.Messages.Block do
       transactions: transactions
     }
 
+  end
+
+  def serialize(%__MODULE__{} = s) do
+    <<
+      s.version :: little-integer-size(32),
+      s.previous_block :: bytes-size(32),
+      s.merkle_root :: bytes-size(32),
+      s.timestamp :: unsigned-little-integer-size(32),
+      s.bits :: unsigned-little-integer-size(32),
+      s.nonce :: unsigned-little-integer-size(32),
+    >> <>
+      Bitcoin.Protocol.Types.Integer.serialize(s.transactions |> Enum.count)
+    <> (
+      s.transactions
+        |> Enum.map(&Tx.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    )
   end
 
 end

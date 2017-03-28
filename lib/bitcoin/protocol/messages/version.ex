@@ -71,4 +71,22 @@ defmodule Bitcoin.Protocol.Messages.Version do
 
   end
 
+  def serialize(%Bitcoin.Protocol.Messages.Version{} = s) do
+    <<
+      s.version :: unsigned-little-integer-size(32),
+      s.services :: bitstring-size(64),
+      s.timestamp :: unsigned-little-integer-size(64)
+    >>
+      <> NetworkAddress.serialize_version(s.address_of_receiving_node)
+      <> NetworkAddress.serialize_version(s.address_of_sending_node)
+    <> <<
+      s.nonce :: unsigned-little-integer-size(64),
+    >>
+      <> String.serialize(s.user_agent)
+    <> <<
+      s.start_height :: unsigned-little-integer-size(32),
+      (if s.relay, do: 1, else: 0)
+    >>
+  end
+
 end

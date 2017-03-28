@@ -68,7 +68,7 @@ defmodule Bitcoin.Protocol.Messages.VersionTest do
              Version.parse(payload)
   end
 
-  test "parses the version payload for protocol version 70002" do
+  test "version payload for protocol version 70002" do
     # Hexdump source: https://bitcoin.org/en/developer-reference#version
     payload = Base.decode16!("72110100" <> # Protocol version: 70002
                              "0100000000000000" <> # Services: NODE_NETWORK
@@ -103,16 +103,20 @@ defmodule Bitcoin.Protocol.Messages.VersionTest do
       user_agent: "/Satoshi:0.9.3/",
       version: 70002}
 
+    # Test parsing
     assert Version.parse(payload) == parsed_msg
 
-    # Test parsing full message with header
+    # Test serialization
+    assert Version.serialize(parsed_msg) == payload
 
+    # Test parsing full message with header
     header = << 0xF9, 0xBE, 0xB4, 0xD9 >> <> # bitcoin main net identifier, magic value 0xD9B4BEF9
                      "version" <> << 0, 0, 0, 0, 0 >> <> # 'version' command
                    << byte_size(payload) :: unsigned-little-integer-size(32) >> <> # payload length, in this case, one byte
                    << 0, 0, 0, 0 >> # invalid checksum, update wehn implementde
 
     assert Bitcoin.Protocol.Message.parse(header <> payload).payload.message == parsed_msg
+
   end
 
 end

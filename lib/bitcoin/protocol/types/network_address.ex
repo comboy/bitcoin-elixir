@@ -58,4 +58,23 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
     }, remaining_stream]
   end
 
+  # Binary representation as it is used in the Addr message
+  def serialize(%Bitcoin.Protocol.Types.NetworkAddress{} = s) do
+    <<
+      s.time :: unsigned-native-integer-size(32),
+      s.services :: bitstring-size(64),
+      s.address :: bytes-size(16),
+      s.port :: unsigned-big-integer-size(16)
+    >>
+  end
+
+  # Binary representation as it is used in the Version message
+  def serialize_version(%Bitcoin.Protocol.Types.NetworkAddress{} = s) do
+    <<
+      s.services :: bitstring-size(64),
+      s.address :: bytes-size(16),
+      s.port :: unsigned-big-integer-size(16)
+    >>
+  end
+
 end

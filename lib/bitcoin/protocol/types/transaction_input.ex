@@ -27,4 +27,11 @@ defmodule Bitcoin.Protocol.Types.TransactionInput do
 
   end
 
+  def serialize(%__MODULE__{} = s) do
+    (s.previous_output |> Outpoint.serialize) <>
+    (s.signature_script |> byte_size |> Integer.serialize) <>
+    s.signature_script <>
+    << s.sequence ::  unsigned-little-integer-size(32) >>
+  end
+
 end

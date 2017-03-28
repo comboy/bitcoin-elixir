@@ -11,7 +11,7 @@ defmodule Bitcoin.Protocol.Messages.Inv do
 
   defstruct inventory_vectors: []
 
-  @type t :: %Bitcoin.Protocol.Messages.Inv{
+  @type t :: %__MODULE__{
     inventory_vectors: [InventoryVector]
   }
 
@@ -34,10 +34,19 @@ defmodule Bitcoin.Protocol.Messages.Inv do
 
     end
 
-    %Bitcoin.Protocol.Messages.Inv{
+    %__MODULE__{
       inventory_vectors: inventory_vectors
     }
 
+  end
+
+  def serialize(%__MODULE__{} = s) do
+    Integer.serialize(s.inventory_vectors |> Enum.count)
+    <> (
+      s.inventory_vectors
+        |> Enum.map(&InventoryVector.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    )
   end
 
 end

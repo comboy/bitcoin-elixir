@@ -10,23 +10,39 @@ defmodule Bitcoin.Protocol.Types.InventoryVector do
   defstruct reference_type: :error,
             hash: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>>
 
-  @type t :: %Bitcoin.Protocol.Types.InventoryVector{
+  @type t :: %__MODULE__{
     reference_type: atom,
     hash: String.t
   }
 
   def parse(<<type_id :: unsigned-little-integer-size(32), hash :: bytes-size(32)>>) do
     %Bitcoin.Protocol.Types.InventoryVector{
-      reference_type: Map.get(@inventory_vector_reference_types, type_id),
+      reference_type: type_id |> get_type_name,
       hash: hash
     }
   end
 
   def parse_stream(<<type_id :: unsigned-little-integer-size(32), hash :: bytes-size(32), remaining_stream :: binary>>) do
     [%Bitcoin.Protocol.Types.InventoryVector{
-      reference_type: Map.get(@inventory_vector_reference_types, type_id),
+      reference_type: type_id |> get_type_name,
       hash: hash
     }, remaining_stream]
+  end
+
+  def serialize(%__MODULE__{} = s) do
+    type_id = s.reference_type |> get_type_id
+    <<
+      type_id :: unsigned-little-integer-size(32),
+      s.hash :: bytes-size(32)
+    >>
+  end
+
+  defp get_type_id(type_name) do
+    @inventory_vector_reference_types |> Enum.map(fn {k,v} -> {v,k} end) |> Enum.into(%{}) |> Map.get(type_name)
+  end
+
+  defp get_type_name(type_id) do
+    @inventory_vector_reference_types |> Map.get(type_id)
   end
 
 end

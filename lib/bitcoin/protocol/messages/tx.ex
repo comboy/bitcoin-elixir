@@ -20,16 +20,16 @@ defmodule Bitcoin.Protocol.Messages.Tx do
                          # If all TxIn inputs have final (0xffffffff) sequence numbers then lock_time is irrelevant.
                          # Otherwise, the transaction may not be added to a block until after lock_time (see NLockTime).
 
-  @type t :: %Bitcoin.Protocol.Messages.Tx{
-    version: non_neg_integer,
+  @type t :: %__MODULE__{
+    version: integer, # note, this is signed
     inputs: [],
     outputs: [],
     lock_time: non_neg_integer
   }
 
-  def parse(data) do
+  def parse_stream(data) do
 
-    <<version :: unsigned-little-integer-size(32), payload :: binary>> = data
+    <<version :: little-integer-size(32), payload :: binary>> = data
 
     [tx_in_count, payload] = Integer.parse_stream(payload)
 
@@ -45,15 +45,41 @@ defmodule Bitcoin.Protocol.Messages.Tx do
       [collection ++ [element], payload]
     end)
 
-    <<lock_time::unsigned-little-integer-size(32)>> = payload
+    <<lock_time::unsigned-little-integer-size(32), remaining :: binary>> = payload
 
-    %Bitcoin.Protocol.Messages.Tx{
+    struct = %__MODULE__{
       version: version,
       inputs: transaction_inputs,
       outputs: transaction_outputs,
       lock_time: lock_time
     }
 
+    [struct, remaining]
+
+  end
+
+  def parse(data) do
+    [struct, ""] = parse_stream(data)
+    struct
+  end
+
+  def serialize(%__MODULE__{} = s) do
+    <<
+      s.version :: little-integer-size(32),
+    >> <>
+      Integer.serialize(s.inputs |> Enum.count)
+    <> (
+      s.inputs
+        |> Enum.map(&TransactionInput.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    ) <>
+      Integer.serialize(s.outputs |> Enum.count)
+    <> (
+      s.outputs
+        |> Enum.map(&TransactionOutput.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    ) <>
+    << s.lock_time :: unsigned-little-integer-size(32) >>
   end
 
 end

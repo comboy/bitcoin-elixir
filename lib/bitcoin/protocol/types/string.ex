@@ -18,4 +18,6 @@ defmodule Bitcoin.Protocol.Types.String do
     end
 
   end
+
+  def serialize(str), do: (byte_size(str) |> Integer.serialize) <> str
 end
