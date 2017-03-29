@@ -9,11 +9,13 @@ defmodule Bitcoin.Protocol.Messages.Inv do
   alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Types.InventoryVector
 
+
   defstruct inventory_vectors: []
 
   @type t :: %__MODULE__{
     inventory_vectors: [InventoryVector]
   }
+
 
   def parse(data) do
 

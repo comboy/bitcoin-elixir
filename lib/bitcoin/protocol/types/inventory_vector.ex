@@ -15,6 +15,12 @@ defmodule Bitcoin.Protocol.Types.InventoryVector do
     hash: String.t
   }
 
+  defimpl Inspect, for: __MODULE__ do
+    def inspect(data, _opts) do
+      "%InventoryVector{ #{data.reference_type} :: #{data.hash |> Base.encode16} }"
+    end
+  end
+
   def parse(<<type_id :: unsigned-little-integer-size(32), hash :: bytes-size(32)>>) do
     %Bitcoin.Protocol.Types.InventoryVector{
       reference_type: type_id |> get_type_name,

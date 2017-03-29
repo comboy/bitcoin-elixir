@@ -53,6 +53,27 @@ repository and submit a pull request back to develop.
     * reject
     * tx
     * version
+  * Message Serialisation
+    * addr
+    * block
+    * getaddr
+    * getblocks
+    * getdata
+    * getheaders
+    * headers
+    * inv
+    * notfound
+    * ping
+    * pong
+    * tx
+    * version
+  * Common Structure Serialisation
+    * varint/varint[]
+    * varstring/varstring[]
+    * inventory vector
+    * network address
+    * txin/txout/outpoint
+    * block header  
 * OTP Application / Full Node
   * Peer
     * Connection Pool/Acceptor and Handler
@@ -70,29 +91,9 @@ repository and submit a pull request back to develop.
     * Transaction Queues
   * Event Model
   * Logging Strategy
-  * Common Structure Serialisation
-    * varint/varint[]
-    * varstring/varstring[]
-    * inventory vector
-    * network address
-    * txin/txout/outpoint
-    * block header  
   * Message Serialisation
-    * addr
-    * alert
-    * block
-    * getaddr
-    * getblocks
-    * getdata
-    * getheaders
-    * headers
-    * inv
-    * notfound
-    * ping
-    * pong
     * reject
-    * tx
-    * version
+    * alert
 * OTP Application / Full Node
   * Server Layout and Deployment
   * Blockchain Bulk Storage and Index API

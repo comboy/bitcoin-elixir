@@ -10,6 +10,12 @@ defmodule Bitcoin.Protocol.Types.TransactionOutput do
     pk_script: bitstring
   }
 
+  defimpl Inspect, for: __MODULE__ do
+    def inspect(data, _opts) do
+      "%Out{ #{data.value} -> #{data.pk_script |> Base.encode16} }"
+    end
+  end
+
   def parse_stream(data) do
 
     <<value::unsigned-little-integer-size(64), payload :: binary>> = data

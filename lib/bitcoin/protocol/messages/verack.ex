@@ -7,8 +7,10 @@ defmodule Bitcoin.Protocol.Messages.Verack do
     https://en.bitcoin.it/wiki/Protocol_specification#verack
   """
 
+  defstruct []
+
   def parse(_data) do
-    %{}
+    %__MODULE__{}
   end
 
   def serialize(_), do: <<>>

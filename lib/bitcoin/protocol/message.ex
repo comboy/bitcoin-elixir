@@ -4,6 +4,10 @@ defmodule Bitcoin.Protocol.Message do
     https://en.bitcoin.it/wiki/Protocol_documentation#Message_structure
   """
 
+  alias Bitcoin.Protocol.Messages
+  alias Bitcoin.Protocol.Message.Payload
+  alias Bitcoin.Protocol.Message.Header
+
   defimpl String.Chars, for: Bitcoin.Protocol.Message do
 
     @spec to_string(Message) :: String.t
@@ -25,17 +29,15 @@ defmodule Bitcoin.Protocol.Message do
 
   end
 
-  defstruct header: Bitcoin.Protocol.Message.Header,
-            message: Bitcoin.Protocol.Message.Payload
+  defstruct header: Header,
+            payload: Payload
 
   @type t :: %{
-    header: Bitcoin.Protocol.Message.Header.t,
-    message: Bitcoin.Protocol.Message.Payload.t
+    header: Header.t,
+    payload: Payload.t
   }
 
-  alias Bitcoin.Protocol.Messages
-
-  @command_handlers %{
+  @commands %{
     "addr"       => Messages.Addr,
     "alert"      => Messages.Alert,
     "block"      => Messages.Block,
@@ -54,80 +56,9 @@ defmodule Bitcoin.Protocol.Message do
     "version"    => Messages.Version
   }
 
-  defmodule Payload do
+  @message_types @commands |> Map.values()
+  @command_names @commands |> Map.keys()
 
-    defimpl String.Chars, for: Payload do
-      @spec to_string(Payload.t) :: String.t
-      def to_string(data) do
-        """
-          parsed data:
-            #{data.payload |> String.Chars.to_string()}
-          raw data:
-            #{"0x" <> Base.encode16(data.raw_data)}
-        """ |> String.strip()
-      end
-    end
-
-    defstruct raw_data: <<>>,
-              message: <<>>
-
-    @type t :: %Payload{
-      raw_data: binary,
-      message: binary
-    }
-
-    def parse(command, data) do
-      message = case Bitcoin.Protocol.Message.handler(command) do
-        # Unrecognized message
-        nil     ->  <<>>
-        # Parse using message specific module
-        handler ->  handler.parse(data)
-      end
-
-      %Payload{
-        raw_data: data,
-        message: message
-      }
-    end
-
-  end
-
-  defmodule Header do
-
-    @known_network_identifiers %{
-      main: <<0xF9, 0xBE, 0xB4, 0xD9>>,
-      testnet: <<0xFA, 0xBF, 0xB5, 0xDA>>,
-      testnet3: <<0x0B, 0x11, 0x09, 0x07>>,
-      namecoin: <<0xF9, 0xBE, 0xB4, 0xFE>>
-    }
-
-    defstruct network_identifier: 0,
-              command: <<>>,
-              payload_size_bytes: 0,
-              checksum: 0
-
-    @type t :: %Header{
-      network_identifier: non_neg_integer,
-      command: String.t,
-      payload_size_bytes: non_neg_integer,
-      checksum: non_neg_integer # sha256(sha256(payload)) first four bytes
-    }
-
-    def parse(<<network_identifier :: unsigned-little-integer-size(32),
-                      command :: bytes-size(12),
-                      payload_size_bytes :: unsigned-little-integer-size(32),
-                      checksum :: unsigned-little-integer-size(32)
-                    >>) do
-
-      %Header{
-        network_identifier: network_identifier,
-        command: command |> String.trim_trailing(<<0>>),
-        payload_size_bytes: payload_size_bytes,
-        checksum: checksum
-      }
-    end
-
-  end
 
   @doc """
     Reads and deserialises bitcoin message in serialised format and returns the parsed result
@@ -141,16 +72,76 @@ defmodule Bitcoin.Protocol.Message do
 
     header  = Header.parse(raw_header)
 
-    %{
+    %__MODULE__{
       header: header,
       payload: Payload.parse(header.command, payload)
     }
 
   end
 
-  @doc """
-    Returns module which can parse and build messages with specified command
-  """
-  def handler(command), do: @command_handlers[command]
+  def parse_stream(message) do
 
+    <<
+      raw_header :: bytes-size(24),
+      data :: binary
+    >> = message
+
+    header  = Header.parse(raw_header)
+
+    if byte_size(data) < header.payload_size_bytes do
+      [nil, message]
+    else
+      size = header.payload_size_bytes
+      <<
+        payload :: binary-size(size),
+        remaining :: binary
+      >> = data
+
+      message = %__MODULE__{
+        header: header,
+        payload: Payload.parse(header.command, payload)
+      }
+
+      [message, remaining]
+    end
+
+  end
+
+  @doc """
+    Returns message type associated with given command
+  """
+  def message_type(command), do: @commands[command]
+
+  @doc """
+    Returns command associated with given message type
+  """
+  def command_name(message_type) when message_type in @message_types do
+    @commands
+      |> Enum.find(fn {_k,v} -> v == message_type end)
+      |> elem(0)
+  end
+
+  @doc """
+    List of supported commands
+  """
+  def command_names, do: @command_names
+
+  @doc """
+    Serialize message type struct into a full binary message that is ready to be send over the network
+  """
+  def serialize(%{__struct__: message_type} = struct) when message_type in @message_types do
+
+    << network_identifier :: unsigned-little-integer-size(32) >> = <<0xF9, 0xBE, 0xB4, 0xD9>># TODO read from config (e.g. magic[Node.network()]
+
+    payload = message_type.serialize(struct)
+
+    header = %Header{
+      network_identifier: network_identifier,
+      command: message_type |> command_name,
+      payload_size_bytes: byte_size(payload),
+      checksum: Header.checksum(payload)
+    }
+
+    Header.serialize(header) <> payload
+  end
 end
