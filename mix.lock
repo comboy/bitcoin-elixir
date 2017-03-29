@@ -1,7 +1,7 @@
-%{"datastructures": {:hex, :datastructures, "0.2.6", "fe0fd2566886c79c072024acb7a062eaed56b06a87931526daefbdc12d902dee", [:mix], []},
+%{"datastructures": {:hex, :datastructures, "0.2.8", "cd9f53bed18f1d9526689a9559676c682b5a3ba230c1e3de187182f4ff86899c", [:mix], []},
   "exlager": {:git, "https://github.com/khia/exlager.git", "dfee7fffcbb44f9ecd79f1237bae0f170bb27d87", [branch: "master"]},
-  "exts": {:hex, :exts, "0.3.3", "f03027317eb2a672ec53bb675bad6670e943edf1dfafa3097a7d3367cb630ebc", [:mix], [{:datastructures, "~> 0.2", [hex: :datastructures, optional: false]}]},
+  "exts": {:hex, :exts, "0.3.4", "ec2af096ab4494c087a9615fffe9d5ba8a0fa0ccc465b340ee522ed7aff79078", [:mix], [{:datastructures, "~> 0.2", [hex: :datastructures, optional: false]}]},
   "goldrush": {:git, "https://github.com/basho/goldrush.git", "8f1b715d36b650ec1e1f5612c00e28af6ab0de82", [tag: "0.1.9"]},
   "lager": {:git, "https://github.com/basho/lager.git", "81eaef0ce98fdbf64ab95665e3bc2ec4b24c7dac", [tag: "3.2.4"]},
-  "reagent": {:hex, :reagent, "0.1.11", "d0131bf432e2dbd47d2bfcfe3096b1cca8a421a42ddd64fabd1444ed71aa4fcf", [:mix], [{:exts, "~> 0.3", [hex: :exts, optional: false]}, {:socket, "~> 0.3", [hex: :socket, optional: false]}]},
-  "socket": {:hex, :socket, "0.3.7", "68c029a8449fc6efc5f4c3bdf6d8b19ca94d3304e419f364c5cfc8b716f7c219", [:mix], []}}
+  "reagent": {:hex, :reagent, "0.1.14", "f6eaa35266091a41c93ae18b510472fa7c931c1f67a030d213ab0206ace843e1", [:mix], [{:exts, "~> 0.3", [hex: :exts, optional: false]}, {:socket, "~> 0.3", [hex: :socket, optional: false]}]},
+  "socket": {:hex, :socket, "0.3.11", "46004230045c2207c0b90adb9abe3ba15a83e634b341ac37af39a4adf48ed00b", [:mix], []}}
