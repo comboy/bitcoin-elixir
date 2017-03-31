@@ -9,7 +9,7 @@ defmodule Bitcoin.Protocol.Types.IntegerArray do
     if array_size > 0 do
 
       Enum.reduce(1..array_size, [[], payload], fn (_, [element_collection, payload]) ->
-        [element, payload] = Integer.parse_stream(payload)
+        << element :: unsigned-little-integer-size(32), payload::binary >> = payload
         [element_collection ++ [element], payload]
       end)
 

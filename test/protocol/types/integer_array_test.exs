@@ -14,10 +14,10 @@ defmodule BitcoinTest.Protocol.Types.IntegerArrayTest do
 
   end
 
-  test "returns an array of size one with properly int(8) and the remaining payload" do
+  test "returns an array of size one" do
 
     payload = <<1,       # element count
-                  1,     # first element, 1 (int(8)) Bitcoin.Protocol.Types.Integer
+                  1 :: unsigned-little-integer-size(32),     # first element
                 0, 1, 0  # remaining stream
               >>
     assert [
@@ -30,11 +30,11 @@ defmodule BitcoinTest.Protocol.Types.IntegerArrayTest do
 
   end
 
-  test "returns an array of size two with properly int(8), int(16) and the remaining payload" do
+  test "returns an array of size two" do
 
       payload = <<2,       # element count
-                    1,                 # first element, 1 (int(8)) Bitcoin.Protocol.Types.Integer
-                    253, 43, 221,      # second element, 56619 (int(16)) Bitcoin.Protocol.Types.Integer
+                    1 :: unsigned-little-integer-size(32),                 # first element
+                    56619 :: unsigned-little-integer-size(32),             # second element
                   1, 1, 0  # remaining stream
                 >>
       assert [
@@ -48,13 +48,11 @@ defmodule BitcoinTest.Protocol.Types.IntegerArrayTest do
 
     end
 
-  test "returns an array of size three with properly int(8), int(16), int(32) and the remaining payload" do
+  test "returns an array of size three" do
 
-      payload = <<3,       # element count
-                    1,                 # first element, 1 (int(8)) Bitcoin.Protocol.Types.Integer
-                    253, 43, 221,      # second element, 56619 (int(16)) Bitcoin.Protocol.Types.Integer
-                    254, 43, 221, 215, 77, # third element, 1305992491 (int(16)) Bitcoin.Protocol.Types.Integer
-                  1, 1, 1  # remaining stream
+      payload = <<3,                     # element count
+                  1 :: unsigned-little-integer-size(32), 56619 :: unsigned-little-integer-size(32), 1305992491 :: unsigned-little-integer-size(32),  # elements
+                  1, 1, 1                # remaining stream
                 >>
       assert [
                [
