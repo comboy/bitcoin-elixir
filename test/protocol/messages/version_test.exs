@@ -16,12 +16,12 @@ defmodule Bitcoin.Protocol.Messages.VersionTest do
     assert %Bitcoin.Protocol.Messages.Version{
              address_of_receiving_node: %Bitcoin.Protocol.Types.NetworkAddress{
                services: <<1, 0, 0, 0, 0, 0, 0, 0>>,
-               address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 10, 0, 0, 1>>,
+               address: {10, 0, 0, 1},
                port: 8333
              },
              address_of_sending_node: %Bitcoin.Protocol.Types.NetworkAddress{
                services: <<1, 0, 0, 0, 0, 0, 0, 0>>,
-               address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 10, 0, 0, 2>>,
+               address: {10, 0, 0, 2},
                port: 8333
              },
              nonce: 1393780771635895773,
@@ -49,12 +49,12 @@ defmodule Bitcoin.Protocol.Messages.VersionTest do
     assert %Bitcoin.Protocol.Messages.Version{
              address_of_receiving_node: %Bitcoin.Protocol.Types.NetworkAddress{
                services: <<1, 0, 0, 0, 0, 0, 0, 0>>,
-               address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0>>,
+               address: {0, 0, 0, 0},
                port: 0
              },
              address_of_sending_node: %Bitcoin.Protocol.Types.NetworkAddress{
                services: <<1, 0, 0, 0, 0, 0, 0, 0>>,
-               address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0>>,
+               address: {0, 0, 0, 0}, 
                port: 0
              },
              nonce: 7284544412836900411,
@@ -86,12 +86,12 @@ defmodule Bitcoin.Protocol.Messages.VersionTest do
                              "01") # Relay flag: true
     parsed_msg = %Bitcoin.Protocol.Messages.Version{
       address_of_receiving_node: %Bitcoin.Protocol.Types.NetworkAddress{
-        address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 198, 27, 100, 9>>,
+        address: {198, 27, 100, 9},
         port: 8333,
         services: <<1, 0, 0, 0, 0, 0, 0, 0>>
         },
       address_of_sending_node: %Bitcoin.Protocol.Types.NetworkAddress{
-        address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 203, 0, 113, 192>>,
+        address: {203, 0, 113, 192},
         port: 8333,
         services: <<1, 0, 0, 0, 0, 0, 0, 0>>
         },

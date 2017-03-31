@@ -1,14 +1,14 @@
 defmodule Bitcoin.Protocol.Types.NetworkAddress do
 
   defstruct time: 0, # (uint32) the Time (version >= 31402). Not present in version message.
-            services: 0, # (uint64_t) bitfield of features to be enabled for this connection. See Version Message.
-            address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>, # (char[16]) IPv6 address. Network byte order. The original client only supported IPv4 and only read the last 4 bytes to get the IPv4 address. However, the IPv4 address is written into the message as a 16 byte IPv4-mapped IPv6 address.
-            port: 0 # (uint16_t) port number, network byte order
+            services: <<0, 0, 0, 0, 0, 0, 0, 0>>, # (uint64_t) bitfield of features to be enabled for this connection. See Version Message.
+            address: {0, 0, 0, 0}, # decoded address tuple, 4 elemnt for IPv4, 8 element for IPv6 (see :inet)
+            port: 8333 # (uint16_t) port number, network byte order
 
   @type t :: %Bitcoin.Protocol.Types.NetworkAddress{
     time: non_neg_integer,
     services: binary,
-    address: non_neg_integer,
+    address: tuple,
     port: non_neg_integer
   }
 
@@ -19,7 +19,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
     %Bitcoin.Protocol.Types.NetworkAddress{
       time: time,
       services: services,
-      address: address,
+      address: address |> addr_to_inet,
       port: port
     }
   end
@@ -32,7 +32,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
     [%Bitcoin.Protocol.Types.NetworkAddress{
       time: time,
       services: services,
-      address: address,
+      address: address |> addr_to_inet,
       port: port
     }, remaining_stream]
   end
@@ -42,7 +42,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
               port :: unsigned-big-integer-size(16)>>) do
       %Bitcoin.Protocol.Types.NetworkAddress{
         services: services,
-        address: address,
+        address: address |> addr_to_inet,
         port: port
       }
     end
@@ -53,7 +53,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
               remaining_stream :: binary>>) do
     [%Bitcoin.Protocol.Types.NetworkAddress{
       services: services,
-      address: address,
+      address: address |> addr_to_inet,
       port: port
     }, remaining_stream]
   end
@@ -63,7 +63,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
     <<
       s.time :: unsigned-native-integer-size(32),
       s.services :: bitstring-size(64),
-      s.address :: bytes-size(16),
+      (s.address |> inet_to_addr) :: bytes-size(16),
       s.port :: unsigned-big-integer-size(16)
     >>
   end
@@ -72,9 +72,17 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
   def serialize_version(%Bitcoin.Protocol.Types.NetworkAddress{} = s) do
     <<
       s.services :: bitstring-size(64),
-      s.address :: bytes-size(16),
+      (s.address |> inet_to_addr) :: bytes-size(16),
       s.port :: unsigned-big-integer-size(16)
     >>
   end
+
+  # Convert address bytes to erlang :inet ip adress, IPv4
+  def addr_to_inet(<<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, b1, b2, b3, b4>>), do: {b1, b2, b3, b4}
+  def addr_to_inet(<<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, b1, b2, b3, b4>>), do: {b1, b2, b3, b4}
+  def addr_to_inet(<< ipv6 :: binary-size(128) >>), do: {0,0,0,0} #TODO IPv6
+
+  # Convert erlang inet ip adress to address byptes IPv4 (TODO IPv6)
+  def inet_to_addr({b1, b2, b3, b4}), do: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, b1, b2, b3, b4>> 
 
 end

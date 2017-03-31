@@ -10,7 +10,7 @@ defmodule BitcoinTest.Protocol.Types.NetworkAddressTest do
                                "208D") # - port 8333"
 
     struct = %Bitcoin.Protocol.Types.NetworkAddress{
-             address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 10, 0, 0, 1>>,
+             address: {10, 0, 0, 1},
              port: 8333,
              services: <<1, 0, 0, 0, 0, 0, 0, 0>>
            } 
@@ -29,7 +29,7 @@ defmodule BitcoinTest.Protocol.Types.NetworkAddressTest do
 
       struct = %Bitcoin.Protocol.Types.NetworkAddress{
                time: 1292899810,
-               address: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 10, 0, 0, 1>>,
+               address: {10, 0, 0, 1},
                port: 8333,
                services: <<1, 0, 0, 0, 0, 0, 0, 0>>
              }
