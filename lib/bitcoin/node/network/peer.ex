@@ -8,15 +8,10 @@ defmodule Bitcoin.Node.Network.Peer do
     more complicated (connection should be a master to peer, but we probably rather want to
     call higher level functions on peer)
 
-    FIXME abstraction mixup, ConnectionManager uses Reagent with this module as a handler,
-    but we want both ConnectionManager and Peer to be swapped independently, so ConnectionManager
-    must implemetn it's own Reagent handler that talks to the Peer module
-
     TODO close connection if there's no successful handshake within specific time
   """
 
   use GenServer
-  use Reagent
   require Lager
 
   alias Bitcoin.Node
@@ -27,7 +22,7 @@ defmodule Bitcoin.Node.Network.Peer do
   @ping_frequency 600_000 # 10 minutes
 
   # Initialize Peer asking it to make  connection to specific
-  def start(%Reagent.Connection{} = conn), do: GenServer.start(__MODULE__, conn)
+  def start(socket), do: GenServer.start(__MODULE__, socket)
   def start(ip, port \\ 8333), do: GenServer.start(__MODULE__, %{ip: ip, port: port})
 
 
@@ -51,8 +46,8 @@ defmodule Bitcoin.Node.Network.Peer do
     {:ok, state}
   end
 
-  # Reagent initalization, called by reagent on accepted socket
-  def init(%Reagent.Connection{socket: socket}) do
+  # Initialize with existing socket (inbound connection) 
+  def init(socket) do
     {:ok, {ip, port}} = :inet.peername(socket)
 
     state = %{
@@ -64,13 +59,9 @@ defmodule Bitcoin.Node.Network.Peer do
       buffer: ""
     }
 
-    {:ok, state}
-  end
-
-  def handle_info({ Reagent, :ack }, state) do
-    state.socket |> Socket.active!()
     self() |> send(:handshake)
-    {:noreply, state}
+
+    {:ok, state}
   end
 
   #
@@ -203,6 +194,9 @@ defmodule Bitcoin.Node.Network.Peer do
   # TCP stuff
   #
 
+  # FIXME abuse vector
+  # When no message is found ini the buffer we will continue to append it indefinitely (running out of memory eventually)
+  # E.g. fix Massage.parse_stream should separate case of incomplete message from message not found
   def handle_info({:tcp, _port, data}, state) do
     #state |> debug(">> #{data |> Base.encode16}")
     state = state |> Map.put(:buffer, process_buffer(state[:buffer] <> data))
@@ -258,13 +252,17 @@ defmodule Bitcoin.Node.Network.Peer do
     {:stop, :normal, state |> Map.put(:status, :disconnected)}
   end
 
+  # Validate version packet received from the peer
+  # Return :ok, or {:error, reason} tuple with the first encountered error
   defp validate_version(%Messages.Version{} = version) do
-    cond do
-      version.nonce == Bitcoin.Node.nonce() ->
-        {:error, :self_connection}
-      true ->
-        :ok
-    end
+    [
+      # Nonce in the VERSION packet is used to detect self connections
+      fn version -> if version.nonce != Bitcoin.Node.nonce(), do: :ok, else: {:error, :self_connection} end,
+
+      # Check if the timestamp difference is below 1 hour
+      fn version -> if abs(Bitcoin.Node.timestamp() - version.timestamp) < 3600, do: :ok, else: {:error, :incorrect_timestamp} end
+    ]
+    |> Bitcoin.Util.run_validations(version)
   end
 
 end

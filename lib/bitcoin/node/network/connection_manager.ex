@@ -1,4 +1,21 @@
 defmodule Bitcoin.Node.Network.ConnectionManager do
+
+  # Reagent connection handler
+  defmodule ReagentHandler do
+    use Reagent
+
+    def handle(%Reagent.Connection{socket: socket}) do
+      {:ok, pid} = Bitcoin.Node.Network.Peer.start(socket)
+      # Potential issue:
+      # If the connection gets closed after Peer.start but before switching the controlling process
+      # then probably Peer will never receive _:tcp_closed. Not sure if we need to care because
+      # it should just timout then
+      socket |> :gen_tcp.controlling_process(pid)
+      socket |> :inet.setopts(active: true)
+      :ok
+    end
+  end
+
   use GenServer
 
   require Lager
@@ -16,9 +33,8 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
       peers: []
     }
 
-    {:ok, _pid} = Reagent.start_link(Bitcoin.Node.Network.Peer, port: state.config[:listen_port])
+    {:ok, _pid} = Reagent.start_link(ReagentHandler, port: state.config[:listen_port])
     self() |> send(:periodical_connectivity_check)
-
     {:ok, state}
   end
 

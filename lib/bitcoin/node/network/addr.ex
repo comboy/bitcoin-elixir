@@ -23,10 +23,9 @@ defmodule Bitcoin.Node.Network.Addr do
   def handle_cast({:add, %NetworkAddress{} = addr}, addrs) do
     Lager.debug("adding new network address #{addr.address |> :inet.ntoa}")
     existing = addrs[addr.address]
+
     # If we already have this address, update timestamp if it's older
-    # TODO check if timestamp is not in the future
-    # TODO mark seed addresses somehow and be nice to them (i.e. disconnect after fetching addrs)
-    if !existing || existing && existing.time< addr.time do
+    if (!existing || existing && existing.time < addr.time) && valid?(addr) do
       {:noreply, addrs |> Map.put(addr.address, addr)}
     else
       {:noreply, addrs}
@@ -45,5 +44,7 @@ defmodule Bitcoin.Node.Network.Addr do
   def handle_call(:get, _from, addrs) do
     {:reply, addrs |> Map.values |> Enum.random, addrs}
   end
+
+  defp valid?(%NetworkAddress{} = na), do: na.time <= Bitcoin.Node.timestamp()
 
 end

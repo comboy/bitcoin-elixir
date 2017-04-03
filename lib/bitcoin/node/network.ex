@@ -8,17 +8,29 @@ defmodule Bitcoin.Node.Network do
   #
   # This module is also probably where Node will be requesting to fetch misisng inv / headers etc.
 
+  alias Bitcoin.Node.Network
+
+  @default_modules [
+    # Addrs managager, keeps list of IPs to connect to
+    addr: Network.Addr,
+    # Peer connection handler, exchanges information with a single peer
+    peer: Network.Peer,
+    # Peers discovery - find IPs of peers to connect to if we have non in the database
+    discovery: Network.Discovery,
+    # Connection manager, accepts incoming connection, keeps track of all connected peers
+    connection_manager: Network.ConnectionManager
+  ]
+
+
   def find_more_addrs do
     modules[:discovery].begin_discovery()
   end
 
-  # TODO use config
   def modules do
-    [
-      addr: Bitcoin.Node.Network.Addr,
-      discovery: Bitcoin.Node.Network.Discovery,
-      connection_manager: Bitcoin.Node.Network.ConnectionManager
-    ]
+    case Application.get_env(:bitcoin, :node, :modules) do
+       nil -> @default_modules
+      list -> @default_modules |> Keyword.merge(list)
+    end
   end
 
 end

@@ -11,8 +11,8 @@ defmodule Bitcoin.Node.Network.Supervisor do
     Lager.info "Starting Node subsystems"
     modules = Bitcoin.Node.Network.modules()
     children = 
-      modules
-      |> Keyword.values 
+      [:addr, :discovery, :connection_manager]
+      |> Enum.map(fn name -> modules[name] end)
       |> Enum.map(fn m -> worker(m, [%{modules: modules}]) end)
 
     children |> supervise(strategy: :one_for_one)
