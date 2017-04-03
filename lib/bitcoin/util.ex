@@ -21,4 +21,13 @@ defmodule Bitcoin.Util do
     end)
   end
 
+  def double_sha256(data), do: :crypto.hash(:sha256, :crypto.hash(:sha256, data))
+
+  # reverse bytes order in a binary
+  def binary_reverse(binary), do: binary |> :binary.bin_to_list |> Enum.reverse |> :binary.list_to_bin
+
+  # this needs a better name
+  # it transforms binary hash as used in the Bitcoin protocol to the hex representation that you see everywhere
+  def friendly_hash(hash), do: hash |> binary_reverse |> Base.encode16 |> String.downcase
+
 end

@@ -22,4 +22,16 @@ defmodule Bitcoin.UTilTest do
     assert Util.run_validations(funs, 2) == {:error, :below5}
     assert Util.run_validations(funs, 8) == {:error, :below10}
   end
+
+  test "binary reverse" do
+    assert Util.binary_reverse(<<1, 2, 3>>) == <<3, 2, 1>>
+  end
+
+  test "double sha256" do
+    assert Util.double_sha256("foo") |> Base.encode16 == "C7ADE88FC7A21498A6A5E5C385E1F68BED822B72AA63C4A9A48A02C2466EE29E"
+  end
+
+  test "friendly hash" do
+    assert Util.friendly_hash(<<239, 190>>) == "beef"
+  end
 end

@@ -65,6 +65,19 @@ defmodule Bitcoin.Protocol.Messages.Block do
   end
 
   def serialize(%__MODULE__{} = s) do
+    (s |> serialize_header)
+    <>
+      Bitcoin.Protocol.Types.Integer.serialize(s.transactions |> Enum.count)
+    <> (
+      s.transactions
+        |> Enum.map(&Tx.serialize/1)
+        |> Enum.reduce(<<>>, &(&2 <> &1))
+    )
+  end
+
+  # Serialization of header fields is separated so that we can compute the block hash
+  # Note that these differ from Types.BlockHeader by transaction_count field
+  def serialize_header(%__MODULE__{} = s) do
     <<
       s.version :: little-integer-size(32),
       s.previous_block :: bytes-size(32),
@@ -72,12 +85,16 @@ defmodule Bitcoin.Protocol.Messages.Block do
       s.timestamp :: unsigned-little-integer-size(32),
       s.bits :: unsigned-little-integer-size(32),
       s.nonce :: unsigned-little-integer-size(32),
-    >> <>
-      Bitcoin.Protocol.Types.Integer.serialize(s.transactions |> Enum.count)
-    <> (
-      s.transactions
-        |> Enum.map(&Tx.serialize/1)
-        |> Enum.reduce(<<>>, &(&2 <> &1))
+    >>
+  end
+
+  # Transform Block struct to Types.BlockHeader struct
+  def header(%__MODULE__{} = block) do
+    %Bitcoin.Protocol.Types.BlockHeader{} |> Map.merge(
+      block
+        |> Map.from_struct
+        |> Map.put(:transaction_count, block.transactions |> length)
+        |> Map.delete(:transactions)
     )
   end
 
