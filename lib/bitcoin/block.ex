@@ -1,6 +1,7 @@
 defmodule Bitcoin.Block do
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Protocol.Types
+  alias Bitcoin.Block.Validation
 
   def hash(%Messages.Block{} = block) do
     block
@@ -13,6 +14,15 @@ defmodule Bitcoin.Block do
       |> Enum.map(&Bitcoin.Tx.hash/1)
       |> merkle_tree_hash
   end
+
+  def validate(%Messages.Block{} = block) do
+    [
+      &Validation.merkle_root/1,
+      &Validation.hash_below_target/1
+    ] |> Bitcoin.Util.run_validations(block)
+  end
+
+
 
   def merkle_tree_hash([hash]), do: hash
   def merkle_tree_hash(list) when rem(length(list), 2) == 1, do: (list ++ [List.last(list)]) |> merkle_tree_hash
