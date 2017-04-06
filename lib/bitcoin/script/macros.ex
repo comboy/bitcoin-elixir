@@ -17,6 +17,14 @@ defmodule Bitcoin.Script.Macros do
     end
   end
 
+  defmacro op(op, stack_clause, do: stack_expression) when is_atom(op) do
+    quote do
+      def run(unquote(stack_clause), [unquote(op) | script], opts) do
+        (unquote(stack_expression)) |> run(script, opts)
+      end
+    end
+  end
+
   defmacro op_alias(op, list) when is_atom(op) and is_list(list) do
     quote do
       def run(stack, [unquote(op) | script], opts) do

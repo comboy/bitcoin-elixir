@@ -38,6 +38,8 @@ defmodule Bitcoin.Script do
   alias Bitcoin.Script.Binary
 
   import Bitcoin.Script.Macros
+  import Bitcoin.Script.Control
+  import Bitcoin.Script.Number
 
 
   @invalid_unexecuted [:OP_VERIF, :OP_VERNOT_IF]
@@ -74,19 +76,17 @@ defmodule Bitcoin.Script do
     end
   end
 
-  # Run the parsed script
-  def run(script, opts), do: run([], script, opts)
-
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
   def run(:invalid, _script), do: :invalid
+
+  # Run the parsed script
+  def run(script, opts), do: run([], script, opts)
 
   # When no script is left to run, return the stack
   def run(stack, [], _opts), do: stack
 
   # Binary blob, put it on the stack
   def run(stack, [data | script], opts) when is_binary(data) or is_number(data), do: run([data | stack], script, opts)
-
-
 
 
   ##
@@ -103,7 +103,6 @@ defmodule Bitcoin.Script do
   op :OP_3,  stack, do: [3 | stack]
   op :OP_4,  stack, do: [4 | stack]
   op :OP_5,  stack, do: [5 | stack]
-  op :OP_6,  stack, do: [6 | stack]
   op :OP_6,  stack, do: [6 | stack]
   op :OP_7,  stack, do: [7 | stack]
   op :OP_8,  stack, do: [8 | stack]
@@ -135,12 +134,13 @@ defmodule Bitcoin.Script do
   op :OP_VERNOTIF, _, do: :invalid
 
   # OP_IF If the top stack value is not False, the statements are executed. The top stack value is removed.
-  def run([0 | stack], [:OP_IF | script], opts), do: stack |> run_else(script, opts)
-  def run([x | stack], [:OP_IF | script], opts), do: stack |> run_if(script, opts)
+  def run([0 | stack], [:OP_IF | script], opts), do: stack |> run(script |> extract_else, opts)
+  def run([x | stack], [:OP_IF | script], opts), do: stack |> run(script |> extract_if, opts)
 
   # OP_NOTIF If the top stack value is False, the statements are executed. The top stack value is removed.
-  def run([0 | stack], [:OP_NOTIF | script], opts), do: stack |> run_if(script, opts)
-  def run([_ | stack], [:OP_NOTIF | script], opts), do: stack |> run_else(script, opts)
+  # Not the same as OP_NOT then OP_IF because OP_NOT should only work on numbers
+  def run([0 | stack], [:OP_NOTIF | script], opts), do: stack |> run(script |> extract_if, opts)
+  def run([_ | stack], [:OP_NOTIF | script], opts), do: stack |> run(script |> extract_else, opts)
 
   # OP_ELSE implemented as part of the OP_IF
 
@@ -244,8 +244,12 @@ defmodule Bitcoin.Script do
   # OP_XOR disabled
 
   # OP_EQUAL Returns 1 if the inputs are exactly equal, 0 otherwise.
+  # These convoluted cases below come from the fact that we keep 0 and 1 on the stack
+  # intsead of <<>> and <<1>> (same for OP_1-16, We should switch to proper representation on the stack
   op :OP_EQUAL, [a, b | stack] when is_binary(a) and is_binary(b), do: [(if a == b, do: 1, else: 0) | stack]
-  op :OP_EQUAL, [a, b | stack], do: [(if num(a) == num(b), do: 1, else: 0) | stack]
+  op :OP_EQUAL, [a, b | stack] when is_number(a) and is_binary(b), do: [(if bin(a) == b, do: 1, else: 0) | stack]
+  op :OP_EQUAL, [a, b | stack] when is_binary(a) and is_number(b), do: [(if a == bin(b), do: 1, else: 0) | stack]
+  op :OP_EQUAL, [a, b | stack] when is_number(a) and is_number(b), do: [(if bin(a) == bin(b), do: 1, else: 0) | stack]
 
 
   # OP_EQUALVERIFY Same as OP_EQUAL, but runs OP_VERIFY afterward
@@ -262,19 +266,19 @@ defmodule Bitcoin.Script do
   ##
 
   # OP_1ADD 1 is added to the input.
-  op :OP_1ADD, [x | stack], do: [num(x) + 1 | stack]
+  op :OP_1ADD, [x | stack], do: [bin(num(x) + 1) | stack]
 
   # OP_1ADD 1 is substracted from the input.
-  op :OP_1SUB, [x | stack], do: [num(x) - 1 | stack]
+  op :OP_1SUB, [x | stack], do: [bin(num(x) - 1) | stack]
 
   # OP_2MUL disabled
   # OP_2DIV disabled
 
   # OP_NEGATE The sign of the input is flipped.
-  op :OP_NEGATE, [x | stack], do: [-1 * num(x) | stack]
+  op :OP_NEGATE, [x | stack], do: [bin(-1 * num(x)) | stack]
 
   # OP_ABS The input is made positive.
-  op :OP_ABS, [x | stack], do: [ num(x) |> abs | stack]
+  op :OP_ABS, [x | stack], do: [bin(num(x) |> abs) | stack]
 
   # OP_NOT If the input is 0 or 1, it is flipped. Otherwise the output will be 0.
   op :OP_NOT, [0 | stack], do: [1 | stack]
@@ -286,10 +290,10 @@ defmodule Bitcoin.Script do
   op :OP_0NOTEQUAL, [_ | stack], do: [1 | stack]
 
   # OP_ADD a is added to be
-  op :OP_ADD, [a, b | stack], do: [num(a) + num(b) | stack]
+  op :OP_ADD, [a, b | stack], do: [bin(num(a) + num(b)) | stack]
 
   # OP_SUB a is substracted from b
-  op :OP_SUB, [a, b | stack], do: [num(b) - num(a) | stack]
+  op :OP_SUB, [a, b | stack], do: [bin(num(b) - num(a)) | stack]
 
   # OP_MUL disabled
   # OP_DIV disabled
@@ -299,11 +303,11 @@ defmodule Bitcoin.Script do
 
   # OP_BOOLAND If both a and b are not 0, the output is 1. Otherwise 0.
   op :OP_BOOLAND, [a, b | stack] when a != 0 and b != 0, do: [1 | stack]
-  op :OP_BOOLAND, [a, b | stack], do: [0 | stack]
+  op :OP_BOOLAND, [_a, _b | stack], do: [0 | stack]
 
   # OP_BOOLOR If a or b is not 0, the output is 1. Otherwise 0.
   op :OP_BOOLOR, [a, b | stack] when a != 0 or b != 0, do: [1 | stack]
-  op :OP_BOOLOR, [a, b | stack], do: [0 | stack]
+  op :OP_BOOLOR, [_a, _b | stack], do: [0 | stack]
 
   # OP_NUMEQUAL Returns 1 if the numbers are equal, 0 otherwise.
   op :OP_NUMEQUAL, [a, b | stack], do: [(if num(a) == num(b), do: 1, else: 0) | stack]
@@ -338,10 +342,6 @@ defmodule Bitcoin.Script do
   ##
   ## CRYPTO
   ##
-
-  # Convert stack element to binary - necessary for it to work as an input to crypto functions
-  def bin(x) when is_binary(x), do: x
-  def bin(x), do: <<x>>
 
   # OP_RIPEMD160 The input is hashed using RIPEMD-160.
   op :OP_RIPEMD160, [x | stack], do: [:crypto.hash(:ripemd160, bin(x)) | stack]
@@ -383,11 +383,10 @@ defmodule Bitcoin.Script do
   # keys are not checked again if they fail any signature comparison, signatures must be placed in the scriptSig
   # using the same order as their corresponding public keys were placed in the scriptPubKey or redeemScript.
   # If all signatures are valid, 1 is returned, 0 otherwise.
-  #
-  # Due to a bug, one extra unused value is removed from the stack.
   op :OP_CHECKMULTISIG, stack do
     {keys, stack} = get_multi(stack)
     {sigs, stack} = get_multi(stack)
+    # Due to a bug, one extra unused value is removed from the stack.
     [_bug | stack] = stack
     [1 | stack]
   end
@@ -421,74 +420,5 @@ defmodule Bitcoin.Script do
   # OP_PUBKEYHASH
   # OP_PUBKEY
   # OP_INVALIDOPCODE
-
-
-  # IF STATEMENT IMPLEMENTATION
-  #
-  # OP_IFs can be nested, which complicates running script a bit.
-  #
-  # Just going sequentially through it we would have to track some complicated state,
-  # especially given that there can be multiple OP_ELSEs.
-  #
-  # So instead function `parse_if` finds the matching OP_ELSEs (if present) and OP_ENDIF,
-  # and returns scripts associated with `if` block part and `else` block part. For multiple
-  # OP_ELSE statements, those that execute when `if` block is executed are appended to the
-  # if` block script, and others to the `else` block script
-
-  # Run the if block of the provided script which was prepended by OP_IF or OP_NOTIF
-  def run_if(stack, script, opts) do
-    {if_script, _else_script, script} = parse_if(script)
-    stack |> run(if_script ++ script, opts)
-  end
-
-  # Run the else block (if present) of the provided script which was prepended by OP_IF or OP_NOTIF
-  def run_else(stack, script, opts) do
-    {_if_script, else_script, script} = parse_if(script)
-    stack |> run(else_script ++ script, opts)
-  end
-
-  # Returns value: {if_block, else_block, remaining_script}
-  defp parse_if(script), do: parse_if({[], []}, script, 0)
-
-  # Found OP_ENDIF and we are not in the nested OP_IF, returning
-  # To be faster we are appending to the beginning of the list when
-  # collecting if and else blocks, so now it's time to reverse them
-  defp parse_if(  {if_script, else_script}, [:OP_ENDIF | script], 0), do: {if_script |> Enum.reverse, else_script |> Enum.reverse, script}
-  defp parse_else({if_script, else_script}, [:OP_ENDIF | script], 0), do: {if_script |> Enum.reverse, else_script |> Enum.reverse, script}
-
-  # Found else, collect script for the else block
-  defp parse_if({if_script, else_script}, [:OP_ELSE | script], 0), do: {if_script, else_script} |> parse_else(script, 0)
-
-  # WHOA Multiple OP_ELSE statements are valid and execution inverts on each OP_ELSE encountered
-  defp parse_else({if_script, else_script}, [:OP_ELSE | script], 0), do: {if_script, else_script} |> parse_if(script, 0)
-
-  # Collect the else script part, change if_depth when encountering nested IFs
-  defp parse_else({if_script, else_script}, [x | script], if_depth), do: {if_script, [x | else_script]} |> parse_else(script, if_depth + if_depth_change(x))
-
-  # Collect the if script part, change if_depth when encountering nested IFs
-  defp parse_if({if_script, else_script}, [x | script], if_depth), do: {[x | if_script], else_script} |> parse_if(script, if_depth + if_depth_change(x))
-
-  defp if_depth_change(:OP_IF),    do:  1
-  defp if_depth_change(:OP_NOTIF), do:  1
-  defp if_depth_change(:OP_ENDIF), do: -1
-  defp if_depth_change(_),         do:  0
-
-
-  ## Script integers (a.k.a. CScriptNum parsknig)
-
-  use Bitwise
-
-  def num(<<>>), do: 0
-  def num(<< x1 >>)             when (x1 &&& 0x80) != 0, do: -1 * num(<< x1 ^^^ 0x80 >>)
-  def num(<< x1, x2 >>)         when (x2 &&& 0x80) != 0, do: -1 * num(<< x1, x2 ^^^ 0x80 >>)
-  def num(<< x1, x2, x3 >>)     when (x3 &&& 0x80) != 0, do: -1 * num(<< x1, x2, x3 ^^^ 0x80 >>)
-  def num(<< x1, x2, x3, x4 >>) when (x4 &&& 0x80) != 0, do: -1 * num(<< x1, x2, x3, x4 ^^^ 0x80 >>)
-  def num(<< x :: unsigned-little-integer-size(32) >>), do: x
-  def num(<< x :: unsigned-little-integer-size(24) >>), do: x
-  def num(<< x :: unsigned-little-integer-size(16) >>), do: x
-  def num(<< x :: unsigned-little-integer-size(8) >>), do: x
-  def num(x) when is_number(x), do: x
-
-
 
 end
