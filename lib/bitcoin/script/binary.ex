@@ -165,21 +165,18 @@ defmodule Bitcoin.Script.Binary do
   #def parse(script, << @op_pushdata1, 0, bin :: binary >>), do: (script) |> parse(bin)
 
   # OP_PUSHDATA1 The next byte contains the number of bytes to be pushed onto the stack.1
-  def parse(script, << @op_pushdata1, size, bin :: binary >>) when size == 0, do: (script ++ [0]) |> parse(bin)
   def parse(script, << @op_pushdata1, size, bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
     (script ++ [data]) |> parse(bin)
   end
 
   # OP_PUSHDATA2 The next two bytes contain the number of bytes to be pushed onto the stack.
-  def parse(script, << @op_pushdata2, size :: unsigned-little-integer-size(16), bin :: binary >>) when size == 0, do: (script ++ [0]) |> parse(bin)
   def parse(script, << @op_pushdata2, size :: unsigned-little-integer-size(16), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
     (script ++ [data]) |> parse(bin)
   end
 
   # OP_PUSHDATA5 The next four bytes contain the number of bytes to be pushed onto the stack.
-  def parse(script, << @op_pushdata4, size :: unsigned-little-integer-size(32), bin :: binary >>) when size == 0, do: (script ++ [0]) |> parse(bin)
   def parse(script, << @op_pushdata4, size :: unsigned-little-integer-size(32), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
     (script ++ [data]) |> parse(bin)

@@ -86,6 +86,9 @@ defmodule Bitcoin.Script do
   # Binary blob, put it on the stack
   def run(stack, [data | script], opts) when is_binary(data) or is_number(data), do: run([data | stack], script, opts)
 
+
+
+
   ##
   ## PUSH VALUE
   ##
@@ -208,7 +211,7 @@ defmodule Bitcoin.Script do
   op :OP_ROLL, [n | stack], do: [stack |> Enum.at(num(n)) | stack |> List.delete_at(num(n))]
 
   # OP_ROT The top three items on the stack are rotated to the left.
-  op :OP_ROT, [a, b, c | stack], do: [b, c, a | stack]
+  op :OP_ROT, [a, b, c | stack], do: [c, a, b | stack]
 
   # OP_SWAP The top two items on the stack are swapped.
   op :OP_SWAP, [a, b | stack], do: [b, a | stack]
@@ -241,13 +244,12 @@ defmodule Bitcoin.Script do
   # OP_XOR disabled
 
   # OP_EQUAL Returns 1 if the inputs are exactly equal, 0 otherwise.
-  def run([a, b | stack], [:OP_EQUAL | script], opts) when is_binary(a) and is_binary(b), do: [(if a == b, do: 1, else: 0), a, b | stack] |> run(script, opts)
-  op :OP_EQUAL, [a, b | stack], do: [(if num(a) == num(b), do: 1, else: 0), a, b | stack]
+  op :OP_EQUAL, [a, b | stack] when is_binary(a) and is_binary(b), do: [(if a == b, do: 1, else: 0) | stack]
+  op :OP_EQUAL, [a, b | stack], do: [(if num(a) == num(b), do: 1, else: 0) | stack]
 
 
   # OP_EQUALVERIFY Same as OP_EQUAL, but runs OP_VERIFY afterward
-  def run([a, b | stack], [:OP_EQUALVERIFY | script], opts) when a != b, do: [0 | stack]
-  def run([a, b | stack], [:OP_EQUALVERIFY | script], opts) when a == b, do: stack |> run(script, opts)
+  op_alias :OP_EQUALVERIFY, [:OP_EQUAL, :OP_VERIFY]
 
   # OP_RESERVED1 Transaction is invalid unless occuring in an unexecuted OP_IF branch
   op :OP_RESERVED1, _, do: :invalid
@@ -258,12 +260,6 @@ defmodule Bitcoin.Script do
   ##
   ## NUMERIC
   ##
-
-  def num(<< x :: signed-little-integer-size(32) >>), do: x
-  def num(<< x :: signed-little-integer-size(24) >>), do: x
-  def num(<< x :: signed-little-integer-size(16) >>), do: x
-  def num(<< x :: signed-little-integer-size(8) >>), do: x
-  def num(x) when is_number(x), do: x
 
   # OP_1ADD 1 is added to the input.
   op :OP_1ADD, [x | stack], do: [num(x) + 1 | stack]
@@ -292,8 +288,8 @@ defmodule Bitcoin.Script do
   # OP_ADD a is added to be
   op :OP_ADD, [a, b | stack], do: [num(a) + num(b) | stack]
 
-  # OP_SUB b is substracted from a
-  op :OP_SUB, [a, b | stack], do: [num(a) - num(b) | stack]
+  # OP_SUB a is substracted from b
+  op :OP_SUB, [a, b | stack], do: [num(b) - num(a) | stack]
 
   # OP_MUL disabled
   # OP_DIV disabled
@@ -302,14 +298,12 @@ defmodule Bitcoin.Script do
   # OP_RSHIFT disabled
 
   # OP_BOOLAND If both a and b are not 0, the output is 1. Otherwise 0.
-  op :OP_BOOLAND, [0, 0 | stack], do: [1 | stack]
-  op :OP_BOOLAND, [_, _ | stack], do: [0 | stack]
+  op :OP_BOOLAND, [a, b | stack] when a != 0 and b != 0, do: [1 | stack]
+  op :OP_BOOLAND, [a, b | stack], do: [0 | stack]
 
   # OP_BOOLOR If a or b is not 0, the output is 1. Otherwise 0.
-  op :OP_BOOLOR, [0, 0 | stack], do: [0 | stack]
-  op :OP_BOOLOR, [_, 0 | stack], do: [0 | stack]
-  op :OP_BOOLOR, [0, _ | stack], do: [0 | stack]
-  op :OP_BOOLOR, [_, _ | stack], do: [1 | stack]
+  op :OP_BOOLOR, [a, b | stack] when a != 0 or b != 0, do: [1 | stack]
+  op :OP_BOOLOR, [a, b | stack], do: [0 | stack]
 
   # OP_NUMEQUAL Returns 1 if the numbers are equal, 0 otherwise.
   op :OP_NUMEQUAL, [a, b | stack], do: [(if num(a) == num(b), do: 1, else: 0) | stack]
@@ -318,7 +312,7 @@ defmodule Bitcoin.Script do
   op :OP_NUMNOTEQUAL, [a, b | stack], do: [(if num(a) != num(b), do: 1, else: 0) | stack]
 
   # OP_NUMEQUAVERIFY Same as OP_NUMEQUAL, but runs OP_VERIFY afterward.
-  op :OP_NUMEQUALVERIFY, [a, b | stack], do: if num(a) == num(b), do: stack, else: :invalid
+  op_alias :OP_NUMEQUALVERIFY, [:OP_NUMEQUAL, :OP_VERIFY]
 
   # OP_NUMLESSTHAN Returns 1 if a is less than b, 0 otherwise.
   op :OP_LESSTHAN, [b, a | stack], do: [(if num(a) < num(b), do: 1, else: 0) | stack]
@@ -372,9 +366,8 @@ defmodule Bitcoin.Script do
   # XXX always true
   op :OP_CHECKSIG, [sig, pubkey | stack], do: [1 | stack]
 
-  # TODO OP_CHEKSIGVERIFY Same as OP_CHECKSIG, but OP_VERIFY is executed afterward.
-  # XXX always true
-  op :OP_CHECKSIGVERIFY, [sig, pubkey | stack], do: stack
+  # OP_CHEKSIGVERIFY Same as OP_CHECKSIG, but OP_VERIFY is executed afterward.
+  op_alias :OP_CHECKSIGVERIFY, [:OP_CHECKSIG, :OP_VERIFY]
 
   # Used to get multiple keys or signatures from the stack
   # First item is the number of them and then it's alist of binaries
@@ -399,15 +392,8 @@ defmodule Bitcoin.Script do
     [1 | stack]
   end
 
-  # TODO OP_CHECKMULTISIGVERIFY
-  # XXX Always true
   # Same as OP_CHECKMULTISIG, but OP_VERIFY is executed afterward.
-  op :OP_CHECKMULTISIGVERIFY, stack do
-    {keys, stack} = get_multi(stack)
-    {sigs, stack} = get_multi(stack)
-    [_bug | stack] = stack
-    stack
-  end
+  op_alias :OP_CHECKMULTISIGVERIFY, [:OP_CHECKMULTISIG, :OP_VERIFY]
 
   ##
   ## EXPANSION
@@ -486,4 +472,23 @@ defmodule Bitcoin.Script do
   defp if_depth_change(:OP_NOTIF), do:  1
   defp if_depth_change(:OP_ENDIF), do: -1
   defp if_depth_change(_),         do:  0
+
+
+  ## Script integers (a.k.a. CScriptNum parsknig)
+
+  use Bitwise
+
+  def num(<<>>), do: 0
+  def num(<< x1 >>)             when (x1 &&& 0x80) != 0, do: -1 * num(<< x1 ^^^ 0x80 >>)
+  def num(<< x1, x2 >>)         when (x2 &&& 0x80) != 0, do: -1 * num(<< x1, x2 ^^^ 0x80 >>)
+  def num(<< x1, x2, x3 >>)     when (x3 &&& 0x80) != 0, do: -1 * num(<< x1, x2, x3 ^^^ 0x80 >>)
+  def num(<< x1, x2, x3, x4 >>) when (x4 &&& 0x80) != 0, do: -1 * num(<< x1, x2, x3, x4 ^^^ 0x80 >>)
+  def num(<< x :: unsigned-little-integer-size(32) >>), do: x
+  def num(<< x :: unsigned-little-integer-size(24) >>), do: x
+  def num(<< x :: unsigned-little-integer-size(16) >>), do: x
+  def num(<< x :: unsigned-little-integer-size(8) >>), do: x
+  def num(x) when is_number(x), do: x
+
+
+
 end
