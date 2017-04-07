@@ -354,7 +354,7 @@ defmodule Bitcoin.Script do
   # OP_CHECKSIG The entire transaction's outputs, inputs, and script (from the most recently-executed OP_CODESEPARATOR
   # to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key.
   # If it is, 1 is returned, 0 otherwise.
-  op :OP_CHECKSIG, [pk, sig | stack], opts, do: [verify_signature(pk, sig, opts) |> bool | stack]
+  op :OP_CHECKSIG, [pk, sig | stack], opts, do: [verify_signature(sig, pk, opts) |> bool | stack]
 
   # OP_CHEKSIGVERIFY Same as OP_CHECKSIG, but OP_VERIFY is executed afterward.
   op_alias :OP_CHECKSIGVERIFY, [:OP_CHECKSIG, :OP_VERIFY]
@@ -364,8 +364,7 @@ defmodule Bitcoin.Script do
   # Returs {items, remaining_stack}
   def get_multi([ n | stack]), do: stack |> Enum.split(num(n))
 
-  # TODO OP_CHECKMULTISIG
-  # XXX always true
+  # OP_CHECKMULTISIG
   # Compares the first signature against each public key until it finds an ECDSA match.
   # Starting with the subsequent public key, it compares the second signature against each remaining public key
   # until it finds an ECDSA match. The process is repeated until all signatures have been checked or not enough
@@ -373,12 +372,12 @@ defmodule Bitcoin.Script do
   # keys are not checked again if they fail any signature comparison, signatures must be placed in the scriptSig
   # using the same order as their corresponding public keys were placed in the scriptPubKey or redeemScript.
   # If all signatures are valid, 1 is returned, 0 otherwise.
-  op :OP_CHECKMULTISIG, stack do
-    {keys, stack} = get_multi(stack)
-    {sigs, stack} = get_multi(stack)
-    # Due to a bug, one extra unused value is removed from the stack.
-    [_bug | stack] = stack
-    [1 | stack]
+  op :OP_CHECKMULTISIG, stack, opts do
+    {pks, stack} = stack |> get_multi
+    {sigs, stack} = stack |> get_multi
+    # TODO when BIP 147 applies (:nulldummy flag), ensure that _bug == <<>>
+    [_bug | stack] = stack # Due to a bug, one extra unused value is removed from the stack.
+    [verify_all_signatures(sigs, pks, opts) |> bool | stack]
   end
 
   # Same as OP_CHECKMULTISIG, but OP_VERIFY is executed afterward.
@@ -415,11 +414,27 @@ defmodule Bitcoin.Script do
   def bool(true), do: 1
   def bool(false), do: 0
 
-  def verify_signature(pk, sig, opts) do
-    # TODO the removed byte is sighashtype, use it
+  def verify_signature(sig, pk, opts) do
+    # Last byte is a sighash_type, read it and remove it
+    sighash_type = sig |> :binary.at(byte_size(sig)-1)
     sig = sig |> :binary.part(0, byte_size(sig)-1)
-    sighash = opts[:tx] |> Bitcoin.Tx.sighash(0, opts[:sub_script])
+    # Generate sighash (with only single sha256)
+    sighash = opts[:tx] |> Bitcoin.Tx.sighash(0, opts[:sub_script], sighash_type)
+    # Do sha256 again and verify
     :crypto.verify(:ecdsa, :sha256, sighash, sig, [pk, :secp256k1])
+  end
+
+  # No sigs to verify
+  def verify_all_signatures([], _, opts), do: true
+  # No PKs to verify against, but there are still some sigs (previous match gets rid of [])
+  def verify_all_signatures(_, [], opts), do: false
+  def verify_all_signatures([sig | sigs], [pk | pks], opts) do
+    case verify_signature(sig, pk, opts) do
+      # Verification succeeded, move to the next sig
+      true  -> verify_all_signatures(sigs, pks, opts)
+      # Verification failed, try the next PK
+      false -> verify_all_signatures([sig | sigs], pks, opts)
+    end
   end
 
 end
