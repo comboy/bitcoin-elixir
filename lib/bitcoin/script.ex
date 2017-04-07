@@ -88,7 +88,6 @@ defmodule Bitcoin.Script do
   # Binary blob, put it on the stack
   def run(stack, [data | script], opts) when is_binary(data) or is_number(data), do: run([data | stack], script, opts)
 
-
   ##
   ## PUSH VALUE
   ##
@@ -361,10 +360,17 @@ defmodule Bitcoin.Script do
   # TODO OP_CODESEPARATOR All of the signature checking words will only match signatures to the data after the most recently-executed OP_CODESEPARATOR.
   op :OP_CODESEPARATOR, stack, do: stack
 
-  # TODO OP_CHECKSIG The entire transaction's outputs, inputs, and script (from the most recently-executed OP_CODESEPARATOR to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key. If it is, 1 is returned, 0 otherwise.
-  # TODO introduce context
-  # XXX always true
-  op :OP_CHECKSIG, [sig, pubkey | stack], do: [1 | stack]
+  # OP_CHECKSIG The entire transaction's outputs, inputs, and script (from the most recently-executed OP_CODESEPARATOR to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key. If it is, 1 is returned, 0 otherwise.
+  def run([pk, sig | stack], [:OP_CHECKSIG | script], opts) do
+    # TODO the removed byte is sighashtype, use it
+    sig = sig |> :binary.part(0, byte_size(sig)-1)
+    sighash = opts[:tx] |> Bitcoin.Tx.sighash(0, opts[:sub_script])
+    case :crypto.verify(:ecdsa, :sha256, sighash, sig, [pk, :secp256k1]) do
+       true -> [1 | stack]
+      false -> [0 | stack]
+    end
+    |> run(script, opts)
+  end
 
   # OP_CHEKSIGVERIFY Same as OP_CHECKSIG, but OP_VERIFY is executed afterward.
   op_alias :OP_CHECKSIGVERIFY, [:OP_CHECKSIG, :OP_VERIFY]

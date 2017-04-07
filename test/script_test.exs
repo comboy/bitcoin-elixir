@@ -20,8 +20,13 @@ defmodule Bitcoin.ScriptTest do
   }
 
 
-  # TODO preparation for OP_CHECKSIG testing
-  def test_script_verify(pk_bin, sig_bin) do
+  # From script test cases json file: 
+  #["It is evaluated as if there was a crediting coinbase transaction with two 0"],
+  #["pushes as scriptSig, and one output of 0 satoshi and given scriptPubKey,"],
+  #["followed by a spending transaction which spends this output as only input (and"],
+  #["correct prevout hash), using the given scriptSig. All nLockTimes are 0, all"],
+  #["nSequences are max."],
+  def test_script_verify(sig_bin, pk_bin) do
 
     cred_tx = %Messages.Tx{
       inputs: [
@@ -41,7 +46,7 @@ defmodule Bitcoin.ScriptTest do
         }
       ],
       lock_time: 0,
-      version: 1 #?
+      version: 1
     }
 
     spend_tx = %Messages.Tx{
@@ -65,7 +70,7 @@ defmodule Bitcoin.ScriptTest do
       version: 1
     }
 
-    (pk_bin <> sig_bin) |> Bitcoin.Script.verify(tx: spend_tx)
+    (sig_bin <> pk_bin) |> Bitcoin.Script.verify(tx: spend_tx, input_number: 0, sub_script: pk_bin)
   end
 
   test "parse" do
@@ -86,11 +91,12 @@ defmodule Bitcoin.ScriptTest do
     invalid = File.read!("test/data/script_hex_invalid.json") |> Poison.decode! |> Enum.map(fn x -> [false | x] end)
 
     scripts = valid ++ invalid
+    #scripts = []
 
-    rets = scripts |> Enum.map(fn [result, pk_hex, sig_hex, _flags, comment] ->
+    rets = scripts |> Enum.map(fn [result, sig_hex, pk_hex, _flags, comment] ->
       pk_bin = pk_hex |> String.upcase |> Base.decode16!
       sig_bin = sig_hex |> String.upcase |> Base.decode16!
-      ret = test_script_verify(pk_bin, sig_bin) == result
+      ret = test_script_verify(sig_bin, pk_bin) == result
       if !ret do
         # Uncomment to get list of scripts that failed
         #(pk_bin <> sig_bin) |> Bitcoin.Script.Binary.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
@@ -106,4 +112,3 @@ defmodule Bitcoin.ScriptTest do
 
   end
 end
-

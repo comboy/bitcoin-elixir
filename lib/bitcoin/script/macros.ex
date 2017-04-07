@@ -1,7 +1,6 @@
 defmodule Bitcoin.Script.Macros do
 
   defmacro op(op, {:when, _, [stack_clause, when_clause]}, do: stack_expression) when is_atom(op) do
-    stack_clause |> IO.inspect
     quote do
       def run(unquote(stack_clause), [unquote(op) | script], opts) when unquote(when_clause) do
         (unquote(stack_expression)) |> run(script, opts)
