@@ -13,14 +13,6 @@ defmodule Bitcoin.Script do
 
     Script.Binary handles parsing the script from a binary into a list with opcodes as symbols.
 
-    op macro is just a shorthand for defining another case of the `run` function. To be super clear:
-
-        op :OP_DUP, [x | stack], do: [x, x | stack]
-
-    expands to
-
-        run([x | stack], [:OP_DUP | script], opts), do: [x, x | stack] |> run(script, opts)
-
   """
 
   # TODO max ops count = 201 - opts can be used to easily increase counter
@@ -265,34 +257,34 @@ defmodule Bitcoin.Script do
   ##
 
   # OP_1ADD 1 is added to the input.
-  op :OP_1ADD, [x | stack], do: [bin(num(x) + 1) | stack]
+  op_num :OP_1ADD, x, do: x + 1
 
   # OP_1ADD 1 is substracted from the input.
-  op :OP_1SUB, [x | stack], do: [bin(num(x) - 1) | stack]
+  op_num :OP_1SUB, x, do: x - 1
 
   # OP_2MUL disabled
   # OP_2DIV disabled
 
   # OP_NEGATE The sign of the input is flipped.
-  op :OP_NEGATE, [x | stack], do: [bin(-1 * num(x)) | stack]
+  op_num :OP_NEGATE, x, do: -1 * x
 
   # OP_ABS The input is made positive.
-  op :OP_ABS, [x | stack], do: [bin(num(x) |> abs) | stack]
+  op_num :OP_ABS, x, do: x |> abs
 
   # OP_NOT If the input is 0 or 1, it is flipped. Otherwise the output will be 0.
-  op :OP_NOT, [0 | stack], do: [1 | stack]
-  op :OP_NOT, [1 | stack], do: [0 | stack]
-  op :OP_NOT, [_ | stack], do: [0 | stack]
+  op_num :OP_NOT, 0, do: 1
+  op_num :OP_NOT, 1, do: 0
+  op_num :OP_NOT, x, do: 0
 
   # OP_0NOTEQUAL 	Returns 0 if the input is 0. 1 otherwise.
-  op :OP_0NOTEQUAL, [0 | stack], do: [0 | stack]
-  op :OP_0NOTEQUAL, [_ | stack], do: [1 | stack]
+  op_num :OP_0NOTEQUAL, 0, do: 0
+  op_num :OP_0NOTEQUAL, x, do: 1
 
   # OP_ADD a is added to be
-  op :OP_ADD, [a, b | stack], do: [bin(num(a) + num(b)) | stack]
+  op_num :OP_ADD, a, b, do: a + b
 
   # OP_SUB a is substracted from b
-  op :OP_SUB, [a, b | stack], do: [bin(num(b) - num(a)) | stack]
+  op_num :OP_SUB, a, b, do: b - a
 
   # OP_MUL disabled
   # OP_DIV disabled
@@ -301,33 +293,31 @@ defmodule Bitcoin.Script do
   # OP_RSHIFT disabled
 
   # OP_BOOLAND If both a and b are not 0, the output is 1. Otherwise 0.
-  op :OP_BOOLAND, [a, b | stack] when a != 0 and b != 0, do: [1 | stack]
-  op :OP_BOOLAND, [_a, _b | stack], do: [0 | stack]
+  op_bool :OP_BOOLAND, a, b, do: a != 0 and b != 0
 
   # OP_BOOLOR If a or b is not 0, the output is 1. Otherwise 0.
-  op :OP_BOOLOR, [a, b | stack] when a != 0 or b != 0, do: [1 | stack]
-  op :OP_BOOLOR, [_a, _b | stack], do: [0 | stack]
+  op_bool :OP_BOOLOR, a, b, do: a != 0 or b != 0
 
   # OP_NUMEQUAL Returns 1 if the numbers are equal, 0 otherwise.
-  op :OP_NUMEQUAL, [a, b | stack], do: [(if num(a) == num(b), do: 1, else: 0) | stack]
+  op_bool :OP_NUMEQUAL, a, b, do: num(a) == num(b)
 
   # OP_NUMNOTEQUAL Returns 1 if the numbers are not equal, 0 otherwise.
-  op :OP_NUMNOTEQUAL, [a, b | stack], do: [(if num(a) != num(b), do: 1, else: 0) | stack]
+  op_bool :OP_NUMNOTEQUAL, a, b, do: num(a) != num(b)
 
   # OP_NUMEQUAVERIFY Same as OP_NUMEQUAL, but runs OP_VERIFY afterward.
   op_alias :OP_NUMEQUALVERIFY, [:OP_NUMEQUAL, :OP_VERIFY]
 
   # OP_NUMLESSTHAN Returns 1 if a is less than b, 0 otherwise.
-  op :OP_LESSTHAN, [b, a | stack], do: [(if num(a) < num(b), do: 1, else: 0) | stack]
+  op_bool :OP_LESSTHAN, b, a, do: num(a) < num(b)
 
   # OP_NUMGREATERTHAN Returns 1 if a is greater than b, 0 otherwise.
-  op :OP_GREATERTHAN, [b, a | stack], do: [(if num(a) > num(b), do: 1, else: 0) | stack]
+  op_bool :OP_GREATERTHAN, b, a, do: num(a) > num(b)
 
   # OP_NUMLESSTHANOREQUAL Returns 1 if a is less than  or equal b, 0 otherwise.
-  op :OP_LESSTHANOREQUAL, [b, a | stack], do: [(if num(a) <= num(b), do: 1, else: 0) | stack]
+  op_bool :OP_LESSTHANOREQUAL, b, a, do: num(a) <= num(b)
 
   # OP_NUMGREATERTHANOREQUAL Returns 1 if a is greater than b, 0 otherwise.
-  op :OP_GREATERTHANOREQUAL, [b, a | stack], do: [(if num(a) >= num(b), do: 1, else: 0) | stack]
+  op_bool :OP_GREATERTHANOREQUAL, b, a, do: num(a) >= num(b)
 
   # OP_MIN Returns the smaller of a and b
   op :OP_MIN, [a, b | stack], do: [(if (num(a) <=  num(b)), do: a, else: b) | stack]
@@ -336,7 +326,7 @@ defmodule Bitcoin.Script do
   op :OP_MAX, [a, b | stack], do: [(if (num(a) >=  num(b)), do: a, else: b) | stack]
 
   # OP_WITHIN Returns 1 if x is within the specified range (left-inclusive), 0 otherwise.
-  op :OP_WITHIN, [b, a, x | stack], do: [(if num(x) >= num(a) && num(x) < num(b), do: 1, else: 0) | stack]
+  op_bool :OP_WITHIN, b, a, x, do: num(x) >= num(a) and num(x) < num(b)
 
   ##
   ## CRYPTO
@@ -357,20 +347,14 @@ defmodule Bitcoin.Script do
   # OP_HASH256 The input is hashed two times with SHA-256.
   op :OP_HASH256, [x | stack], do: [:crypto.hash(:sha256, :crypto.hash(:sha256, bin(x))) | stack]
 
-  # TODO OP_CODESEPARATOR All of the signature checking words will only match signatures to the data after the most recently-executed OP_CODESEPARATOR.
+  # TODO OP_CODESEPARATOR All of the signature checking words will only match signatures
+  # to the data after the most recently-executed OP_CODESEPARATOR.
   op :OP_CODESEPARATOR, stack, do: stack
 
-  # OP_CHECKSIG The entire transaction's outputs, inputs, and script (from the most recently-executed OP_CODESEPARATOR to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key. If it is, 1 is returned, 0 otherwise.
-  def run([pk, sig | stack], [:OP_CHECKSIG | script], opts) do
-    # TODO the removed byte is sighashtype, use it
-    sig = sig |> :binary.part(0, byte_size(sig)-1)
-    sighash = opts[:tx] |> Bitcoin.Tx.sighash(0, opts[:sub_script])
-    case :crypto.verify(:ecdsa, :sha256, sighash, sig, [pk, :secp256k1]) do
-       true -> [1 | stack]
-      false -> [0 | stack]
-    end
-    |> run(script, opts)
-  end
+  # OP_CHECKSIG The entire transaction's outputs, inputs, and script (from the most recently-executed OP_CODESEPARATOR
+  # to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key.
+  # If it is, 1 is returned, 0 otherwise.
+  op :OP_CHECKSIG, [pk, sig | stack], opts, do: [verify_signature(pk, sig, opts) |> bool | stack]
 
   # OP_CHEKSIGVERIFY Same as OP_CHECKSIG, but OP_VERIFY is executed afterward.
   op_alias :OP_CHECKSIGVERIFY, [:OP_CHECKSIG, :OP_VERIFY]
@@ -426,5 +410,16 @@ defmodule Bitcoin.Script do
   # OP_PUBKEYHASH
   # OP_PUBKEY
   # OP_INVALIDOPCODE
+
+  # Helper to cast boolean result operations to resulting stack element
+  def bool(true), do: 1
+  def bool(false), do: 0
+
+  def verify_signature(pk, sig, opts) do
+    # TODO the removed byte is sighashtype, use it
+    sig = sig |> :binary.part(0, byte_size(sig)-1)
+    sighash = opts[:tx] |> Bitcoin.Tx.sighash(0, opts[:sub_script])
+    :crypto.verify(:ecdsa, :sha256, sighash, sig, [pk, :secp256k1])
+  end
 
 end
