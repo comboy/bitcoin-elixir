@@ -70,7 +70,7 @@ defmodule Bitcoin.ScriptTest do
       version: 1
     }
 
-    (sig_bin <> pk_bin) |> Bitcoin.Script.verify(tx: spend_tx, input_number: 0, sub_script: pk_bin)
+    Bitcoin.Script.verify_sig_pk(sig_bin, pk_bin, tx: spend_tx, input_number: 0, sub_script: pk_bin)
   end
 
   test "parse" do
@@ -90,17 +90,18 @@ defmodule Bitcoin.ScriptTest do
     valid =   File.read!("test/data/script_hex_valid.json")   |> Poison.decode! |> Enum.map(fn x -> [true | x] end)
     invalid = File.read!("test/data/script_hex_invalid.json") |> Poison.decode! |> Enum.map(fn x -> [false | x] end)
 
-    scripts = valid ++ invalid
-    #scripts = []
+    scripts = (valid ++ invalid) 
+      |> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "DISCOURAGE_UPGRADABLE_NOPS") end)
 
-    rets = scripts |> Enum.map(fn [result, sig_hex, pk_hex, _flags, comment] ->
+    rets = scripts  |> Enum.map(fn [result, sig_hex, pk_hex, flags, comment] ->
       pk_bin = pk_hex |> String.upcase |> Base.decode16!
       sig_bin = sig_hex |> String.upcase |> Base.decode16!
       ret = test_script_verify(sig_bin, pk_bin) == result
       if !ret do
         # Uncomment to get list of scripts that failed
-        #(pk_bin <> sig_bin) |> Bitcoin.Script.Binary.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
-        #IO.puts "should be #{result} | #{comment} | #{pk_hex <> sig_hex}"
+        #IO.puts "should be #{result} #[#{flags}] | #{comment} :"
+        #sig_bin |> IO.inspect |> Bitcoin.Script.Binary.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
+        #pk_bin |> IO.inspect |> Bitcoin.Script.Binary.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
         #assert false
       end
       ret

@@ -1,5 +1,8 @@
 defmodule Bitcoin.Script.Binary do
 
+  # PUSHDATA with size > @max_element_size makes the script invalid
+  @max_element_size 520
+
   @op [ # source https://github.com/bitcoin/bitcoin/blob/master/src/script/script.h
     # push value
     OP_0: 0x00,
@@ -150,8 +153,37 @@ defmodule Bitcoin.Script.Binary do
 
   @op_name @op |> Enum.map(fn {k,v} -> {v,k} end) |> Enum.into(%{})
 
+  @disabled_op [
+    :OP_CAT,
+    :OP_SUBSTR,
+    :OP_LEFT,
+    :OP_RIGHT,
+    :OP_INVERT,
+    :OP_AND,
+    :OP_OR,
+    :OP_XOR,
+    :OP_2MUL,
+    :OP_2DIV,
+    :OP_MUL,
+    :OP_DIV,
+    :OP_MOD,
+    :OP_LSHIFT,
+    :OP_RSHIFT,
+    :OP_VERIF,
+    :OP_VERNOTIF
+  ]
+
+  @disabled_op_values @disabled_op |> Enum.map(fn name -> @op[name] end)
+
+  @invalid [:invalid]
+
   def parse(binary) when is_binary(binary) do
-    parse([], binary)
+    try do
+       parse([], binary)
+     rescue 
+       # Match error can occur when there's not enough bytes after pushdata instruction
+       e in MatchError -> @invalid
+     end
   end
 
   def parse(script, <<>>), do: script
@@ -162,8 +194,6 @@ defmodule Bitcoin.Script.Binary do
     (script ++ [data]) |> parse(bin)
   end
 
-  #def parse(script, << @op_pushdata1, 0, bin :: binary >>), do: (script) |> parse(bin)
-
   # OP_PUSHDATA1 The next byte contains the number of bytes to be pushed onto the stack.1
   def parse(script, << @op_pushdata1, size, bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
@@ -171,16 +201,21 @@ defmodule Bitcoin.Script.Binary do
   end
 
   # OP_PUSHDATA2 The next two bytes contain the number of bytes to be pushed onto the stack.
+  def parse(script, << @op_pushdata2, size :: unsigned-little-integer-size(16), bin :: binary >>) when size > @max_element_size, do: @invalid
   def parse(script, << @op_pushdata2, size :: unsigned-little-integer-size(16), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
     (script ++ [data]) |> parse(bin)
   end
 
   # OP_PUSHDATA5 The next four bytes contain the number of bytes to be pushed onto the stack.
+  def parse(script, << @op_pushdata4, size :: unsigned-little-integer-size(32), bin :: binary >>) when size > @max_element_size, do: @invalid
   def parse(script, << @op_pushdata4, size :: unsigned-little-integer-size(32), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
     (script ++ [data]) |> parse(bin)
   end
+
+  # Disabled opcodes
+  def parse(script, << op_code, bin :: binary >>) when op_code in @disabled_op_values, do: @invalid
 
   # Other opcodes
   def parse(script, << op_code, bin :: binary >>) when op_code in @op_values do

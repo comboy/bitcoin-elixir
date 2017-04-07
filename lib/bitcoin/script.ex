@@ -36,10 +36,24 @@ defmodule Bitcoin.Script do
 
   @invalid_unexecuted [:OP_VERIF, :OP_VERNOT_IF]
 
+
+  # The reason for this function is that we need to parse sig script and pk separately.
+  # Otherwise sig script could do some nasty stuff with malformed PUSHDATA
+  # Then we have to run it separately
+  def verify_sig_pk(sig_bin, pk_bin, opts \\[]) when is_binary(sig_bin) and is_binary(pk_bin) do
+    try do
+      sig_script = sig_bin |> Binary.parse
+      pk_script = pk_bin |> Binary.parse
+      sig_script |> run(opts) |> run(pk_script, opts) |> cast_to_bool
+    catch _,_ ->
+      false
+    end
+  end
+
   @doc """
     Run the provided script and evaluate to boolean.
 
-    Opts can be used to set the context of teh script (e.g. [tx: %Messages.Tx{}])
+    Opts can be used to set the context of the script (e.g. [tx: %Messages.Tx{}])
   """
   # Returns true if top item of the stack is non-zero
   def verify(script, opts \\ []) do
@@ -61,15 +75,13 @@ defmodule Bitcoin.Script do
   def run(script, opts \\ [])
 
   # When binary is provided, parse it and then run
-  def run(binary, opts) when is_binary(binary) do
-    case binary |> Binary.parse do
-       {:error, :invalid} -> :invalid
-       script -> script |> run(opts)
-    end
-  end
+  def run(binary, opts) when is_binary(binary), do: binary |> Binary.parse |> run(opts)
 
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
-  def run(:invalid, _script), do: :invalid
+  def run(:invalid, _script, opts), do: :invalid
+
+  # Parser returns [:invalid] if the script couldn't be parsed
+  def run(_, [:invalid | _], opts), do: :invalid
 
   # Run the parsed script
   def run(script, opts), do: run([], script, opts)
@@ -113,15 +125,18 @@ defmodule Bitcoin.Script do
   # OP_NOP Does nothing
   op :OP_NOP, stack, do: stack
 
+  # OP_RESERVED Transaction is invalid unless occuring in an unexecuted OP_IF branch
+  op :OP_RESERVED, _, do: :invalid
+
   # OP_VER Transaction is invalid unless occuring in an unexecuted OP_IF branch
   op :OF_VER, _, do: :invalid
 
-  # OPVERIF ransaction is invalid even when occuring in an unexecuted OP_IF branch
-  # TODO this will need special handling when if is implemented
+  # OPVERIF Transaction is invalid even when occuring in an unexecuted OP_IF branch
+  # Because of that, it's handled by the parser same as disabled OPs
   op :OP_VERIF, _, do: :invalid
 
-  # OPVERIF ransaction is invalid even when occuring in an unexecuted OP_IF branch
-  # TODO this will need special handling when if is implemented
+  # OPVERIF transaction is invalid even when occuring in an unexecuted OP_IF branch
+  # Because of that, it's handled by the parser same as disabled OPs
   op :OP_VERNOTIF, _, do: :invalid
 
   # OP_IF If the top stack value is not False, the statements are executed. The top stack value is removed.
@@ -293,10 +308,11 @@ defmodule Bitcoin.Script do
   # OP_RSHIFT disabled
 
   # OP_BOOLAND If both a and b are not 0, the output is 1. Otherwise 0.
-  op_bool :OP_BOOLAND, a, b, do: a != 0 and b != 0
+  # We cast to num because it's in arithmetic ops category, so it should fail if arg is not a proper int
+  op_bool :OP_BOOLAND, a, b, do: num(a) != 0 and num(b) != 0
 
   # OP_BOOLOR If a or b is not 0, the output is 1. Otherwise 0.
-  op_bool :OP_BOOLOR, a, b, do: a != 0 or b != 0
+  op_bool :OP_BOOLOR, a, b, do: num(a) != 0 or num(b) != 0
 
   # OP_NUMEQUAL Returns 1 if the numbers are equal, 0 otherwise.
   op_bool :OP_NUMEQUAL, a, b, do: num(a) == num(b)

@@ -87,6 +87,7 @@ defmodule Bitcoin.Script.Macros do
     end
   end
 
+  # changes opcode in the script to list of provided opcodes
 
   defmacro op_alias(op, list) when is_atom(op) and is_list(list) do
     quote do
