@@ -17,6 +17,7 @@ defmodule Bitcoin.Script do
 
   # TODO max ops count = 201 - opts can be used to easily increase counter
   # TODO block sigop limit (MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50), so we need to be abel to export that count
+  # TODO verify signature encoding https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki
 
   # Notes
   #
@@ -33,18 +34,22 @@ defmodule Bitcoin.Script do
   import Bitcoin.Script.Control
   import Bitcoin.Script.Number
 
+  use Bitcoin.Script.P2SH
 
-  @invalid_unexecuted [:OP_VERIF, :OP_VERNOT_IF]
-
+  # Max number of items in stack + altstack
+  @max_stacks_size 1000
+  @max_pubkeys_per_multisig 20
 
   # The reason for this function is that we need to parse sig script and pk separately.
   # Otherwise sig script could do some nasty stuff with malformed PUSHDATA
   # Then we have to run it separately
   def verify_sig_pk(sig_bin, pk_bin, opts \\[]) when is_binary(sig_bin) and is_binary(pk_bin) do
     try do
-      sig_script = sig_bin |> Binary.parse
-      pk_script = pk_bin |> Binary.parse
-      sig_script |> run(opts) |> run(pk_script, opts) |> cast_to_bool
+      sig_bin
+      |> Binary.parse
+      |> run(opts)
+      |> run(pk_bin |> Binary.parse, opts)
+      |> cast_to_bool
     catch _,_ ->
       false
     end
@@ -82,6 +87,10 @@ defmodule Bitcoin.Script do
 
   # Parser returns [:invalid] if the script couldn't be parsed
   def run(_, [:invalid | _], opts), do: :invalid
+
+  # Stack size limit
+  # TODO should include altstack
+  def run(stack, script, opts) when length(stack) > @max_stacks_size, do: :invalid
 
   # Run the parsed script
   def run(script, opts), do: run([], script, opts)
@@ -129,7 +138,7 @@ defmodule Bitcoin.Script do
   op :OP_RESERVED, _, do: :invalid
 
   # OP_VER Transaction is invalid unless occuring in an unexecuted OP_IF branch
-  op :OF_VER, _, do: :invalid
+  op :OP_VER, _, do: :invalid
 
   # OPVERIF Transaction is invalid even when occuring in an unexecuted OP_IF branch
   # Because of that, it's handled by the parser same as disabled OPs
@@ -393,7 +402,14 @@ defmodule Bitcoin.Script do
     {sigs, stack} = stack |> get_multi
     # TODO when BIP 147 applies (:nulldummy flag), ensure that _bug == <<>>
     [_bug | stack] = stack # Due to a bug, one extra unused value is removed from the stack.
-    [verify_all_signatures(sigs, pks, opts) |> bool | stack]
+
+    # with nsigs > npubkeys it must make the script invalid (it's not enough that it returns false)
+    # same if number of pubkeys is > 20
+    if length(pks) > @max_pubkeys_per_multisig || length(sigs) > length(pks) do
+      :invalid
+    else
+      [verify_all_signatures(sigs, pks, opts) |> bool | stack]
+    end
   end
 
   # Same as OP_CHECKMULTISIG, but OP_VERIFY is executed afterward.

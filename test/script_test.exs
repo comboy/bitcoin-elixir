@@ -92,6 +92,7 @@ defmodule Bitcoin.ScriptTest do
 
     scripts = (valid ++ invalid) 
       |> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "DISCOURAGE_UPGRADABLE_NOPS") end)
+      #|> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "MINIMALDATA") end)
 
     rets = scripts  |> Enum.map(fn [result, sig_hex, pk_hex, flags, comment] ->
       pk_bin = pk_hex |> String.upcase |> Base.decode16!

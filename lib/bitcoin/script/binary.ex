@@ -2,6 +2,7 @@ defmodule Bitcoin.Script.Binary do
 
   # PUSHDATA with size > @max_element_size makes the script invalid
   @max_element_size 520
+  @max_script_size 10_000 # scripts > 10,000 bytes are invalid
 
   @op [ # source https://github.com/bitcoin/bitcoin/blob/master/src/script/script.h
     # push value
@@ -177,6 +178,7 @@ defmodule Bitcoin.Script.Binary do
 
   @invalid [:invalid]
 
+  def parse(binary) when is_binary(binary) and byte_size(binary) > @max_script_size, do: @invalid
   def parse(binary) when is_binary(binary) do
     try do
        parse([], binary)
@@ -185,6 +187,9 @@ defmodule Bitcoin.Script.Binary do
        e in MatchError -> @invalid
      end
   end
+
+  # not a binry
+  def parse(_), do: @invalid
 
   def parse(script, <<>>), do: script
 
