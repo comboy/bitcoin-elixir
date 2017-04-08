@@ -151,6 +151,7 @@ defmodule Bitcoin.Script.Serialization do
   @op |> Enum.map(fn {op, val} -> Module.put_attribute(__MODULE__, op |> to_string |> String.downcase |> String.to_atom, val) end)
 
   @op_values @op |> Keyword.values
+  @op_names @op |> Keyword.keys
 
   @op_name @op |> Enum.map(fn {k,v} -> {v,k} end) |> Enum.into(%{})
 
@@ -234,6 +235,23 @@ defmodule Bitcoin.Script.Serialization do
   def parse(script, << op_code, bin :: binary >>) when not (op_code in @op_values) do
     (script ++ [:OP_UNKNOWN]) |> parse(bin)
   end
+
+  ##
+  ## Binary serialization
+  ##
+
+  def to_binary(script) when is_list(script) do
+    script
+    |> Enum.map(&to_binary_word/1)
+    |> Enum.join
+  end
+
+  def to_binary_word(word) when is_binary(word) and byte_size(word) >= 0x01 and byte_size(word) <= 0x4b, do: << byte_size(word) >> <> word
+  def to_binary_word(word) when is_binary(word) and byte_size(word) <= 0xff , do: << @op_pushdata1, byte_size(word) >> <> word
+  def to_binary_word(word) when is_binary(word) and byte_size(word) > @max_element_size , do: {:error, :max_element_size}
+  def to_binary_word(word) when is_binary(word), do: << @op_pushdata2, byte_size(word) ::unsigned-little-integer-size(16) >> <> word
+  # OP_PUSHDATA4 currently unused because of @max_element_size
+  def to_binary_word(word) when word in @op_names, do: << @op[word] >>
 
   ##
   ## Parsing bitcoind string representation

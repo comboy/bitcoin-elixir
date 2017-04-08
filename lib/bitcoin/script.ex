@@ -38,12 +38,13 @@ defmodule Bitcoin.Script do
   # Otherwise sig script could do some nasty stuff with malformed PUSHDATA
   # Then we have to run it separately
   # TODO can OP_IF and OP_ENDIF be split between sig and pk script?
-  def verify_sig_pk(sig_bin, pk_bin, opts \\[]) when is_binary(sig_bin) and is_binary(pk_bin) do
+  def verify_sig_pk(sig_bin, pk_bin, opts \\[])
+  def verify_sig_pk(sig_bin, pk_bin, opts) when is_binary(sig_bin) and is_binary(pk_bin), do: verify_sig_pk(sig_bin |> parse, pk_bin |> parse, opts)
+  def verify_sig_pk(sig_script, pk_script, opts) do
     try do
-      sig_bin
-      |> parse
+      sig_script
       |> run(opts)
-      |> run(pk_bin |> parse, opts)
+      |> run(pk_script, opts)
       |> cast_to_bool
     catch _,_ ->
       false

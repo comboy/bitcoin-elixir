@@ -92,6 +92,16 @@ defmodule Bitcoin.ScriptTest do
     end)
   end
 
+  test "to binary" do
+    ["005163A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A76767A7681468CA4FEC736264C13B859BAC43D5173DF687168287", 
+      "6362675168", "0100917551", "00483045022015BD0139BCCCF990A6AF6EC5C1C52ED8222E03A0D51C334DF139968525D2FCD20221009F9EFE325476EB64C3958E4713E9EEFE49BF1D820ED58D2112721B134E2A1A5303483045022015BD0139BCCCF990A6AF6EC5C1C52ED8222E03A0D51C334DF139968525D2FCD20221009F9EFE325476EB64C3958E4713E9EEFE49BF1D820ED58D2112721B134E2A1A5303"]
+    |> Enum.map(fn hex ->
+      bin = hex |> Base.decode16!
+      script = bin |> Bitcoin.Script.Serialization.parse
+      assert bin == Bitcoin.Script.Serialization.to_binary(script) 
+    end)
+  end
+
   test "run super simple" do
     assert true == [2, 3, :OP_ADD, 5, :OP_EQUAL] |> Bitcoin.Script.verify
     assert false ==[2, 3, :OP_ADD, 4, :OP_EQUAL] |> Bitcoin.Script.verify
@@ -126,5 +136,4 @@ defmodule Bitcoin.ScriptTest do
     IO.puts "\nHARDCORE SCRIPT TESTS: #{ok_count}/#{count}"# (#{fail_count} FAIL, #{count - ok_count - fail_count} BAD)"
 
   end
-
 end
