@@ -75,7 +75,7 @@ defmodule Bitcoin.ScriptTest do
 
   test "parse" do
     @parsed_scripts |> Enum.each(fn {hex, script} ->
-      assert Bitcoin.Script.Binary.parse(hex |> Base.decode16!) == script
+      assert Bitcoin.Script.Serialization.parse(hex |> Base.decode16!) == script
     end)
   end
 
@@ -101,8 +101,8 @@ defmodule Bitcoin.ScriptTest do
       if !ret do
         # Uncomment to get list of scripts that failed
         #IO.puts "should be #{result} #[#{flags}] | #{comment} :"
-        #sig_bin |> IO.inspect |> Bitcoin.Script.Binary.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
-        #pk_bin |> IO.inspect |> Bitcoin.Script.Binary.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
+        #sig_bin |> IO.inspect |> Bitcoin.Script.Serialization.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
+        #pk_bin |> IO.inspect |> Bitcoin.Script.Serialization.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
         #assert false
       end
       ret

@@ -11,24 +11,18 @@ defmodule Bitcoin.Script do
     There is still a long road ahead to 100% of valid/invalid scripts test suite (it's really good).
     List of issues to remember can be find in the source file with an upcase 'todo' tag.
 
-    Script.Binary handles parsing the script from a binary into a list with opcodes as symbols.
+    Script.Serialization handles parsing the script from a binary into a list with opcodes as symbols.
 
+    Script.Control implements parsing OP_IF
+
+    Script.Number handles parsing and serializing script integers (CStriptNum)
   """
 
   # TODO max ops count = 201 - opts can be used to easily increase counter
   # TODO block sigop limit (MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50), so we need to be abel to export that count
   # TODO verify signature encoding https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki
 
-  # Notes
-  #
-  # OP_MIN case that seems not coveredi in tests:
-  # a and b are the same number but with a different binary representation, which should we return if they are equal?
-  # (could matter if next op is e.g. OP_SIZE)
-  #
-  # OP_BOOLOR and others, should we check if 0 is maybe represented as  more than 1 byte long binary?
-
-
-  alias Bitcoin.Script.Binary
+  import Bitcoin.Script.Serialization
 
   import Bitcoin.Script.Macros
   import Bitcoin.Script.Control
@@ -43,23 +37,19 @@ defmodule Bitcoin.Script do
   # The reason for this function is that we need to parse sig script and pk separately.
   # Otherwise sig script could do some nasty stuff with malformed PUSHDATA
   # Then we have to run it separately
+  # TODO can OP_IF and OP_ENDIF be split between sig and pk script?
   def verify_sig_pk(sig_bin, pk_bin, opts \\[]) when is_binary(sig_bin) and is_binary(pk_bin) do
     try do
       sig_bin
-      |> Binary.parse
+      |> parse
       |> run(opts)
-      |> run(pk_bin |> Binary.parse, opts)
+      |> run(pk_bin |> parse, opts)
       |> cast_to_bool
     catch _,_ ->
       false
     end
   end
 
-  @doc """
-    Run the provided script and evaluate to boolean.
-
-    Opts can be used to set the context of the script (e.g. [tx: %Messages.Tx{}])
-  """
   # Returns true if top item of the stack is non-zero
   def verify(script, opts \\ []) do
     # TODO we should get rid of exceptions, make parser return {:error and non matched script cases should just be :invalid
@@ -74,26 +64,26 @@ defmodule Bitcoin.Script do
   def cast_to_bool(:invalid), do: false
   def cast_to_bool([]), do: false
   def cast_to_bool([0 | _]), do: false
+  def cast_to_bool([<<>> | _]), do: false
   def cast_to_bool([_ | _]), do: true
 
   # Header declaration for function with default value and multiple clauses
   def run(script, opts \\ [])
 
+  # Run the parsed script
+  def run(script, opts), do: run([], script, opts)
+
   # When binary is provided, parse it and then run
-  def run(binary, opts) when is_binary(binary), do: binary |> Binary.parse |> run(opts)
+  def run(binary, opts) when is_binary(binary), do: binary |> parse |> run(opts)
 
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
-  def run(:invalid, _script, opts), do: :invalid
-
   # Parser returns [:invalid] if the script couldn't be parsed
+  def run(:invalid, _script, opts), do: :invalid
   def run(_, [:invalid | _], opts), do: :invalid
 
   # Stack size limit
   # TODO should include altstack
   def run(stack, script, opts) when length(stack) > @max_stacks_size, do: :invalid
-
-  # Run the parsed script
-  def run(script, opts), do: run([], script, opts)
 
   # When no script is left to run, return the stack
   def run(stack, [], _opts), do: stack
@@ -105,27 +95,27 @@ defmodule Bitcoin.Script do
   ## PUSH VALUE
   ##
 
-  op :OP_TRUE, stack, do: [1 | stack]
-  op :OP_FALSE, stack, do: [0 | stack]
+  op_push :OP_TRUE,  1
+  op_push :OP_FALSE, 0
 
-  op :OP_1NEGATE, stack, do: [-1 | stack]
+  op_push :OP_1NEGATE, -1
 
-  op :OP_1,  stack, do: [1 | stack]
-  op :OP_2,  stack, do: [2 | stack]
-  op :OP_3,  stack, do: [3 | stack]
-  op :OP_4,  stack, do: [4 | stack]
-  op :OP_5,  stack, do: [5 | stack]
-  op :OP_6,  stack, do: [6 | stack]
-  op :OP_7,  stack, do: [7 | stack]
-  op :OP_8,  stack, do: [8 | stack]
-  op :OP_9,  stack, do: [9 | stack]
-  op :OP_10, stack, do: [10 | stack]
-  op :OP_11, stack, do: [11 | stack]
-  op :OP_12, stack, do: [12 | stack]
-  op :OP_13, stack, do: [13 | stack]
-  op :OP_14, stack, do: [14 | stack]
-  op :OP_15, stack, do: [15 | stack]
-  op :OP_16, stack, do: [16 | stack]
+  op_push :OP_1,  1
+  op_push :OP_2,  2
+  op_push :OP_3,  3
+  op_push :OP_4,  4
+  op_push :OP_5,  5
+  op_push :OP_6,  6
+  op_push :OP_7,  7
+  op_push :OP_8,  8
+  op_push :OP_9,  9
+  op_push :OP_10, 10
+  op_push :OP_11, 11
+  op_push :OP_12, 12
+  op_push :OP_13, 13
+  op_push :OP_14, 14
+  op_push :OP_15, 15
+  op_push :OP_16, 16
 
   ##
   ## CONTROL

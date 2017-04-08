@@ -97,4 +97,20 @@ defmodule Bitcoin.Script.Macros do
     end
   end
 
+  # `op_push` puts a specified value on the stack
+  #
+  #     op_const :OP_7, 7 |> bin
+  #
+  # expands to
+  #
+  #     run(stack, [:OP_7 | script], opts), do: [(7 |> bin) | stack] |> run(script, opts)
+
+  defmacro op_push(op, value) when is_atom(op) do
+    quote do
+      def run(stack, [unquote(op) | script], opts) do
+        ([unquote(value) | stack]) |> run(script, opts)
+      end
+    end
+  end
+
 end

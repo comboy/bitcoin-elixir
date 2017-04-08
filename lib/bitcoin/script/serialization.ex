@@ -1,4 +1,4 @@
-defmodule Bitcoin.Script.Binary do
+defmodule Bitcoin.Script.Serialization do
 
   # PUSHDATA with size > @max_element_size makes the script invalid
   @max_element_size 520
