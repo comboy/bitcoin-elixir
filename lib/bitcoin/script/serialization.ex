@@ -278,4 +278,30 @@ defmodule Bitcoin.Script.Serialization do
   def parse_string_op_validate(opcode) when opcode in @disabled_op, do: :invalid
   def parse_string_op_validate(opcode), do: opcode
 
+  ##
+  ## Parsing alternative string representation
+  ##
+  ## e.g. 1 0x41 0x04cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4 0x41 0x0461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af 2 OP_CHECKMULTISIG
+  ## op names can also appear without OP_ prefix
+
+  def parse_string2(string) do
+    script = string
+      |> String.split(" ")
+      |> Enum.map(&parse_string2_word/1)
+      |> Enum.join
+      |> parse
+  end
+
+  # parse_string2_word parses string representation into binary (because it can include pushdata opcodes)
+  def parse_string2_word("1"), do: <<@op[:OP_TRUE]>>
+  def parse_string2_word("0"), do: <<@op[:OP_FALSE]>>
+  @short_op_names @op_names |> Enum.map(&to_string/1) |> Enum.map(fn("OP_" <> name) -> name end)
+  def parse_string2_word(opcode) when opcode in @short_op_names, do: <<@op[:"OP_#{opcode}"]>>
+  def parse_string2_word(("OP_" <> _) = op_name), do: <<@op[op_name |> String.to_atom]>>
+  def parse_string2_word("0x" <> hex), do: hex |> String.upcase |> Base.decode16!
+  def parse_string2_word(int) do
+    {num, _} = int |> Integer.parse
+    num |> Bitcoin.Script.Number.bin |> to_binary_word
+  end
+
 end

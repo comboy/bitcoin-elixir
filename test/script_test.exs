@@ -133,7 +133,8 @@ defmodule Bitcoin.ScriptTest do
 
     ok_count = rets |> Enum.filter(fn x -> x == true end) |> Enum.count
     count = scripts |> length
-    IO.puts "\nHARDCORE SCRIPT TESTS: #{ok_count}/#{count}"# (#{fail_count} FAIL, #{count - ok_count - fail_count} BAD)"
+    IO.puts "\nHardcore script tests: #{ok_count}/#{count}"# (#{fail_count} FAIL, #{count - ok_count - fail_count} BAD)"
 
   end
+
 end
