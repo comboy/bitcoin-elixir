@@ -178,11 +178,15 @@ defmodule Bitcoin.Script.Serialization do
 
   @invalid [:invalid]
 
+  ##
+  ## Parsing binary script (as it appears in the transaction)
+  ##
+
   def parse(binary) when is_binary(binary) and byte_size(binary) > @max_script_size, do: @invalid
   def parse(binary) when is_binary(binary) do
     try do
        parse([], binary)
-     rescue 
+     rescue
        # Match error can occur when there's not enough bytes after pushdata instruction
        e in MatchError -> @invalid
      end
@@ -230,5 +234,30 @@ defmodule Bitcoin.Script.Serialization do
   def parse(script, << op_code, bin :: binary >>) when not (op_code in @op_values) do
     (script ++ [:OP_UNKNOWN]) |> parse(bin)
   end
+
+  ##
+  ## Parsing bitcoind string representation
+  ##
+
+  def parse_string(string) do
+    script = string
+      |> String.split(" ")
+      |> Enum.map(&parse_string_word/1)
+      |> Enum.reverse
+      |> Enum.reduce([], fn(x, r) ->
+        cond do
+          x == :invalid      -> @invalid
+          r == @invalid -> @invalid
+          true               -> [x | r]
+        end
+      end)
+  end
+
+  def parse_string_word("1"), do: :OP_TRUE
+  def parse_string_word("0"), do: :OP_FALSE
+  def parse_string_word(("OP_" <> _) = op_name), do: op_name |> String.to_atom |> parse_string_op_validate
+  def parse_string_word(hex), do: hex |> String.upcase |> Base.decode16!
+  def parse_string_op_validate(opcode) when opcode in @disabled_op, do: :invalid
+  def parse_string_op_validate(opcode), do: opcode
 
 end
