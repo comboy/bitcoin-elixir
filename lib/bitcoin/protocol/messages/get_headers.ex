@@ -15,6 +15,8 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
 
   alias Bitcoin.Protocol.Types.Integer
 
+  import Bitcoin.Protocol
+
   defstruct version: 0, # the protocol version
             block_locator_hashes: [], # block locator object; newest back to genesis block (dense to start, but then sparse)
             hash_stop: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>> # hash of the last desired block; set to zero to get as many headers as possible (up to 2000)
@@ -29,12 +31,7 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
 
     <<version :: unsigned-little-integer-size(32), payload :: binary>> = data
 
-    [count, payload] = Integer.parse_stream(payload)
-
-    [block_locator_hashes, payload] = Enum.reduce(1..count, [[], payload], fn (_, [collection, payload]) ->
-      <<element :: bytes-size(32), payload :: binary>> = payload
-      [collection ++ [element], payload]
-    end)
+    [block_locator_hashes, payload] = payload |> collect_items(:hash)
 
     << hash_stop :: bytes-size(32) >> = payload
 
@@ -47,16 +44,11 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
   end
 
   def serialize(%__MODULE__{} = s) do
-    << 
-      s.version :: unsigned-little-integer-size(32),
-    >> <>
-      Integer.serialize(s.block_locator_hashes |> Enum.count)
-    <> (
-      s.block_locator_hashes |> Enum.reduce(<<>>, &(&2 <> &1))
-    ) <>
-    <<
-      s.hash_stop :: bytes-size(32)
-    >>
+    << s.version :: unsigned-little-integer-size(32) >> 
+    <>
+    ( s.block_locator_hashes |> serialize_items )
+    <>
+    << s.hash_stop :: bytes-size(32) >>
   end
 
 end

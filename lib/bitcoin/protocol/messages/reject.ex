@@ -8,6 +8,8 @@ defmodule Bitcoin.Protocol.Messages.Reject do
 
   alias Bitcoin.Protocol.Types.String
 
+  import Bitcoin.Protocol
+
   @reject_reasons %{
     0x01 => :MALFORMED,
     0x10 => :INVALID,

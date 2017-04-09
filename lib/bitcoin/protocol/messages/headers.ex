@@ -17,34 +17,24 @@ defmodule Bitcoin.Protocol.Messages.Headers do
   alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Types.BlockHeader
 
+  import Bitcoin.Protocol
+
   defstruct headers: [] # Bitcoin.Protocol.Types.BlockHeader[], https://en.bitcoin.it/wiki/Protocol_specification#Block_Headers
 
   @type t :: %Bitcoin.Protocol.Messages.Headers{
     headers: [BlockHeader]
   }
 
-  def parse(data) do
-
-    [header_count, payload] = Integer.parse_stream(data)
-
-    [headers, _] = Enum.reduce(1..header_count, [[], payload], fn (_, [collection, payload]) ->
-      [element, payload] = BlockHeader.parse_stream(payload)
-      [collection ++ [element], payload]
-    end)
+  def parse(payload) do
+    [headers, _payload] = payload |> collect_items(BlockHeader)
 
     %Bitcoin.Protocol.Messages.Headers{
       headers: headers
     }
-
   end
 
   def serialize(%__MODULE__{} = s) do
-    Integer.serialize(s.headers |> Enum.count)
-    <> (
-      s.headers
-        |> Enum.map(&BlockHeader.serialize/1)
-        |> Enum.reduce(<<>>, &(&2 <> &1))
-    )
+    s.headers |> serialize_items
   end
 
 end

@@ -17,6 +17,8 @@ defmodule Bitcoin.Protocol.Messages.Block do
   alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Messages.Tx
 
+  import Bitcoin.Protocol
+
   defstruct version: 0, # Block version information, based upon the software version creating this block
             previous_block: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>>, # char[32], The hash value of the previous block this particular block references
             merkle_root: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>>, # char[32], The reference to a Merkle tree collection which is a hash of all transactions related to this block
@@ -45,12 +47,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, payload] = Integer.parse_stream(payload)
-
-    [transactions, _] = Enum.reduce(1..transaction_count, [[], payload], fn (_, [collection, payload]) ->
-      [element, payload] = Tx.parse_stream(payload)
-      [collection ++ [element], payload]
-    end)
+    [transactions, _] = payload |> collect_items(Tx)
 
     %__MODULE__{
       version: version,
@@ -67,12 +64,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
   def serialize(%__MODULE__{} = s) do
     (s |> serialize_header)
     <>
-      Bitcoin.Protocol.Types.Integer.serialize(s.transactions |> Enum.count)
-    <> (
-      s.transactions
-        |> Enum.map(&Tx.serialize/1)
-        |> Enum.reduce(<<>>, &(&2 <> &1))
-    )
+    (s.transactions |> serialize_items)
   end
 
   # Serialization of header fields is separated so that we can compute the block hash

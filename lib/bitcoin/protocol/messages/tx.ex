@@ -10,7 +10,7 @@ defmodule Bitcoin.Protocol.Messages.Tx do
   alias Bitcoin.Protocol.Types.TransactionInput
   alias Bitcoin.Protocol.Types.TransactionOutput
 
-  import Bitcoin.Protocol.Parser
+  import Bitcoin.Protocol
 
   defstruct version: 0, # Transaction data format version
             inputs: [], # A list of 1 or more transaction inputs or sources for coins
@@ -54,21 +54,12 @@ defmodule Bitcoin.Protocol.Messages.Tx do
   end
 
   def serialize(%__MODULE__{} = s) do
-    <<
-      s.version :: little-integer-size(32),
-    >> <>
-      Integer.serialize(s.inputs |> Enum.count)
-    <> (
-      s.inputs
-        |> Enum.map(&TransactionInput.serialize/1)
-        |> Enum.reduce(<<>>, &(&2 <> &1))
-    ) <>
-      Integer.serialize(s.outputs |> Enum.count)
-    <> (
-      s.outputs
-        |> Enum.map(&TransactionOutput.serialize/1)
-        |> Enum.reduce(<<>>, &(&2 <> &1))
-    ) <>
+    << s.version :: little-integer-size(32) >>
+    <>
+    ( s.inputs |> serialize_items )
+    <>
+    ( s.outputs |> serialize_items )
+    <>
     << s.lock_time :: unsigned-little-integer-size(32) >>
   end
 
