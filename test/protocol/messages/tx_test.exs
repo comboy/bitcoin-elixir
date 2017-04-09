@@ -67,4 +67,12 @@ defmodule Bitcoin.Protocol.Messages.TxTest do
     assert Tx.serialize(struct) == payload
   end
 
+  test "tx without outputs" do
+    # Suck transaction won't pass validity test, but the message itself is not malformed and is parsed correctly by bitcoin core
+    payload = "01000000010001000000000000000000000000000000000000000000000000000000000000000000006d483045022100f16703104aab4e4088317c862daec83440242411b039d14280e03dd33b487ab802201318a7be236672c5c56083eb7a5a195bc57a40af7923ff8545016cd3b571e2a601232103c40e5d339df3f30bf753e7e04450ae4ef76c9e45587d1d993bdc4cd06f0651c7acffffffff0000000000" |> String.upcase |> Base.decode16!
+
+    struct = Tx.parse(payload) # should not raise 
+    assert Tx.serialize(struct) == payload
+  end 
+
 end

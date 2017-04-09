@@ -10,6 +10,8 @@ defmodule Bitcoin.Protocol.Messages.Tx do
   alias Bitcoin.Protocol.Types.TransactionInput
   alias Bitcoin.Protocol.Types.TransactionOutput
 
+  import Bitcoin.Protocol.Parser
+
   defstruct version: 0, # Transaction data format version
             inputs: [], # A list of 1 or more transaction inputs or sources for coins
             outputs: [], # A list of 1 or more transaction outputs or destinations for coins
@@ -31,31 +33,19 @@ defmodule Bitcoin.Protocol.Messages.Tx do
 
     <<version :: little-integer-size(32), payload :: binary>> = data
 
-    [tx_in_count, payload] = Integer.parse_stream(payload)
-
-    [transaction_inputs, payload] = Enum.reduce(1..tx_in_count, [[], payload], fn (_, [collection, payload]) ->
-      [element, payload] = TransactionInput.parse_stream(payload)
-      [collection ++ [element], payload]
-    end)
-
-    [tx_out_count, payload] = Integer.parse_stream(payload)
-
-    [transaction_outputs, payload] = Enum.reduce(1..tx_out_count, [[], payload], fn (_, [collection, payload]) ->
-      [element, payload] = TransactionOutput.parse_stream(payload)
-      [collection ++ [element], payload]
-    end)
+    [inputs, payload] =  payload |> collect_items(TransactionInput)
+    [outputs, payload] = payload |> collect_items(TransactionOutput)
 
     <<lock_time::unsigned-little-integer-size(32), remaining :: binary>> = payload
 
     struct = %__MODULE__{
       version: version,
-      inputs: transaction_inputs,
-      outputs: transaction_outputs,
+      inputs: inputs,
+      outputs: outputs,
       lock_time: lock_time
     }
 
     [struct, remaining]
-
   end
 
   def parse(data) do
