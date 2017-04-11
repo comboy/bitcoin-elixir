@@ -1,9 +1,5 @@
 defmodule Bitcoin.Tx do
 
-  @sighash_all          0x01
-  @sighash_none         0x02
-  @sighash_single       0x03
-  @sighash_anyonecanpay 0x80
 
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Protocol.Types
