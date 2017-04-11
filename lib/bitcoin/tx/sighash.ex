@@ -5,8 +5,7 @@ defmodule Bitcoin.Tx.Sighash do
   alias Bitcoin.Protocol.Types
   alias Bitcoin.Protocol.Messages
 
-  # TODO test coverage of different sighash tyes is very poor currently because it's impossible
-  # to test them with just script tests that are run on a single input transaction
+  # TODO Uhm. Besides the four listed hashtypes only a hashtype of value 0 appears a few times in the (main) block chain (and is handled like SIGHASH_ALL).
   # documentation: https://en.bitcoin.it/wiki/OP_CHECKSIG#cite_note-1
   def sighash(tx, input_number, sub_script, sighash_type \\ @sighash_all) do
     #IO.puts "SIGHASH TYPE: #{sighash_type |> IO.inspect}"
