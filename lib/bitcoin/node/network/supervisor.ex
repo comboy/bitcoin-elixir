@@ -10,12 +10,15 @@ defmodule Bitcoin.Node.Network.Supervisor do
   def init(_) do
     Lager.info "Starting Node subsystems"
     modules = Bitcoin.Node.Network.modules()
-    children = 
-      [:addr, :discovery, :connection_manager]
-      |> Enum.map(fn name -> modules[name] end)
-      |> Enum.map(fn m -> worker(m, [%{modules: modules}]) end)
 
-    children |> supervise(strategy: :one_for_one)
+    dynamic_modules =  [:addr, :discovery, :connection_manager] |> Enum.map(fn name -> modules[name] end)
+    static_modules = [
+      Bitcoin.Node.Storage
+    ]
+
+    (static_modules ++ dynamic_modules)
+    |> Enum.map(fn m -> worker(m, [%{modules: modules}]) end)
+    |> supervise(strategy: :one_for_one)
   end
 
 end

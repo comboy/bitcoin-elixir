@@ -10,6 +10,7 @@ defmodule Bitcoin.Node.Network do
 
   alias Bitcoin.Node.Network
 
+  # TODO move modules to the Node module, it's not just network
   @default_modules [
     # Addrs managager, keeps list of IPs to connect to
     addr: Network.Addr,
@@ -18,12 +19,14 @@ defmodule Bitcoin.Node.Network do
     # Peers discovery - find IPs of peers to connect to if we have non in the database
     discovery: Network.Discovery,
     # Connection manager, accepts incoming connection, keeps track of all connected peers
-    connection_manager: Network.ConnectionManager
+    connection_manager: Network.ConnectionManager,
+    # Storage engine - persistance layer
+    storage_engine: Bitcoin.Node.Storage.Engine.Dummy
   ]
 
 
   def find_more_addrs do
-    modules[:discovery].begin_discovery()
+    modules()[:discovery].begin_discovery()
   end
 
   def modules do
