@@ -129,6 +129,12 @@ defmodule Bitcoin.Node.Network.Peer do
   # last_ping_nonce != 0 which means we did not receive the PONG
   def handle_info(:check_ping_response, state), do: state |> disconnect(:ping_timout)
 
+  def handle_info({:send_message, msg}, state) do
+    state |> debug("<= #{msg |> inspect}")
+    :ok = msg |> send_message(state)
+    {:noreply, state}
+  end
+
   #
   # Message handlers
   #
@@ -171,17 +177,31 @@ defmodule Bitcoin.Node.Network.Peer do
     {:noreply, state}
   end
 
-  def handle_info({:msg, %Messages.GetHeaders{} = _msg}, state) do
+  def handle_info({:msg, %Messages.GetHeaders{} = msg}, state) do
     state |> debug("=> GET HEADERS")
     {:noreply, state}
   end
 
   def handle_info({:msg, %Messages.Inv{inventory_vectors: inventory_vectors} = _msg}, state) do
     state |> debug("=> INV  #{inventory_vectors |> inspect}")
+    inventory_vectors |> Enum.each(fn iv -> Node.Inventory.seen(iv) end)
+
     #Lager.info "#{ip |> inspect} <= I WANT IT ALL "
     #%Messages.GetData{
       #inventory_vectors: inventory_vectors |> Enum.filter(fn iv -> iv.reference_type == :msg_tx end)
     #}|> send_message(state)
+    {:noreply, state}
+  end
+
+  def handle_info({:msg, %Messages.Block{} = block}, state) do
+    state |> debug("=> BLOCK #{block |> Bitcoin.Block.hash |> Bitcoin.Util.friendly_hash}")
+    block |> Node.Inventory.add
+    {:noreply, state}
+  end
+
+  def handle_info({:msg, %Messages.Tx{} = tx}, state) do
+    state |> debug("=> TX #{tx |> Bitcoin.Tx.hash |> Bitcoin.Util.friendly_hash}")
+    #tx |> Node.Inventory.add
     {:noreply, state}
   end
 
@@ -248,7 +268,7 @@ defmodule Bitcoin.Node.Network.Peer do
   end
 
   defp disconnect(state, reason \\ :none) do
-    Lager.info "#{state.ip |> :inet.ntoa} disconnected :#{reason}"
+    Lager.debug "#{state.ip |> :inet.ntoa} disconnected :#{reason}"
     {:stop, :normal, state |> Map.put(:status, :disconnected)}
   end
 

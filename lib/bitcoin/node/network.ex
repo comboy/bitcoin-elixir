@@ -24,6 +24,7 @@ defmodule Bitcoin.Node.Network do
     storage_engine: Bitcoin.Node.Storage.Engine.Dummy
   ]
 
+  def connected?, do: GenServer.whereis(modules()[:connection_manager]) && length(modules()[:connection_manager].peers) > 0
 
   def find_more_addrs do
     modules()[:discovery].begin_discovery()

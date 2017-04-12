@@ -22,6 +22,7 @@ defmodule Bitcoin.Node do
   def config,  do: GenServer.call(__MODULE__, :config)
   def nonce,  do: GenServer.call(__MODULE__, :nonce)
   def height, do: 1
+  def protocol_version, do: @protocol_version
 
   # Implementation
 

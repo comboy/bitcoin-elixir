@@ -23,8 +23,9 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
   alias Bitcoin.Protocol.Types.NetworkAddress
 
   def start_link(%{modules: _modules} = opts), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
-  def connect(ip, port), do: GenServer.cast(__MODULE__, {:connect, ip, port})
+  def connect(ip, port \\ 8333), do: GenServer.cast(__MODULE__, {:connect, ip, port})
   def register_peer(), do: GenServer.call(__MODULE__, :register_peer)
+  def peers, do: GenServer.call(__MODULE__, :peers)
 
   def init(opts) do
     state = %{
@@ -34,8 +35,19 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
     }
 
     {:ok, _pid} = Reagent.start_link(ReagentHandler, port: state.config[:listen_port])
-    self() |> send(:periodical_connectivity_check)
+
+    # If connect option is specified in the node config, only connect to the specified peers
+    case state.config[:connect] do
+      nil -> self() |> send(:periodical_connectivity_check)
+      # TODO allow ip:port, actually it will only accept IP as a tuple currently
+      list -> list |> Enum.each(fn ip -> connect(ip) end)
+    end
+
     {:ok, state}
+  end
+
+  def handle_call(:peers, _from, state) do
+    {:reply, state.peers, state}
   end
 
   def handle_info(:periodical_connectivity_check, state) do

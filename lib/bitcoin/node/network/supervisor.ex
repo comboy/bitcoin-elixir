@@ -13,7 +13,8 @@ defmodule Bitcoin.Node.Network.Supervisor do
 
     dynamic_modules =  [:addr, :discovery, :connection_manager] |> Enum.map(fn name -> modules[name] end)
     static_modules = [
-      Bitcoin.Node.Storage
+      Bitcoin.Node.Storage,
+      Bitcoin.Node.Inventory
     ]
 
     (static_modules ++ dynamic_modules)
