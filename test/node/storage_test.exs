@@ -23,7 +23,7 @@ defmodule Bitcoin.Node.StorageTest do
     :ok = b1 |> Storage.store
 
     assert Storage.max_height() == 1
-    {:error, :no_previous} = b3 |> Storage.store
+    {:error, :no_parent} = b3 |> Storage.store
 
     :ok = b2 |> Storage.store
     assert Storage.max_height() == 2
@@ -39,7 +39,7 @@ defmodule Bitcoin.Node.StorageTest do
 
   # There's a commented line in the Dummy storage that saves all blocks to the tmp directory
   # Thanks to that it's easy to do a rerun of the validations and storage on the blockchain
-  # without fetching it each tim
+  # without fetching it each time. It can also be used to do some perf tests later.
   #@tag timeout: 60_000*60*24
   #test "store bitcoin blocks" do
     #{:ok, pid} = Storage.start_link

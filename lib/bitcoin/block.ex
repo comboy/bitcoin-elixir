@@ -17,8 +17,11 @@ defmodule Bitcoin.Block do
 
   def validate(%Messages.Block{} = block) do
     [
+      &Validation.has_parent/1,
       &Validation.merkle_root/1,
-      &Validation.hash_below_target/1
+      &Validation.hash_below_target/1,
+      &Validation.coinbase/1,
+      &Validation.transactions/1,
     ] |> Bitcoin.Util.run_validations(block)
   end
 

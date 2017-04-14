@@ -7,7 +7,6 @@ defmodule Bitcoin.BlockTest do
     {:ok, payload} = File.read("test/data/blk_100000.dat")
     block = Messages.Block.parse(payload)
     assert block.merkle_root == block |> Bitcoin.Block.merkle_root
-    block |> Bitcoin.Block.validate
   end
 
   test "merkle root 460_281" do
@@ -33,9 +32,12 @@ defmodule Bitcoin.BlockTest do
   test "validation" do
     {:ok, payload} = File.read("test/data/blk_100000.dat")
     block = Messages.Block.parse(payload)
-    assert block |> Bitcoin.Block.validate == :ok
-    assert block |> Map.put(:nonce, 1) |> Bitcoin.Block.validate == {:error, :hash_above_target}
-    assert block |> Map.put(:merkle_root, block.merkle_root |> Bitcoin.Util.binary_reverse) |> Bitcoin.Block.validate == {:error, :merkle_root_invalid}
+
+    assert block |> Bitcoin.Block.Validation.hash_below_target == :ok
+    assert block |> Map.put(:nonce, 1) |> Bitcoin.Block.Validation.hash_below_target == {:error, :hash_above_target}
+
+    assert block |> Bitcoin.Block.Validation.merkle_root == :ok
+    assert block |> Map.put(:merkle_root, block.merkle_root |> Bitcoin.Util.binary_reverse) |> Bitcoin.Block.Validation.merkle_root == {:error, :merkle_root_invalid}
   end
 
 end
