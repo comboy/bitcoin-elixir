@@ -10,16 +10,12 @@ defmodule Bitcoin.Tx.Sighash do
   alias Bitcoin.Protocol.Types
   alias Bitcoin.Protocol.Messages
 
-  # TODO move remove_op_code separator to Bitcoin.Script
-  @op_codeseparator 0xab
-
   # Calculate transaction hash for signing
   # documentation: https://en.bitcoin.it/wiki/OP_CHECKSIG#cite_note-1
   # WARNING This is actually sighash without last sha256 hash. The reason is that erlang :crypto.verify
   # will hash it with sha256, so that makes two hashes already. If you know how to use :crypto.verify
   # with some kind of digest :none, then we can return Bitcoun.Util.double_sha256 here
   def sighash(tx, input_number, sub_script, sighash_type \\ @sighash_all) do
-    sub_script = sub_script |> remove_op_codeseparator
     tx = tx |> Map.put(:inputs,
       # Set scripts for all transaction inputs to an empty script
       tx.inputs
@@ -81,9 +77,12 @@ defmodule Bitcoin.Tx.Sighash do
   # SIGHASH_ALL - nothing to do
   def sighash_preparation(tx, input_number, sighash_type), do: tx
 
-
-
-  defp remove_op_codeseparator(script), do: script |> :binary.bin_to_list |> Enum.filter(fn x -> x != @op_codeseparator end) |> :binary.list_to_bin
+  defp remove_op_codeseparator(script) do
+    script
+    |> Bitcoin.Script.Serialization.parse
+    |> Enum.filter(fn op -> op != :OP_CODESEPARATOR end)
+    |> Bitcoin.Script.Serialization.to_binary
+  end
 
   defp zero_sequence_numbers(tx, input_number) do
     tx
