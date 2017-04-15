@@ -2,6 +2,7 @@ defmodule BitcoinTest.Protocol.Types.StringTest do
   use ExUnit.Case
 
   alias Bitcoin.Protocol.Types.String
+  alias Bitcoin.Protocol.Types.Integer
 
   test "returns empty string when string size is zero and also returns remaining payload" do
 
@@ -28,6 +29,10 @@ defmodule BitcoinTest.Protocol.Types.StringTest do
     assert ["ab", <<1, 1, 0>>] ==
              String.parse_stream(payload)
 
+  end
+
+  test "parse 0 length string" do
+    assert ["", <<>>] = String.parse_stream(Integer.serialize(0))
   end
 
   test "serialization" do
