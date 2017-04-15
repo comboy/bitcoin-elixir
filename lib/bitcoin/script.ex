@@ -456,7 +456,7 @@ defmodule Bitcoin.Script do
     sighash_type = sig |> :binary.at(byte_size(sig)-1)
     sig = sig |> :binary.part(0, byte_size(sig)-1)
     # Generate sighash (with only single sha256)
-    sighash = opts[:tx] |> Bitcoin.Tx.sighash(0, opts[:sub_script], sighash_type)
+    sighash = opts[:tx] |> Bitcoin.Tx.sighash(opts[:input_number], opts[:sub_script], sighash_type)
     # Do sha256 again and verify
     :crypto.verify(:ecdsa, :sha256, sighash, sig, [pk, :secp256k1])
   end
