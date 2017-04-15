@@ -31,7 +31,7 @@ defmodule Bitcoin.Node.Network do
   end
 
   def modules do
-    case Application.get_env(:bitcoin, :node, :modules) do
+    case Application.get_env(:bitcoin, :node, [])[:modules] do
        nil -> @default_modules
       list -> @default_modules |> Keyword.merge(list)
     end

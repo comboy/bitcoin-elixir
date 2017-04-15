@@ -1,6 +1,7 @@
 use Mix.Config
 
-config :bitcoin, :node, []
+# Uncomment the line below to start the node when the application is starting
+# config :bitcoin, :node, []
 
 config :exlager,
   level: :info

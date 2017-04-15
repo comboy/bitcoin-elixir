@@ -7,8 +7,6 @@ defmodule Bitcoin do
     import Supervisor.Spec
 
     # Start node only if :bitcoin,:node config section is present
-    # TODO this is not great, because when using Bitcon-Ex as a lib,
-    # there must a way to overwrite our dev default (which is node enabled)
     children = case Application.fetch_env(:bitcoin, :node) do
       :error ->
          []
