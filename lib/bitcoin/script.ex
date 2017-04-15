@@ -28,11 +28,13 @@ defmodule Bitcoin.Script do
   import Bitcoin.Script.Control
   import Bitcoin.Script.Number
 
+  use Bitcoin.Script.Opcodes
   use Bitcoin.Script.P2SH
 
   # Max number of items in stack + altstack
   @max_stacks_size 1000
   @max_pubkeys_per_multisig 20
+  @max_ops 201
 
   # The reason for this function is that we need to parse sig script and pk separately.
   # Otherwise sig script could do some nasty stuff with malformed PUSHDATA
@@ -71,11 +73,11 @@ defmodule Bitcoin.Script do
   # Header declaration for function with default value and multiple clauses
   def run(script, opts \\ [])
 
-  # Run the parsed script
-  def run(script, opts), do: run([], script, opts)
-
   # When binary is provided, parse it and then run
   def run(binary, opts) when is_binary(binary), do: binary |> parse |> run(opts)
+
+  # Run the parsed script
+  def run(script, opts), do: run([], script |> validate, opts)
 
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
   # Parser returns [:invalid] if the script couldn't be parsed
@@ -91,6 +93,18 @@ defmodule Bitcoin.Script do
 
   # Binary blob, put it on the stack
   def run(stack, [data | script], opts) when is_binary(data) or is_number(data), do: run([data | stack], script, opts)
+
+  # VAlidate sanityf of the script
+  # We should probably switch to a single run through script like in bitcoin core
+  def validate(script) do
+    cond do
+      # Script invalid if any of disabled ops is present
+      script |> Enum.any?(fn op -> op in @disabled_op end) -> [:invalid]
+      # Scirpt max ops
+      script |> length > @max_ops -> [:invalid] # TODO op count excludes OP_1 - OP_16
+      true -> script
+    end
+  end
 
   ##
   ## PUSH VALUE
