@@ -18,7 +18,7 @@ defmodule Bitcoin.Script.Serialization do
        parse([], binary)
      rescue
        # Match error can occur when there's not enough bytes after pushdata instruction
-       e in MatchError -> @invalid
+       _e in MatchError -> @invalid
      end
   end
 
@@ -40,14 +40,14 @@ defmodule Bitcoin.Script.Serialization do
   end
 
   # OP_PUSHDATA2 The next two bytes contain the number of bytes to be pushed onto the stack.
-  def parse(script, << @op_pushdata2, size :: unsigned-little-integer-size(16), bin :: binary >>) when size > @max_element_size, do: @invalid
+  def parse(_script, << @op_pushdata2, size :: unsigned-little-integer-size(16), _bin :: binary >>) when size > @max_element_size, do: @invalid
   def parse(script, << @op_pushdata2, size :: unsigned-little-integer-size(16), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
     (script ++ [data]) |> parse(bin)
   end
 
   # OP_PUSHDATA5 The next four bytes contain the number of bytes to be pushed onto the stack.
-  def parse(script, << @op_pushdata4, size :: unsigned-little-integer-size(32), bin :: binary >>) when size > @max_element_size, do: @invalid
+  def parse(_script, << @op_pushdata4, size :: unsigned-little-integer-size(32), _bin :: binary >>) when size > @max_element_size, do: @invalid
   def parse(script, << @op_pushdata4, size :: unsigned-little-integer-size(32), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
     (script ++ [data]) |> parse(bin)
@@ -84,17 +84,9 @@ defmodule Bitcoin.Script.Serialization do
   ##
 
   def parse_string(string) do
-    script = string
-      |> String.split(" ")
-      |> Enum.map(&parse_string_word/1)
-      |> Enum.reverse
-      |> Enum.reduce([], fn(x, r) ->
-        cond do
-          x == :invalid      -> @invalid
-          r == @invalid -> @invalid
-          true               -> [x | r]
-        end
-      end)
+    string
+    |> String.split(" ")
+    |> Enum.map(&parse_string_word/1)
   end
 
   def parse_string_word("1"), do: :OP_TRUE

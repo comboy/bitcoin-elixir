@@ -80,7 +80,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
   # Convert address bytes to erlang :inet ip adress, IPv4
   def addr_to_inet(<<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, b1, b2, b3, b4>>), do: {b1, b2, b3, b4}
   def addr_to_inet(<<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, b1, b2, b3, b4>>), do: {b1, b2, b3, b4}
-  def addr_to_inet(<< ipv6 :: binary-size(16) >>), do: {0,0,0,0} #TODO IPv6
+  def addr_to_inet(<< _ipv6 :: binary-size(16) >>), do: {0,0,0,0} #TODO IPv6
 
   # Convert erlang inet ip adress to address byptes IPv4 (TODO IPv6)
   def inet_to_addr({b1, b2, b3, b4}), do: <<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, b1, b2, b3, b4>> 

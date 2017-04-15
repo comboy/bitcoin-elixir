@@ -17,7 +17,7 @@ defmodule Bitcoin.Protocol do
     collect_items(payload, parser, count, [])
   end
 
-  def collect_items(payload, parser, 0, items), do: [items |> Enum.reverse, payload]
+  def collect_items(payload, _parser, 0, items), do: [items |> Enum.reverse, payload]
 
   def collect_items(payload, parser, count, items) when is_atom(parser) do
     [item, payload] = payload |> parser.parse_stream

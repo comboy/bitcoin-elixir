@@ -81,12 +81,12 @@ defmodule Bitcoin.Script do
 
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
   # Parser returns [:invalid] if the script couldn't be parsed
-  def run(:invalid, _script, opts), do: :invalid
-  def run(_, [:invalid | _], opts), do: :invalid
+  def run(:invalid, _script, _opts), do: :invalid
+  def run(_, [:invalid | _], _opts), do: :invalid
 
   # Stack size limit
   # TODO should include altstack
-  def run(stack, script, opts) when length(stack) > @max_stacks_size, do: :invalid
+  def run(stack, _script, _opts) when length(stack) > @max_stacks_size, do: :invalid
 
   # When no script is left to run, return the stack
   def run(stack, [], _opts), do: stack
@@ -155,7 +155,7 @@ defmodule Bitcoin.Script do
 
   # OP_IF If the top stack value is not False, the statements are executed. The top stack value is removed.
   def run([0 | stack], [:OP_IF | script], opts), do: stack |> run(script |> extract_else, opts)
-  def run([x | stack], [:OP_IF | script], opts), do: stack |> run(script |> extract_if, opts)
+  def run([_ | stack], [:OP_IF | script], opts), do: stack |> run(script |> extract_if, opts)
 
   # OP_NOTIF If the top stack value is False, the statements are executed. The top stack value is removed.
   # Not the same as OP_NOT then OP_IF because OP_NOT should only work on numbers
@@ -462,9 +462,9 @@ defmodule Bitcoin.Script do
   end
 
   # No sigs to verify
-  def verify_all_signatures([], _, opts), do: true
+  def verify_all_signatures([], _, _opts), do: true
   # No PKs to verify against, but there are still some sigs (previous match gets rid of [])
-  def verify_all_signatures(_, [], opts), do: false
+  def verify_all_signatures(_, [], _opts), do: false
   def verify_all_signatures([sig | sigs], [pk | pks], opts) do
     case verify_signature(sig, pk, opts) do
       # Verification succeeded, move to the next sig

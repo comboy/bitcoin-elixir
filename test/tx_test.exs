@@ -29,7 +29,7 @@ defmodule Bitcoin.TxTest do
     # no segwit implementation yet
     |> Enum.filter(fn {_, [_,_,flags]} -> !String.contains?(flags, "WITNESS") end)
 
-    rets = txs |> Enum.map(fn {result, [prevouts, tx_serialized, flags]} ->
+    rets = txs |> Enum.map(fn {result, [prevouts, tx_serialized, _flags]} ->
 
       tx = tx_serialized |> String.upcase |> Base.decode16! |> Messages.Tx.parse
 
@@ -41,7 +41,7 @@ defmodule Bitcoin.TxTest do
       end) |> Enum.into(%{})
 
       tx_result = Bitcoin.Tx.validate(tx, %{previous_outputs: previous_outputs}) == :ok
-      ret = tx_result == result
+      tx_result == result
     end)
 
     ok_count = rets |> Enum.count(&(&1)) 
