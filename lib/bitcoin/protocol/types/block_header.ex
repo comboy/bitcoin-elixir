@@ -20,26 +20,9 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
     transaction_count: non_neg_integer
   }
 
-  def parse(data) do
-    <<version::little-integer-size(32),
-      previous_block::bytes-size(32),
-      merkle_root::bytes-size(32),
-      timestamp::unsigned-little-integer-size(32),
-      bits::unsigned-little-integer-size(32),
-      nonce::unsigned-little-integer-size(32),
-      payload::binary>> = data
-
-    [transaction_count, _] = VarInteger.parse_stream(payload)
-
-    %__MODULE__{
-      version: version,
-      previous_block: previous_block,
-      merkle_root: merkle_root,
-      timestamp: timestamp,
-      bits: bits,
-      nonce: nonce,
-      transaction_count: transaction_count
-    }
+  def parse(payload) do
+    [data, <<>>] = parse_stream(payload)
+    data
   end
 
   def parse_stream(data) do

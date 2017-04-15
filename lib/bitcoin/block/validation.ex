@@ -15,23 +15,23 @@ defmodule Bitcoin.Block.Validation do
     end
   end
 
-  def has_parent(%Block{previous_block: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>>} = block), do: :ok
-  def has_parent(%Block{previous_block: previous_hash} = block) do
+  def has_parent(%Block{previous_block: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>>} = _block), do: :ok
+  def has_parent(%Block{previous_block: previous_hash} = _block) do
     case Bitcoin.Node.Storage.get_block(previous_hash) do #  FIXME no need to fetch it, just check it exists
       nil -> {:error, :no_parent}
       _   -> :ok
     end
   end
 
-  def coinbase(%Block{transactions: []} = block), do: {:error, :no_coinbase_tx}
+  def coinbase(%Block{transactions: []} = _block), do: {:error, :no_coinbase_tx}
   def coinbase(%Block{} = block) do
-    [tx | _] = block.transactions
+    [_coinbase | _] = block.transactions
     # TODO validate output value
     :ok
   end
 
   def transactions(%Block{} = block) do
-    [coinbase | transactions] = block.transactions
+    [_coinbase | transactions] = block.transactions
     transactions
     |> Enum.reduce(:ok, fn (tx, result) -> 
       case result do

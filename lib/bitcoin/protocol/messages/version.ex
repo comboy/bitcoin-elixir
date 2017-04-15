@@ -22,7 +22,7 @@ defmodule Bitcoin.Protocol.Messages.Version do
             start_height: 0, # (int32_t) The last block received by the emitting node
             relay: false # (bool) Whether the remote peer should announce relayed transactions or not, may be absent, see BIP 0037 <https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki>, since version >= 70001
 
-  @type t :: %Bitcoin.Protocol.Messages.Version{
+  @type t :: %__MODULE__{
     version: non_neg_integer,
     services: bitstring,
     timestamp: non_neg_integer,
@@ -57,7 +57,7 @@ defmodule Bitcoin.Protocol.Messages.Version do
 
     relay = relay == <<1>> # Relay may be absent, see https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki
 
-    %Bitcoin.Protocol.Messages.Version{
+    %__MODULE__{
       version: version,
       services: services,
       timestamp: timestamp,

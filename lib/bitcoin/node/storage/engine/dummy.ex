@@ -6,7 +6,6 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
 
   require Lager
 
-  alias Bitcoin.Node.Storage
   alias Bitcoin.Protocol.Messages
 
   # TODO behavior
@@ -59,7 +58,7 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
   def handle_call(:max_height, _from, state) do
     max_height =
       state.block
-      |> Enum.map(fn {hash, block} -> block.height end)
+      |> Enum.map(fn {_hash, block} -> block.height end)
       |> Enum.max(fn -> nil end)
     {:reply, max_height, state}
   end

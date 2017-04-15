@@ -66,7 +66,7 @@ defmodule Bitcoin.Node.Inventory do
   # After we request some data from peer we queue this check in @get_data_timeout
   # to check if we got it, and request it from somebody else if it's not received
   # It may turn out to be lighter to just do it on the whole items list periodically
-  def handle_info({:check_received, {item_type, hash} = key}, state) do
+  def handle_info({:check_received, {_item_type, _hash} = key}, state) do
     info = state.items[key]
     cond do
 
@@ -112,7 +112,7 @@ defmodule Bitcoin.Node.Inventory do
 
   # TODO the way we handle it currently, e.g. when we get response to getblocks, we are going to do getData
   # for each block separately, that's no good, nee to batch it
-  def handle_call({:seen, {item_type, hash} = key}, {pid, tag}, state) do
+  def handle_call({:seen, {item_type, hash} = key}, {pid, _tag}, state) do
     case state.items[key] do
 
       # It's the first time we hear about the item

@@ -1,6 +1,6 @@
 defmodule Bitcoin.Protocol.Types.TxInput do
 
-  alias Bitcoin.Protocol.Types.VarInteger
+  alias Bitcoin.Protocol.Types.VarString
   alias Bitcoin.Protocol.Types.Outpoint
 
   defstruct previous_output: %Outpoint{}, # The previous output transaction reference, as an OutPoint structure
@@ -19,15 +19,15 @@ defmodule Bitcoin.Protocol.Types.TxInput do
     end
   end
 
-  def parse_stream(data) do
+  def parse_stream(payload) do
 
-    [outpoint, payload] = Outpoint.parse_stream(data)
-    [signature_script_size, payload] = VarInteger.parse_stream(payload)
-    << script :: bytes-size(signature_script_size), sequence :: unsigned-little-integer-size(32), payload :: binary >> = payload
+    [outpoint, payload] = Outpoint.parse_stream(payload)
+    [sig_script, payload] = VarString.parse_stream(payload)
+    << sequence :: unsigned-little-integer-size(32), payload :: binary >> = payload
 
     [%__MODULE__{
       previous_output: outpoint,
-      signature_script: script,
+      signature_script: sig_script,
       sequence: sequence
     }, payload]
 
@@ -35,8 +35,7 @@ defmodule Bitcoin.Protocol.Types.TxInput do
 
   def serialize(%__MODULE__{} = s) do
     (s.previous_output |> Outpoint.serialize) <>
-    (s.signature_script |> byte_size |> VarInteger.serialize) <>
-    s.signature_script <>
+    (s.signature_script |> VarString.serialize) <>
     << s.sequence ::  unsigned-little-integer-size(32) >>
   end
 

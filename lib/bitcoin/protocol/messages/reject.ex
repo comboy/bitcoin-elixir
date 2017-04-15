@@ -8,8 +8,6 @@ defmodule Bitcoin.Protocol.Messages.Reject do
 
   alias Bitcoin.Protocol.Types.VarString
 
-  import Bitcoin.Protocol
-
   @reject_reasons %{
     0x01 => :MALFORMED,
     0x10 => :INVALID,
@@ -27,7 +25,7 @@ defmodule Bitcoin.Protocol.Messages.Reject do
             data: <<>> # Optional extra data provided by some errors. Currently, all errors which provide this field
                        # fill it with the TXID or block header hash of the object being rejected, so the field is 32 bytes.
 
-  @type t :: %Bitcoin.Protocol.Messages.Reject{
+  @type t :: %__MODULE__{
     message: bitstring,
     code: non_neg_integer,
     reason: bitstring,
@@ -40,7 +38,7 @@ defmodule Bitcoin.Protocol.Messages.Reject do
     <<code::bytes-size(1),payload::binary>> = payload
     [reason, data] = VarString.parse_stream(payload)
 
-    %Bitcoin.Protocol.Messages.Reject{
+    %__MODULE__{
       message: message,
       code: Map.get(@reject_reasons, code),
       reason: reason,

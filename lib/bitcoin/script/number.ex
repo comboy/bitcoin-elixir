@@ -17,12 +17,13 @@ defmodule Bitcoin.Script.Number do
   def num(<<>>), do: 0
   # We reverse it and then encode as big endian because it's only possible to match beginning of binary in Elixir
   def num(x) when is_binary(x), do: x |> Bitcoin.Util.binary_reverse |> rev_num
+  def num(x) when is_number(x), do: x
+
   def rev_num(<< x, bin :: binary >>) when (x &&& 0x80) != 0, do: -1 * rev_num(<< x ^^^ 0x80>> <> bin)
   def rev_num(<< x :: unsigned-integer-size(32) >>), do: x
   def rev_num(<< x :: unsigned-integer-size(24) >>), do: x
   def rev_num(<< x :: unsigned-integer-size(16) >>), do: x
   def rev_num(<< x :: unsigned-integer-size(8) >>), do: x
-  def num(x) when is_number(x), do: x
 
   # Serialize integer into the script representation
   def bin(0), do: <<>>

@@ -23,8 +23,6 @@ defmodule Bitcoin.Protocol.Messages.GetBlocks do
     https://en.bitcoin.it/wiki/Protocol_specification#getblocks
   """
 
-  alias Bitcoin.Protocol.Types.Integer
-
   import Bitcoin.Protocol
 
   defstruct version: 0, # the protocol version

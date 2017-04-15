@@ -1,6 +1,5 @@
 defmodule Bitcoin.Block do
   alias Bitcoin.Protocol.Messages
-  alias Bitcoin.Protocol.Types
   alias Bitcoin.Block.Validation
 
   def hash(%Messages.Block{} = block) do

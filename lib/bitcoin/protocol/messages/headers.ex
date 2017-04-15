@@ -14,21 +14,20 @@ defmodule Bitcoin.Protocol.Messages.Headers do
     https://bitcoin.org/en/developer-reference#headers
   """
 
-  alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Types.BlockHeader
 
   import Bitcoin.Protocol
 
   defstruct headers: [] # Bitcoin.Protocol.Types.BlockHeader[], https://en.bitcoin.it/wiki/Protocol_specification#Block_Headers
 
-  @type t :: %Bitcoin.Protocol.Messages.Headers{
+  @type t :: %__MODULE__{
     headers: [BlockHeader]
   }
 
   def parse(payload) do
     [headers, _payload] = payload |> collect_items(BlockHeader)
 
-    %Bitcoin.Protocol.Messages.Headers{
+    %__MODULE__{
       headers: headers
     }
   end

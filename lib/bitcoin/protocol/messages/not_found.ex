@@ -13,7 +13,7 @@ defmodule Bitcoin.Protocol.Messages.NotFound do
 
   defstruct inventory_vectors: []
 
-  @type t :: %Bitcoin.Protocol.Messages.NotFound{
+  @type t :: %__MODULE__{
     inventory_vectors: [InventoryVector]
   }
 
@@ -21,7 +21,7 @@ defmodule Bitcoin.Protocol.Messages.NotFound do
 
     [inventory_vectors, _] = payload |> collect_items(InventoryVector)
 
-    %Bitcoin.Protocol.Messages.NotFound{
+    %__MODULE__{
       inventory_vectors: inventory_vectors
     }
 

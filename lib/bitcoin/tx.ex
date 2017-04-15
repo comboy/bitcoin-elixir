@@ -2,7 +2,6 @@ defmodule Bitcoin.Tx do
 
 
   alias Bitcoin.Protocol.Messages
-  alias Bitcoin.Protocol.Types
   alias Bitcoin.Tx.Sighash
 
 
@@ -47,7 +46,7 @@ defmodule Bitcoin.Tx do
   end
 
   defp find_previous_output(hash, index, opts) do
-    prev_out = case Bitcoin.Node.Storage.get_tx(hash) do
+    case Bitcoin.Node.Storage.get_tx(hash) do
       # Not found in storage, let's check in the curretn block
       nil ->
         # TODO the struct that storage returns should already have hash field (because storage already has it)

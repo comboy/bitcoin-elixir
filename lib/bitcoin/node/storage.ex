@@ -27,7 +27,6 @@ defmodule Bitcoin.Node.Storage do
     # and only try to recheck after reorg? (check how core does this)
     case block |> Bitcoin.Block.validate do
       :ok ->
-        hash = block |> Bitcoin.Block.hash
         # TODO also add hash to the struct, we need the storage struct
         case block |> block_height() do
           :error ->
@@ -39,7 +38,7 @@ defmodule Bitcoin.Node.Storage do
     end
   end
 
-  def block_height(%{height: height} = block) when height != nil, do: height
+  def block_height(%{height: height} = _block) when height != nil, do: height
   def block_height(block) do
     case get_block(block.previous_block) do
       nil   ->

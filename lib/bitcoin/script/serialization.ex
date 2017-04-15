@@ -104,11 +104,11 @@ defmodule Bitcoin.Script.Serialization do
   ## op names can also appear without OP_ prefix
 
   def parse_string2(string) do
-    script = string
-      |> String.split(" ")
-      |> Enum.map(&parse_string2_word/1)
-      |> Enum.join
-      |> parse
+    string
+    |> String.split(" ")
+    |> Enum.map(&parse_string2_word/1)
+    |> Enum.join
+    |> parse
   end
 
   # parse_string2_word parses string representation into binary (because it can include pushdata opcodes)

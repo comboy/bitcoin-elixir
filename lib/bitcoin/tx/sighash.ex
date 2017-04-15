@@ -58,7 +58,7 @@ defmodule Bitcoin.Tx.Sighash do
       tx
       |> Map.put(:outputs,
         (0..(input_number))
-        |> Enum.map(fn output -> %Types.TxOutput{pk_script: <<>>, value: -1} end)
+        |> Enum.map(fn _output -> %Types.TxOutput{pk_script: <<>>, value: -1} end)
         |> List.replace_at(input_number, matched_output)
       )
       # Set all inputs sequence number to 0
@@ -75,7 +75,7 @@ defmodule Bitcoin.Tx.Sighash do
   end
 
   # SIGHASH_ALL - nothing to do
-  def sighash_preparation(tx, input_number, sighash_type), do: tx
+  def sighash_preparation(tx, _input_number, _sighash_type), do: tx
 
   defp remove_op_codeseparator(script) do
     script

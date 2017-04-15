@@ -177,7 +177,7 @@ defmodule Bitcoin.Node.Network.Peer do
     {:noreply, state}
   end
 
-  def handle_info({:msg, %Messages.GetHeaders{} = msg}, state) do
+  def handle_info({:msg, %Messages.GetHeaders{} = _msg}, state) do
     state |> debug("=> GET HEADERS")
     {:noreply, state}
   end
