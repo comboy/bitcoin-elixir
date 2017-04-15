@@ -1,4 +1,4 @@
-defmodule Bitcoin.Protocol.Types.Integer do
+defmodule Bitcoin.Protocol.Types.VarInteger do
 
   @moduledoc """
     var_int type from the Bitcoin protocol ( https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer )

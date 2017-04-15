@@ -14,7 +14,6 @@ defmodule Bitcoin.Protocol.Messages.Block do
     https://en.bitcoin.it/wiki/Protocol_documentation#block
   """
 
-  alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Messages.Tx
 
   import Bitcoin.Protocol

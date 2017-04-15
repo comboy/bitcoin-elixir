@@ -6,7 +6,6 @@ defmodule Bitcoin.Protocol.Messages.Addr do
     https://en.bitcoin.it/wiki/Protocol_documentation#addr
   """
 
-  alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Types.NetworkAddress
 
   import Bitcoin.Protocol

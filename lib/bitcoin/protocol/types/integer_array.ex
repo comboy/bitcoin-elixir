@@ -1,10 +1,10 @@
 defmodule Bitcoin.Protocol.Types.IntegerArray do
 
-  alias Bitcoin.Protocol.Types.Integer
+  alias Bitcoin.Protocol.Types.VarInteger
 
   def parse_stream(data) do
 
-    [array_size, payload] = Integer.parse_stream(data)
+    [array_size, payload] = VarInteger.parse_stream(data)
 
     if array_size > 0 do
 

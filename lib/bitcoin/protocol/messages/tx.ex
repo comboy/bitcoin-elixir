@@ -6,7 +6,6 @@ defmodule Bitcoin.Protocol.Messages.Tx do
     https://en.bitcoin.it/wiki/Protocol_documentation#tx
   """
 
-  alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Types.TxInput
   alias Bitcoin.Protocol.Types.TxOutput
 

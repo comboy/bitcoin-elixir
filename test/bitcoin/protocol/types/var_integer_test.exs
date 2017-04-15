@@ -1,14 +1,14 @@
-defmodule BitcoinTest.Protocol.Types.IntegerTest do
+defmodule BitcoinTest.Protocol.Types.VarIntegerTest do
   use ExUnit.Case
 
-  alias Bitcoin.Protocol.Types.Integer
+  alias Bitcoin.Protocol.Types.VarInteger
 
   test "unpacks var-int 64-bit native 0xFF w/ remaining" do
 
     payload = <<255, 43, 221, 215, 77, 0, 0, 0, 0, 1, 1, 0>>
 
     assert [1305992491, <<1, 1, 0>>] ==
-             Integer.parse_stream(payload)
+             VarInteger.parse_stream(payload)
 
   end
 
@@ -17,7 +17,7 @@ defmodule BitcoinTest.Protocol.Types.IntegerTest do
     payload = <<254, 43, 221, 215, 77, 0, 1, 0>>
 
     assert [1305992491, <<0, 1, 0>>] ==
-             Integer.parse_stream(payload)
+             VarInteger.parse_stream(payload)
 
   end
 
@@ -26,7 +26,7 @@ defmodule BitcoinTest.Protocol.Types.IntegerTest do
     payload = <<253, 43, 221, 0, 1, 0>>
 
     assert [56619, <<0, 1, 0>>] ==
-             Integer.parse_stream(payload)
+             VarInteger.parse_stream(payload)
 
   end
 
@@ -35,7 +35,7 @@ defmodule BitcoinTest.Protocol.Types.IntegerTest do
     payload = <<0xF0, 0, 1, 0>>
 
     assert [0xF0, <<0, 1, 0>>] ==
-             Integer.parse_stream(payload)
+             VarInteger.parse_stream(payload)
 
   end
 
@@ -44,7 +44,7 @@ defmodule BitcoinTest.Protocol.Types.IntegerTest do
     payload = <<255, 43, 221, 215, 77, 0, 0, 0, 0>>
 
     assert 1305992491 ==
-             Integer.parse(payload)
+             VarInteger.parse(payload)
 
   end
 
@@ -53,7 +53,7 @@ defmodule BitcoinTest.Protocol.Types.IntegerTest do
     payload = <<254, 43, 221, 215, 77>>
 
     assert 1305992491 ==
-             Integer.parse(payload)
+             VarInteger.parse(payload)
 
   end
 
@@ -62,7 +62,7 @@ defmodule BitcoinTest.Protocol.Types.IntegerTest do
     payload = <<253, 43, 221>>
 
     assert 56619 ==
-             Integer.parse(payload)
+             VarInteger.parse(payload)
 
   end
 
@@ -71,26 +71,26 @@ defmodule BitcoinTest.Protocol.Types.IntegerTest do
     payload = <<0xF0>>
 
     assert 0xF0 ==
-             Integer.parse(payload)
+             VarInteger.parse(payload)
 
   end
 
   test "serialize 8-bit" do
-    assert Integer.serialize(0xF0) == <<0xF0>>
+    assert VarInteger.serialize(0xF0) == <<0xF0>>
   end
 
   test "serialize 16-bit" do
-    assert Integer.serialize(56619) == <<253, 43, 221>>
-    assert Integer.serialize(0xFFFF) == <<253, 255, 255>>
+    assert VarInteger.serialize(56619) == <<253, 43, 221>>
+    assert VarInteger.serialize(0xFFFF) == <<253, 255, 255>>
   end
 
   test "serialize 32-bit" do
-    assert Integer.serialize(1305992491) == <<254, 43, 221, 215, 77>>
-    assert Integer.serialize(0xFFFF_FFFF) == <<254, 255, 255, 255, 255>>
+    assert VarInteger.serialize(1305992491) == <<254, 43, 221, 215, 77>>
+    assert VarInteger.serialize(0xFFFF_FFFF) == <<254, 255, 255, 255, 255>>
   end
 
   test "serialize 64-bit" do
-    assert Integer.serialize(0xFFFF_FFFF + 1) == <<255, 0, 0, 0, 0, 1, 0, 0, 0>>
+    assert VarInteger.serialize(0xFFFF_FFFF + 1) == <<255, 0, 0, 0, 0, 1, 0, 0, 0>>
   end
 
 end

@@ -6,7 +6,7 @@ defmodule Bitcoin.Protocol.Messages.Reject do
     https://en.bitcoin.it/wiki/Protocol_specification#reject
   """
 
-  alias Bitcoin.Protocol.Types.String
+  alias Bitcoin.Protocol.Types.VarString
 
   import Bitcoin.Protocol
 
@@ -36,9 +36,9 @@ defmodule Bitcoin.Protocol.Messages.Reject do
 
   def parse(data) do
 
-    [message, payload] = String.parse_stream(data)
+    [message, payload] = VarString.parse_stream(data)
     <<code::bytes-size(1),payload::binary>> = payload
-    [reason, data] = String.parse_stream(payload)
+    [reason, data] = VarString.parse_stream(payload)
 
     %Bitcoin.Protocol.Messages.Reject{
       message: message,

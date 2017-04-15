@@ -8,7 +8,7 @@ defmodule Bitcoin.Protocol.Messages.Version do
     https://en.bitcoin.it/wiki/Protocol_documentation#version
   """
 
-  alias Bitcoin.Protocol.Types.String
+  alias Bitcoin.Protocol.Types.VarString
   alias Bitcoin.Protocol.Types.NetworkAddress
 
   defstruct version: 0, # (int32_t) Identifies protocol version being used by the node
@@ -49,7 +49,7 @@ defmodule Bitcoin.Protocol.Messages.Version do
       remaining :: binary
     >> = remaining
 
-    [user_agent, remaining] = String.parse_stream(remaining)
+    [user_agent, remaining] = VarString.parse_stream(remaining)
 
     <<start_height :: unsigned-little-integer-size(32),
       relay :: binary
@@ -82,7 +82,7 @@ defmodule Bitcoin.Protocol.Messages.Version do
     <> <<
       s.nonce :: unsigned-little-integer-size(64),
     >>
-      <> String.serialize(s.user_agent)
+      <> VarString.serialize(s.user_agent)
     <> <<
       s.start_height :: unsigned-little-integer-size(32),
       (if s.relay, do: 1, else: 0)

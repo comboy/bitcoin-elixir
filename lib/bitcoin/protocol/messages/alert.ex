@@ -51,7 +51,7 @@ defmodule Bitcoin.Protocol.Messages.Alert do
 
   def parse(data) do
 
-    [alert_payload_bytes, alert_data] = Bitcoin.Protocol.Types.Integer.parse_stream(data)
+    [alert_payload_bytes, alert_data] = Bitcoin.Protocol.Types.VarInteger.parse_stream(data)
 
     << alert_payload :: bytes-size(alert_payload_bytes), alert_signature_payload :: binary >> = alert_data
 
@@ -79,13 +79,13 @@ defmodule Bitcoin.Protocol.Messages.Alert do
       priority_payload :: binary
     >> = sub_ver_payload
 
-    [comment, comment_payload] = Bitcoin.Protocol.Types.String.parse_stream(priority_payload)
+    [comment, comment_payload] = Bitcoin.Protocol.Types.VarString.parse_stream(priority_payload)
 
-    [status_bar, status_bar_payload] = Bitcoin.Protocol.Types.String.parse_stream(comment_payload)
+    [status_bar, status_bar_payload] = Bitcoin.Protocol.Types.VarString.parse_stream(comment_payload)
 
-    [reserved, _] = Bitcoin.Protocol.Types.String.parse_stream(status_bar_payload)
+    [reserved, _] = Bitcoin.Protocol.Types.VarString.parse_stream(status_bar_payload)
 
-    [alert_signature_bytes, alert_signature_payload] = Bitcoin.Protocol.Types.Integer.parse_stream(alert_signature_payload)
+    [alert_signature_bytes, alert_signature_payload] = Bitcoin.Protocol.Types.VarInteger.parse_stream(alert_signature_payload)
 
     << alert_signature :: bytes-size(alert_signature_bytes) >> = alert_signature_payload
 

@@ -1,4 +1,6 @@
 defmodule Bitcoin.Protocol.Types.BlockHeader do
+  
+  alias Bitcoin.Protocol.Types.VarInteger
 
   defstruct version: 0, # Block version information, based upon the software version creating this block
             previous_block: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>>, # char[32], The hash value of the previous block this particular block references
@@ -27,7 +29,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, _] = Bitcoin.Protocol.Types.Integer.parse_stream(payload)
+    [transaction_count, _] = VarInteger.parse_stream(payload)
 
     %__MODULE__{
       version: version,
@@ -49,7 +51,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, payload] = Bitcoin.Protocol.Types.Integer.parse_stream(payload)
+    [transaction_count, payload] = VarInteger.parse_stream(payload)
 
     [%__MODULE__{
         version: version,
@@ -74,9 +76,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
       # https://en.bitcoin.it/wiki/Protocol_documentation#headers says tx_count can be > 0
       # https://bitcoin.org/en/developer-reference#headers says it's always 0x00
       # ¯\_(ツ)_/¯
-      Bitcoin.Protocol.Types.Integer.serialize(s.transaction_count)
+      VarInteger.serialize(s.transaction_count)
   end
-
-
 
 end

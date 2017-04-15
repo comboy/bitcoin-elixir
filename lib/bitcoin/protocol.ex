@@ -1,5 +1,5 @@
 defmodule Bitcoin.Protocol do
-  alias Bitcoin.Protocol.Types.Integer
+  alias Bitcoin.Protocol.Types.VarInteger
 
   # Common pattern in protocol messages is var_int followed by a structure repeated number of times
   # This function parses it and returns [collection_of_items, remaining_payload]
@@ -13,7 +13,7 @@ defmodule Bitcoin.Protocol do
   end
 
   def collect_items(payload, parser) do
-    [count, payload] = payload |> Integer.parse_stream
+    [count, payload] = payload |> VarInteger.parse_stream
     collect_items(payload, parser, count, [])
   end
 
@@ -31,7 +31,7 @@ defmodule Bitcoin.Protocol do
 
   # Serialize array of structs into var_int + array format
   def serialize_items(items) do
-    Integer.serialize(items |> Enum.count)
+    VarInteger.serialize(items |> Enum.count)
     <> (
       items
       |> Enum.map(&serialize_item/1)

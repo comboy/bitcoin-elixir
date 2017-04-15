@@ -9,7 +9,6 @@ defmodule Bitcoin.Protocol.Messages.GetData do
     https://en.bitcoin.it/wiki/Protocol_specification#getdata
   """
 
-  alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Types.InventoryVector
 
   import Bitcoin.Protocol

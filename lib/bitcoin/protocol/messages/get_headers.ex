@@ -13,8 +13,6 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
     https://en.bitcoin.it/wiki/Protocol_specification#getheaders
   """
 
-  alias Bitcoin.Protocol.Types.Integer
-
   import Bitcoin.Protocol
 
   defstruct version: 0, # the protocol version

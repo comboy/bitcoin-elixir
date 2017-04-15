@@ -7,7 +7,6 @@ defmodule Bitcoin.Protocol.Messages.NotFound do
     https://en.bitcoin.it/wiki/Protocol_specification#notfound
   """
 
-  alias Bitcoin.Protocol.Types.Integer
   alias Bitcoin.Protocol.Types.InventoryVector
 
   import Bitcoin.Protocol

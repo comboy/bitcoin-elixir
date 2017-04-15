@@ -1,6 +1,6 @@
 defmodule Bitcoin.Protocol.Types.TxOutput do
 
-  alias Bitcoin.Protocol.Types.Integer
+  alias Bitcoin.Protocol.Types.VarInteger
 
   defstruct value: 0, # Transaction Value (in satoshis)
             pk_script: <<>> # Usually contains the public key as a Bitcoin script setting up conditions to claim this output.
@@ -19,7 +19,7 @@ defmodule Bitcoin.Protocol.Types.TxOutput do
   def parse_stream(data) do
 
     <<value::unsigned-little-integer-size(64), payload :: binary>> = data
-    [pk_script_size, payload] = Integer.parse_stream(payload)
+    [pk_script_size, payload] = VarInteger.parse_stream(payload)
     <<pk_script :: bytes-size(pk_script_size), payload :: binary >> = payload
 
     [%__MODULE__{
@@ -31,7 +31,7 @@ defmodule Bitcoin.Protocol.Types.TxOutput do
 
   def serialize(%__MODULE__{} = s) do
     << s.value :: unsigned-little-integer-size(64) >>
-    <> (s.pk_script |> byte_size |> Integer.serialize)
+    <> (s.pk_script |> byte_size |> VarInteger.serialize)
     <> s.pk_script
   end
 
