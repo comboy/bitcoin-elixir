@@ -22,7 +22,12 @@ defmodule Bitcoin.Script do
   # TODO block sigop limit (MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50), so we need to be abel to export that count
   # TODO verify signature encoding https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki
 
-  import Bitcoin.Script.Serialization
+  alias Bitcoin.Script.Serialization
+
+  defdelegate parse(binary), to: Serialization
+  defdelegate to_binary(script), to: Serialization
+  defdelegate parse_string(script), to: Serialization
+  defdelegate parse_string2(script), to: Serialization
 
   import Bitcoin.Script.Macros
   import Bitcoin.Script.Control
@@ -34,12 +39,13 @@ defmodule Bitcoin.Script do
   # Max number of items in stack + altstack
   @max_stacks_size 1000
   @max_pubkeys_per_multisig 20
+  # Max number of opcodes that can be present in the script
+  # (excluding opcodes with byte value equal or below OP_16)
   @max_ops 201
 
   # The reason for this function is that we need to parse sig script and pk separately.
   # Otherwise sig script could do some nasty stuff with malformed PUSHDATA
   # Then we have to run it separately
-  # TODO can OP_IF and OP_ENDIF be split between sig and pk script?
   def verify_sig_pk(sig_bin, pk_bin, opts \\[])
   def verify_sig_pk(sig_bin, pk_bin, opts) when is_binary(sig_bin) and is_binary(pk_bin), do: verify_sig_pk(sig_bin |> parse, pk_bin |> parse, opts)
   def verify_sig_pk(sig_script, pk_script, opts) do

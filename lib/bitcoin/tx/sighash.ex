@@ -79,9 +79,9 @@ defmodule Bitcoin.Tx.Sighash do
 
   defp remove_op_codeseparator(script) do
     script
-    |> Bitcoin.Script.Serialization.parse
+    |> Bitcoin.Script.parse
     |> Enum.filter(fn op -> op != :OP_CODESEPARATOR end)
-    |> Bitcoin.Script.Serialization.to_binary
+    |> Bitcoin.Script.to_binary
   end
 
   defp zero_sequence_numbers(tx, input_number) do

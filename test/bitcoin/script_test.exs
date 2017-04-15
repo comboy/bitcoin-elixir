@@ -75,7 +75,7 @@ defmodule Bitcoin.ScriptTest do
 
   test "parse" do
     @parsed_scripts |> Enum.each(fn {hex, script} ->
-      assert Bitcoin.Script.Serialization.parse(hex |> Base.decode16!) == script
+      assert Bitcoin.Script.parse(hex |> Base.decode16!) == script
     end)
   end
 
@@ -88,7 +88,7 @@ defmodule Bitcoin.ScriptTest do
       {"6362675168", "OP_IF OP_VER OP_ELSE 1 OP_ENDIF"},
       {"6365675168", "OP_IF OP_VERIF OP_ELSE 1 OP_ENDIF"} # :invalid
     ] |> Enum.map(fn {hex, string} ->
-      assert Bitcoin.Script.Serialization.parse(hex |> Base.decode16!) == Bitcoin.Script.Serialization.parse_string(string)
+      assert Bitcoin.Script.parse(hex |> Base.decode16!) == Bitcoin.Script.parse_string(string)
     end)
   end
 
@@ -97,8 +97,8 @@ defmodule Bitcoin.ScriptTest do
       "6362675168", "0100917551", "00483045022015BD0139BCCCF990A6AF6EC5C1C52ED8222E03A0D51C334DF139968525D2FCD20221009F9EFE325476EB64C3958E4713E9EEFE49BF1D820ED58D2112721B134E2A1A5303483045022015BD0139BCCCF990A6AF6EC5C1C52ED8222E03A0D51C334DF139968525D2FCD20221009F9EFE325476EB64C3958E4713E9EEFE49BF1D820ED58D2112721B134E2A1A5303"]
     |> Enum.map(fn hex ->
       bin = hex |> Base.decode16!
-      script = bin |> Bitcoin.Script.Serialization.parse
-      assert bin == Bitcoin.Script.Serialization.to_binary(script)
+      script = bin |> Bitcoin.Script.parse
+      assert bin == Bitcoin.Script.to_binary(script)
     end)
   end
 
@@ -112,7 +112,7 @@ defmodule Bitcoin.ScriptTest do
   end
 
   test "disabled op in unexecuted if branch" do
-    assert false == ([:OP_TRUE, :OP_IF, :OP_TRUE, :OP_ELSE, :OP_2, :OP_2MUL, :OP_ENDIF] |> Bitcoin.Script.Serialization.to_binary |> Bitcoin.Script.verify)
+    assert false == ([:OP_TRUE, :OP_IF, :OP_TRUE, :OP_ELSE, :OP_2, :OP_2MUL, :OP_ENDIF] |> Bitcoin.Script.to_binary |> Bitcoin.Script.verify)
   end
 
   test "the suite" do
@@ -132,8 +132,8 @@ defmodule Bitcoin.ScriptTest do
       if !ret do
         # Uncomment to get list of scripts that failed
         #IO.puts "should be #{result} #[#{flags}] | #{comment} :"
-        #sig_bin |> IO.inspect |> Bitcoin.Script.Serialization.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
-        #pk_bin |> IO.inspect |> Bitcoin.Script.Serialization.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
+        #sig_bin |> IO.inspect |> Bitcoin.Script.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
+        #pk_bin |> IO.inspect |> Bitcoin.Script.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
         #assert false
       end
       ret

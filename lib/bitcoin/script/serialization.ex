@@ -4,8 +4,10 @@ defmodule Bitcoin.Script.Serialization do
 
   # PUSHDATA with size > @max_element_size makes the script invalid
   @max_element_size 520
-  @max_script_size 10_000 # scripts > 10,000 bytes are invalid
+  # scripts > 10,000 bytes are invalid
+  @max_script_size 10_000 
 
+  # Value returned when the script is invalid
   @invalid [:invalid]
 
   ##
