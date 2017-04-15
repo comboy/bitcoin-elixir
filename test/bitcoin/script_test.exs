@@ -30,7 +30,7 @@ defmodule Bitcoin.ScriptTest do
 
     cred_tx = %Messages.Tx{
       inputs: [
-        %Types.TransactionInput{
+        %Types.TxInput{
           previous_output: %Types.Outpoint{
             hash: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>>,
             index: 0xFF_FF_FF_FF,
@@ -40,7 +40,7 @@ defmodule Bitcoin.ScriptTest do
         }
       ],
       outputs: [
-        %Types.TransactionOutput{
+        %Types.TxOutput{
           value: 0,
           pk_script: pk_bin,
         }
@@ -51,7 +51,7 @@ defmodule Bitcoin.ScriptTest do
 
     spend_tx = %Messages.Tx{
       inputs: [
-        %Types.TransactionInput{
+        %Types.TxInput{
           previous_output: %Types.Outpoint{
             hash: cred_tx |> Bitcoin.Tx.hash,
             index: 0
@@ -61,7 +61,7 @@ defmodule Bitcoin.ScriptTest do
         }
       ],
       outputs: [
-        %Types.TransactionOutput{
+        %Types.TxOutput{
           pk_script: <<>>,
           value: 0
         }

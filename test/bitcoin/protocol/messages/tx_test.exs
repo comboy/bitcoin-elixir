@@ -33,7 +33,7 @@ defmodule Bitcoin.Protocol.Messages.TxTest do
 
     struct = %Tx{
              inputs: [
-               %Bitcoin.Protocol.Types.TransactionInput{
+               %Bitcoin.Protocol.Types.TxInput{
                  previous_output: %Bitcoin.Protocol.Types.Outpoint{
                    hash: <<109, 189, 219, 8, 91, 29, 138, 247, 81, 132, 240, 188, 1, 250, 213, 141, 18, 102, 233, 182, 59, 80, 136, 25, 144, 228, 180, 13, 106, 238, 54, 41>>,
                    index: 0
@@ -52,11 +52,11 @@ defmodule Bitcoin.Protocol.Messages.TxTest do
                ],
              lock_time: 0,
              outputs: [
-               %Bitcoin.Protocol.Types.TransactionOutput{
+               %Bitcoin.Protocol.Types.TxOutput{
                  pk_script: Base.decode16!("76A9141AA0CD1CBEA6E7458A7ABAD512A9D9EA1AFB225E88AC"),
                  value: 5000000
                  },
-               %Bitcoin.Protocol.Types.TransactionOutput{
+               %Bitcoin.Protocol.Types.TxOutput{
                  pk_script: Base.decode16!("76A9140EAB5BEA436A0484CFAB12485EFDA0B78B4ECC5288AC"),
                  value: 3354000000
                  }

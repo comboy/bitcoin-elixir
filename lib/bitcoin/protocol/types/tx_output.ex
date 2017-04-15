@@ -1,4 +1,4 @@
-defmodule Bitcoin.Protocol.Types.TransactionOutput do
+defmodule Bitcoin.Protocol.Types.TxOutput do
 
   alias Bitcoin.Protocol.Types.Integer
 

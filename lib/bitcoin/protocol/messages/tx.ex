@@ -7,8 +7,8 @@ defmodule Bitcoin.Protocol.Messages.Tx do
   """
 
   alias Bitcoin.Protocol.Types.Integer
-  alias Bitcoin.Protocol.Types.TransactionInput
-  alias Bitcoin.Protocol.Types.TransactionOutput
+  alias Bitcoin.Protocol.Types.TxInput
+  alias Bitcoin.Protocol.Types.TxOutput
 
   import Bitcoin.Protocol
 
@@ -33,8 +33,8 @@ defmodule Bitcoin.Protocol.Messages.Tx do
 
     <<version :: little-integer-size(32), payload :: binary>> = data
 
-    [inputs, payload] =  payload |> collect_items(TransactionInput)
-    [outputs, payload] = payload |> collect_items(TransactionOutput)
+    [inputs, payload] =  payload |> collect_items(TxInput)
+    [outputs, payload] = payload |> collect_items(TxOutput)
 
     <<lock_time::unsigned-little-integer-size(32), remaining :: binary>> = payload
 
