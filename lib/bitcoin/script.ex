@@ -31,7 +31,9 @@ defmodule Bitcoin.Script do
 
   import Bitcoin.Script.Macros
   import Bitcoin.Script.Control
-  import Bitcoin.Script.Number
+  alias Bitcoin.Script.Number
+  def bin(x) when is_number(x), do: Number.bin(x)
+  defdelegate num(x), to: Number
 
   use Bitcoin.Script.Opcodes
   use Bitcoin.Script.P2SH
@@ -72,9 +74,7 @@ defmodule Bitcoin.Script do
   # Cast stack to boolean
   def cast_to_bool(:invalid), do: false
   def cast_to_bool([]), do: false
-  def cast_to_bool([0 | _]), do: false
-  def cast_to_bool([<<>> | _]), do: false
-  def cast_to_bool([_ | _]), do: true
+  def cast_to_bool([x | _]), do: bool(x)
 
   # Header declaration for function with default value and multiple clauses
   def run(script, opts \\ [])
@@ -160,13 +160,23 @@ defmodule Bitcoin.Script do
   op :OP_VERNOTIF, _, do: :invalid
 
   # OP_IF If the top stack value is not False, the statements are executed. The top stack value is removed.
-  def run([0 | stack], [:OP_IF | script], opts), do: stack |> run(script |> extract_else, opts)
-  def run([_ | stack], [:OP_IF | script], opts), do: stack |> run(script |> extract_if, opts)
+  def run([x | stack], [:OP_IF | script], opts) do
+    if bool(x) do
+      stack |> run(script |> extract_if, opts)
+    else
+      stack |> run(script |> extract_else, opts)
+    end
+  end
 
   # OP_NOTIF If the top stack value is False, the statements are executed. The top stack value is removed.
   # Not the same as OP_NOT then OP_IF because OP_NOT should only work on numbers
-  def run([0 | stack], [:OP_NOTIF | script], opts), do: stack |> run(script |> extract_if, opts)
-  def run([_ | stack], [:OP_NOTIF | script], opts), do: stack |> run(script |> extract_else, opts)
+  def run([x | stack], [:OP_NOTIF | script], opts) do
+    if bool(x) do
+      stack |> run(script |> extract_else, opts)
+    else
+      stack |> run(script |> extract_if, opts)
+    end
+  end
 
   # OP_ELSE implemented as part of the OP_IF
 
@@ -308,6 +318,7 @@ defmodule Bitcoin.Script do
 
   # OP_NOT If the input is 0 or 1, it is flipped. Otherwise the output will be 0.
   op_num :OP_NOT, 0, do: 1
+  op_num :OP_NOT, <<0x80>>, do: 1 # negative zero
   op_num :OP_NOT, 1, do: 0
   op_num :OP_NOT, x, do: 0
 
@@ -390,7 +401,7 @@ defmodule Bitcoin.Script do
   # OP_CHECKSIG The entire transaction's outputs, inputs, and script (from the most recently-executed OP_CODESEPARATOR
   # to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key.
   # If it is, 1 is returned, 0 otherwise.
-  op :OP_CHECKSIG, [pk, sig | stack], opts, do: [verify_signature(sig, pk, opts) |> bool | stack]
+  op :OP_CHECKSIG, [pk, sig | stack], opts, do: [verify_signature(sig, pk, opts) |> bin | stack]
 
   # OP_CHEKSIGVERIFY Same as OP_CHECKSIG, but OP_VERIFY is executed afterward.
   op_alias :OP_CHECKSIGVERIFY, [:OP_CHECKSIG, :OP_VERIFY]
@@ -419,7 +430,7 @@ defmodule Bitcoin.Script do
     if length(pks) > @max_pubkeys_per_multisig || length(sigs) > length(pks) do
       :invalid
     else
-      [verify_all_signatures(sigs, pks, opts) |> bool | stack]
+      [verify_all_signatures(sigs, pks, opts) |> bin | stack]
     end
   end
 
@@ -454,8 +465,16 @@ defmodule Bitcoin.Script do
   # OP_INVALIDOPCODE
 
   # Helper to cast boolean result operations to resulting stack element
-  def bool(true), do: 1
-  def bool(false), do: 0
+  def bin(x) when is_binary(x), do: x
+  def bin(true), do: 1
+  def bin(false), do: 0
+
+  # Helper to cast stack element to true/false value
+  def bool(0), do: false
+  def bool(<<>>), do: false
+  # Negative zero is false
+  def bool(<<0x80>>), do: false
+  def bool(_), do: true
 
   def verify_signature(sig, pk, opts) do
     # Last byte is a sighash_type, read it and remove it

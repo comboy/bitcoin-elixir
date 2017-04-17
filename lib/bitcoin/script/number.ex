@@ -22,12 +22,12 @@ defmodule Bitcoin.Script.Number do
   def rev_num(<< x, bin :: binary >>) when (x &&& 0x80) != 0, do: -1 * rev_num(<< x ^^^ 0x80>> <> bin)
   def rev_num(<< x :: unsigned-integer-size(32) >>), do: x
   def rev_num(<< x :: unsigned-integer-size(24) >>), do: x
+  # Helper to cast boolean result operations to resulting stack element
   def rev_num(<< x :: unsigned-integer-size(16) >>), do: x
   def rev_num(<< x :: unsigned-integer-size(8) >>), do: x
 
   # Serialize integer into the script representation
   def bin(0), do: <<>>
-  def bin(x) when is_binary(x), do: x
 
   # If number is negative xor the last byte with 0x80
   def bin(x) when is_number(x) and x < 0 do

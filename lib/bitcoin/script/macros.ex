@@ -69,12 +69,12 @@ defmodule Bitcoin.Script.Macros do
   #
   # expands to
   #
-  #     run([a, b | stack], [:OP_BOOLAND | script], opts), do: [bool( a != 0 and b != 0) | stack] |> run(script, opts)
+  #     run([a, b | stack], [:OP_BOOLAND | script], opts), do: [bin( a != 0 and b != 0) | stack] |> run(script, opts)
 
   defmacro op_bool(op, a, b, do: stack_expression) when is_atom(op) do
     quote do
       def run([unquote(a), unquote(b) | stack], [unquote(op) | script], opts) do
-        [bool(unquote(stack_expression)) | stack] |> run(script, opts)
+        [bin(unquote(stack_expression)) | stack] |> run(script, opts)
       end
     end
   end
@@ -82,7 +82,7 @@ defmodule Bitcoin.Script.Macros do
   defmacro op_bool(op, a, b, c, do: stack_expression) when is_atom(op) do
     quote do
       def run([unquote(a), unquote(b), unquote(c) | stack], [unquote(op) | script], opts) do
-        [bool(unquote(stack_expression)) | stack] |> run(script, opts)
+        [bin(unquote(stack_expression)) | stack] |> run(script, opts)
       end
     end
   end
