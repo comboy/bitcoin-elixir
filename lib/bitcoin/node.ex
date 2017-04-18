@@ -7,8 +7,8 @@ defmodule Bitcoin.Node do
     listen_ip: '0.0.0.0',
     listen_port: 8333,
     max_connections: 8,
-    user_agent: "/Bitcoin-Ex:0.0.0/",
-    data_directory: Path.expand("~/.bitcoin-ex"),
+    user_agent: "/bitcoin-elixir:0.0.0/",
+    data_directory: Path.expand("~/.bitcoin-elixir"),
     services: <<1, 0, 0, 0, 0, 0, 0, 0>> # TODO probably doesn't belong to config
   }
 

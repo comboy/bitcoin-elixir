@@ -1,33 +1,35 @@
-# Bitcoin-Ex (Bitcoin Elixir)
+# bitcoin-elixir
 
-A Bitcoin protocol parser library and full node implementation written in Elixir.
+Bitcoin script and protocol tools plus a full node implementation written in Elxir.
 
-Current Status: Not even beta quality. Unstable Interfaces.
-Not recommended for any use except gross curiosity.
+It's still work in progress, not suitable for any kind of usage. Contributions and comments are of course very much welcome,
+but if you want to jump in, I'd suggest to get in touch (through github issues) because all APIs are still evolving.
 
-Your improvements and constructive criticisms are highly appreciated.
+Project is a fork of Justin Lynn's [Bitcoin-Ex](https://github.com/justinlynn/bitcoin-ex) which contained excellent 
+protocol parsers and DNS peer discovery.
 
-## Features (Planned)
+## Current status
 
-* Complete Bitcoin Parsing Library
-* Complete Bitcoin Node Implementation
-  * OTP Clustering/Distribution Support for Non-Stop Operation including Hot Code Reloading w/o Node Restart in Production
-  * Suitable for Elixir/Erlang Application Embedding (for creating a [Toshi](https://github.com/coinbase/toshi) compatible API or web interface for example)
-  * Abstract Blockchain Bulk Data and Index Storage Backend Interface (Mnesia, Postgres, etc...)
+* Full protocol parser and serialization
+* Basic script interpreter, but still missing many BIPs (currently 1021/1193 of bitcoin core script tests json)
+* Connecting and accepting connections from other peers
+* Fetching blockchain to a temporary memory storage (but only with very lacking blcoks and tx validation)
 
-### It Works (sort of)
+## Roadmap
 
-* Protocol Library
-  * Protocol messages parsing and serialization
-  * Basic script interpreter (not yet passing full test suite)
-* OTP Application / Full Node
-  * DNS peer discovery
-  * Establilishing connection with other peers
-  * Fetching blockchain to a temporary memory storage
+* Some decent storage backend (postgres or mnesia)
+* More strict validation
+* Mempool
+* BIPs implementation and script fixes to be able to pass all bitcoin core script and transaction tests
+* Pass TheBlueMatt's [test-scripts](https://github.com/TheBlueMatt/test-scripts)
+* Make sure the architecture allows to easily plug in custom modules so that blockchain / bitcoin network stats can be collected
+* Allow it to run across multiple nodes
 
-### Compliance Tests Not Yet Passing but for which Compliance is a Goal
+## Why?
 
-* TheBlueMatt's [regression test suite](https://github.com/TheBlueMatt/test-scripts)
+It's handy to have Bitcoin tools for operatino on addresss, transactions and scripts in the language of your choice.
+Regarding full node, because it's fun. Given that Bitcoin protocol is defined by the reference client, playing with your
+own implementation is one of a very few ways to truly understand how Bitcoin works. It is not meant to be used as a wallet.
 
 ## Running the node
 
@@ -49,6 +51,8 @@ See the LICENCE file in the project root.
 
 Please fork this repository to your own account, create a feature/{short but descriptive name} branch on your own
 repository and submit a pull request back to develop.
+
+**Any** kind of contributions are super welcome. Even if it's a comment bitching about how things are done currently.
 
 
 
