@@ -54,7 +54,7 @@ defmodule Bitcoin.Script do
     try do
       sig_script
       |> run(opts)
-      |> run(pk_script, opts)
+      |> run(pk_script |> validate, opts)
       |> cast_to_bool
     catch _,_ ->
       false
@@ -241,10 +241,10 @@ defmodule Bitcoin.Script do
   op :OP_OVER, [a, b | stack], do: [b, a, b | stack]
 
   # OP_PICK The item n back in the stack is copied to the top
-  op :OP_PICK, [n | stack], do: [stack |> Enum.at(num(n)) | stack]
+  op :OP_PICK, [n | stack], do: [stack |> nth_element(n) | stack]
 
   # OP_ROLL The item n back in the stack is moved to the top.
-  op :OP_ROLL, [n | stack], do: [stack |> Enum.at(num(n)) | stack |> List.delete_at(num(n))]
+  op :OP_ROLL, [n | stack], do: [stack |> nth_element(n) | stack |> List.delete_at(num(n))]
 
   # OP_ROT The top three items on the stack are rotated to the left.
   op :OP_ROT, [a, b, c | stack], do: [c, a, b | stack]
@@ -475,6 +475,15 @@ defmodule Bitcoin.Script do
   # Negative zero is false
   def bool(<<0x80>>), do: false
   def bool(_), do: true
+
+  def nth_element(stack, n) do
+    n = num(n)
+    if n >= 0 do
+      stack |> Enum.at(n)
+    else
+      :invalid
+    end
+  end
 
   def verify_signature(sig, pk, opts) do
     # Last byte is a sighash_type, read it and remove it
