@@ -7,7 +7,15 @@ defmodule Bitcoin.Mixfile do
      elixir: "~> 1.0",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps()]
+     deps: deps(),
+
+     # Docs
+     name: "bitcoin-elixir",
+     source_url: "https://github.com/comboy/bitcoin-elixir",
+     homepage_url: "https://github.com/comboy/bitcoin-elixir",
+     docs: [main: "README",
+          extras: ["README.md"]]
+   ]
   end
 
   # Configuration for the OTP application
@@ -31,9 +39,13 @@ defmodule Bitcoin.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:reagent, "~> 0.1.5"},
+    [
+     # Socket acceptor pool
+     {:reagent, "~> 0.1.5"},
      # JSON library, used to decode test cases
-     {:poison, "~> 3.0", only: :test}
+     {:poison, "~> 3.0", only: :test},
+     # Docs generator
+     {:ex_doc, "~> 0.14", only: :dev, runtime: false}
     ]
   end
 end
