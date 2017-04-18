@@ -16,7 +16,7 @@ defmodule Bitcoin.Mixfile do
   def application do
     [mod: { Bitcoin, [] },
      applications: [
-       :exlager
+       :logger
        ]
     ]
   end
@@ -32,7 +32,6 @@ defmodule Bitcoin.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [{:reagent, "~> 0.1.5"},
-     {:exlager, git: "https://github.com/khia/exlager.git", branch: "master"},
      # JSON library, used to decode test cases
      {:poison, "~> 3.0", only: :test}
     ]

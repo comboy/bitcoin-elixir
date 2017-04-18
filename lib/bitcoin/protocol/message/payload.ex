@@ -1,6 +1,6 @@
 defmodule Bitcoin.Protocol.Message.Payload do
 
-  require Lager
+  require Logger
 
   @command_names Bitcoin.Protocol.Message.command_names()
 
@@ -32,7 +32,7 @@ defmodule Bitcoin.Protocol.Message.Payload do
   end
 
   def parse(command, data) do
-    Lager.info "Unknown command: #{command |> inspect} data[#{byte_size(data)}]"
+    Logger.info "Unknown command: #{command |> inspect} data[#{byte_size(data)}]"
   end
 
 end

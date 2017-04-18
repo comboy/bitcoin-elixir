@@ -1,5 +1,5 @@
 defmodule Bitcoin.Node.Network.Discovery do
-  require Lager
+  require Logger
   use GenServer
 
   alias Bitcoin.Protocol.Types.NetworkAddress
@@ -17,7 +17,7 @@ defmodule Bitcoin.Node.Network.Discovery do
       https://en.bitcoin.it/wiki/Satoshi_Client_Node_Discovery#DNS_Addresses
     """
 
-    require Lager
+    require Logger
 
     @domains [
       [ "bitcoin.sipa.be", 'seed.bitcoin.sipa.be' ], # Pieter Wuille
@@ -31,7 +31,7 @@ defmodule Bitcoin.Node.Network.Discovery do
     def gather_peers(%{modules: modules} = _opts) do
 
       Enum.map(@domains, fn([seed_name, domain]) -> 
-        Lager.info("Starting Peer Discovery via DNS for seed #{seed_name} at domain #{domain}")
+        Logger.info("Starting Peer Discovery via DNS for seed #{seed_name} at domain #{domain}")
         Enum.each(:inet_res.lookup(domain, :in, :a), fn(ip) ->
           %NetworkAddress{
             address: ip, 
@@ -51,7 +51,7 @@ defmodule Bitcoin.Node.Network.Discovery do
 
   def handle_cast(:begin_discovery, %{discovery_started: true} = opts), do: {:noreply, opts}
   def handle_cast(:begin_discovery, opts) do
-    Lager.info "Beginning Peer Discovery Process"
+    Logger.info "Beginning Peer Discovery Process"
     Strategy.DNS.gather_peers(opts)
     {:noreply, opts |> Map.put(:discovery_started, true)}
   end

@@ -12,7 +12,7 @@ defmodule Bitcoin.Node.Network.Peer do
   """
 
   use GenServer
-  require Lager
+  require Logger
 
   alias Bitcoin.Node
   alias Bitcoin.Protocol.Messages
@@ -70,7 +70,7 @@ defmodule Bitcoin.Node.Network.Peer do
 
   # Initialize TCP connection
   def handle_info(:connect, %{ip: ip, port: port} = state) do
-    Lager.info "Connecting to #{ip |> :inet.ntoa}:#{port}"
+    Logger.info "Connecting to #{ip |> :inet.ntoa}:#{port}"
     case :gen_tcp.connect(ip, port, [:binary, active: true]) do
       # Successful connection
       {:ok, socket} ->
@@ -186,7 +186,7 @@ defmodule Bitcoin.Node.Network.Peer do
     state |> debug("=> INV  #{inventory_vectors |> inspect}")
     inventory_vectors |> Enum.each(fn iv -> Node.Inventory.seen(iv) end)
 
-    #Lager.info "#{ip |> inspect} <= I WANT IT ALL "
+    #Logger.info "#{ip |> inspect} <= I WANT IT ALL "
     #%Messages.GetData{
       #inventory_vectors: inventory_vectors |> Enum.filter(fn iv -> iv.reference_type == :msg_tx end)
     #}|> send_message(state)
@@ -263,12 +263,12 @@ defmodule Bitcoin.Node.Network.Peer do
   end
 
   defp debug(%{ip: ip, port: port, direction: direction} = state, msg) do
-    Lager.debug "[#{direction}] #{ip |> :inet.ntoa}:#{port} #{msg}"
+    Logger.debug "[#{direction}] #{ip |> :inet.ntoa}:#{port} #{msg}"
     state
   end
 
   defp disconnect(state, reason \\ :none) do
-    Lager.debug "#{state.ip |> :inet.ntoa} disconnected :#{reason}"
+    Logger.debug "#{state.ip |> :inet.ntoa} disconnected :#{reason}"
     {:stop, :normal, state |> Map.put(:status, :disconnected)}
   end
 

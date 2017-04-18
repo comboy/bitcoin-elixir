@@ -18,7 +18,7 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
 
   use GenServer
 
-  require Lager
+  require Logger
 
   alias Bitcoin.Protocol.Types.NetworkAddress
 
@@ -59,7 +59,7 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
   def handle_info(:check_connectivity, state) do
     num_conn = length(state.peers)
     max_conn = state.config[:max_connections]
-    Lager.info("[CM] #{num_conn} peers connected")
+    Logger.info("[CM] #{num_conn} peers connected")
 
     # TODO we want to differentiate between outbound_max_connections and max_connections
     # E.g. bitcoin-core behavior is that it won't have more than 8 outbound connections
@@ -77,13 +77,13 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
   end
 
   def handle_info({:DOWN, _ref, :process, peer, _reason}, state) do
-    Lager.info("[CM] unregistered peer #{peer |> inspect}")
+    Logger.info("[CM] unregistered peer #{peer |> inspect}")
     self() |> send(:check_connectivity)
     {:noreply, state |> Map.put(:peers, state.peers |> List.delete(peer))}
   end
 
   def handle_call(:register_peer, {peer, _ref}, state) do
-    Lager.info("[CM] registered peer #{peer |> inspect}")
+    Logger.info("[CM] registered peer #{peer |> inspect}")
     state = state |> Map.put(:peers, [peer | state.peers])
     Process.monitor(peer)
     {:reply, :ok, state}

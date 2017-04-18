@@ -1,7 +1,7 @@
 defmodule Bitcoin.Node do
   use GenServer
 
-  require Lager
+  require Logger
 
   @default_config %{
     listen_ip: '0.0.0.0',
@@ -32,7 +32,7 @@ defmodule Bitcoin.Node do
   end
 
   def handle_info(:initialize, state) do
-    Lager.info "Node initialization"
+    Logger.info "Node initialization"
 
     config = case Application.fetch_env(:bitcoin, :node) do
       :error -> @default_config

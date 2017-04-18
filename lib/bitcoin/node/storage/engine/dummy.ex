@@ -2,9 +2,10 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
   @moduledoc """
     In memory storage to use for tests and playing with in dev env.
   """
+
   use GenServer
 
-  require Lager
+  require Logger
 
   alias Bitcoin.Protocol.Messages
 
@@ -65,7 +66,7 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
 
   defp store_block(state, block) do
     hash = block |> Bitcoin.Block.hash
-    Lager.info "Storing block #{block.height} | #{hash |> Bitcoin.Util.friendly_hash}"
+    Logger.info "Storing block #{block.height} | #{hash |> Bitcoin.Util.friendly_hash}"
     #File.write("tmp/block_#{block.height}.dat", block |> Messages.Block.serialize)
     block.transactions
     |> Enum.reduce(state, fn(tx, state) -> state |> store_tx(tx)  end)

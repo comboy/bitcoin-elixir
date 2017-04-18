@@ -7,7 +7,7 @@ defmodule Bitcoin.Node.Inventory do
 
   use GenServer
 
-  require Lager
+  require Logger
 
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Protocol.Types
@@ -100,7 +100,7 @@ defmodule Bitcoin.Node.Inventory do
       :ok -> 
         state |> put_in([:items, key, :status], :present)# TODO update list
       {:error, error} ->
-        Lager.error "Failed to store block #{hash} #{error |> inspect}"
+        Logger.error "Failed to store block #{hash} #{error |> inspect}"
         state |> put_in([:items, key, :status], :invalid)# TODO update list
     end
 

@@ -9,7 +9,7 @@ defmodule Bitcoin.Node.Network.Addr do
   """
   use GenServer
 
-  require Lager
+  require Logger
 
   alias Bitcoin.Protocol.Types.NetworkAddress
 
@@ -21,7 +21,7 @@ defmodule Bitcoin.Node.Network.Addr do
   def clear, do: GenServer.cast(__MODULE__, :clear)
 
   def handle_cast({:add, %NetworkAddress{} = addr}, addrs) do
-    Lager.debug("adding new network address #{addr.address |> :inet.ntoa}")
+    Logger.debug("adding new network address #{addr.address |> :inet.ntoa}")
     existing = addrs[addr.address]
 
     # If we already have this address, update timestamp if it's older
