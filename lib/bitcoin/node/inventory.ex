@@ -165,26 +165,21 @@ defmodule Bitcoin.Node.Inventory do
     :ok
   end
 
-  # TODO maybe block locator hashes belong to some blockchain module which also takes care
-  # of decidnig which is the main chain?
+  def block_locator_hashes, do: block_locator_hashes([], Storage.max_height, 1, 1)
+  def block_locator_hashes(hashes, height, _multiplier, _count) when height < 1, do: [@genesis_hash | hashes] |> Enum.reverse
+  # Fierst add 10 hashes of the latest blocks
+  def block_locator_hashes(hashes, height, multiplier, count) when count <= 10, do:
+    block_locator_hashes([hash_for_height(height) | hashes], height - 1, multiplier, count + 1)
+  # Then step backwards increases with each iteration
+  def block_locator_hashes(hashes, height, multiplier, count), do:
+    block_locator_hashes([hash_for_height(height) | hashes], height - multiplier, multiplier * 2, count + 1)
 
-  # Block locator hashes: newest back to genesis block (dense to start, but then sparse)
-  # We take first block then 2 blocks behind it, then 4 blocks behind it and so on until genesis
-  # (and we include genesis block hash)
-  def block_locator_hashes, do: [ Storage.get_blocks_with_height(Storage.max_height()) |> List.first |> Bitcoin.Block.hash, @genesis_hash]
-
-  # FIXME seemingly proper implementation below doesn't seem to work, maybe just switch to get headers directly to save time
-  # The implementation above of course sucks heavily and will fail on the first encountered fork
-
-  #def block_locator_hashes, do: block_locator_hashes([Bitcoin.Const.genesis_hash()], Storage.max_height, 1)
-  #def block_locator_hashes(hashes, height, multiplier) when height < 1, do: hashes
-  #def block_locator_hashes(hashes, height, multiplier) do
-    #hash = Storage.get_blocks_with_height(height) |> List.first |> Bitcoin.Block.hash
-    #block_locator_hashes([hash | hashes], height - multiplier, multiplier)
-  #end
+  # TODO we shouldn't need to fetch full block from storage to get that hash
+  # TODO it shouldn't be just first block with given height, it should be the main chain
+  defp hash_for_height(height), do: Storage.get_blocks_with_height(height) |> List.first |> Bitcoin.Block.hash
 
   # Request blocks from the peer
-  def get_blocks(peer) do
+  defp get_blocks(peer) do
     msg = %Messages.GetBlocks{
       version: Node.protocol_version(),
       block_locator_hashes: block_locator_hashes()
