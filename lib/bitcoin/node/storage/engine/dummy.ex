@@ -66,7 +66,7 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
 
   defp store_block(state, block) do
     hash = block |> Bitcoin.Block.hash
-    Logger.info "Storing block #{block.height} | #{hash |> Bitcoin.Util.friendly_hash}"
+    Logger.info "Storing block #{block.height} | #{hash |> Bitcoin.Util.hash_to_hex}"
     #File.write("tmp/block_#{block.height}.dat", block |> Messages.Block.serialize)
     block.transactions
     |> Enum.reduce(state, fn(tx, state) -> state |> store_tx(tx)  end)

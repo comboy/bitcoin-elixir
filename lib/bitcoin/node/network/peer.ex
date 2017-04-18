@@ -11,6 +11,7 @@ defmodule Bitcoin.Node.Network.Peer do
     TODO close connection if there's no successful handshake within specific time
   """
 
+  use Bitcoin.Common
   use GenServer
   require Logger
 
@@ -194,13 +195,13 @@ defmodule Bitcoin.Node.Network.Peer do
   end
 
   def handle_info({:msg, %Messages.Block{} = block}, state) do
-    state |> debug("=> BLOCK #{block |> Bitcoin.Block.hash |> Bitcoin.Util.friendly_hash}")
+    state |> debug("=> BLOCK #{block |> Bitcoin.Block.hash |> Bitcoin.Util.hash_to_hex}")
     block |> Node.Inventory.add
     {:noreply, state}
   end
 
   def handle_info({:msg, %Messages.Tx{} = tx}, state) do
-    state |> debug("=> TX #{tx |> Bitcoin.Tx.hash |> Bitcoin.Util.friendly_hash}")
+    state |> debug("=> TX #{tx |> Bitcoin.Tx.hash |> Bitcoin.Util.hash_to_hex}")
     #tx |> Node.Inventory.add
     {:noreply, state}
   end
@@ -255,7 +256,7 @@ defmodule Bitcoin.Node.Network.Peer do
 
   # Called after a successful handshake.
   defp handle_connected(state) do
-    :ok = Node.Network.modules()[:connection_manager].register_peer()
+    :ok = @modules[:connection_manager].register_peer()
     self() |> send(:periodic_ping)
     state
       |> Map.put(:status, :connected)

@@ -10,7 +10,7 @@ defmodule Bitcoin.TxTest do
     block = Messages.Block.parse(payload)
 
     tx = block.transactions |> List.first
-    hash = tx |> Bitcoin.Tx.hash |> Bitcoin.Util.friendly_hash
+    hash = tx |> Bitcoin.Tx.hash |> Bitcoin.Util.hash_to_hex
 
     assert hash == "8c14f0db3df150123e6f3dbbf30f8b955a8249b62ac1d1ff16284aefa3d06d87"
   end

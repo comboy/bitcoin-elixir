@@ -32,6 +32,6 @@ defmodule Bitcoin.UTilTest do
   end
 
   test "friendly hash" do
-    assert Util.friendly_hash(<<239, 190>>) == "beef"
+    assert Util.hash_to_hex(<<239, 190>>) == "beef"
   end
 end

@@ -5,6 +5,7 @@ defmodule Bitcoin.Node.Inventory do
     after validation. Fetched data should be added to storage / mempool.
   """
 
+  use Bitcoin.Common
   use GenServer
 
   require Logger
@@ -17,7 +18,7 @@ defmodule Bitcoin.Node.Inventory do
   @get_data_timeout 60_000
   @sync_check_time  20_000
 
-  def start_link(opts \\ %{}), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  def start_link, do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
 
   # Report inventory spotted from connected peer. This is called by the peer module when it receives INV
   def seen(inv_vector)
@@ -28,9 +29,8 @@ defmodule Bitcoin.Node.Inventory do
   # Add data to inventory. Called by Peer on BLOCK and TX
   def add(%Messages.Block{} = block), do: GenServer.call(__MODULE__, {:add, {:block, block}})
 
-  def init(%{modules: modules}) do
+  def init(_) do
     state = %{
-      modules: modules,
       items: %{}
     }
     self() |> send(:periodical_sync)
@@ -53,7 +53,7 @@ defmodule Bitcoin.Node.Inventory do
       # TODO this peer should be selected in a smarter way
       # Take into account height from the handshake and maybe latency
       # If we are super bored we could also try measure connection speed
-      peer = state.modules[:connection_manager].peers |> List.first
+      peer = @modules[:connection_manager].peers |> List.first
       # TODO upgrade to get headers later
       peer && get_blocks(peer)
     else
@@ -97,11 +97,11 @@ defmodule Bitcoin.Node.Inventory do
     # TODO case when key is not on the list anymore (unlikely, but could probably happen due to cleanup)
 
     state = case Storage.store_block(block) do
-      :ok -> 
-        state |> put_in([:items, key, :status], :present)# TODO update list
+      :ok ->
+        state |> put_in([:items, key, :status], :present)
       {:error, error} ->
-        Logger.error "Failed to store block #{hash} #{error |> inspect}"
-        state |> put_in([:items, key, :status], :invalid)# TODO update list
+        Logger.error "Failed to store block #{hash |> Bitcoin.Util.hash_to_hex} #{error |> inspect}"
+        state |> put_in([:items, key, :status], :invalid)
     end
 
     # If we added all blocks let's check if there aren't any more to fetch
@@ -171,7 +171,7 @@ defmodule Bitcoin.Node.Inventory do
   # Block locator hashes: newest back to genesis block (dense to start, but then sparse)
   # We take first block then 2 blocks behind it, then 4 blocks behind it and so on until genesis
   # (and we include genesis block hash)
-  def block_locator_hashes, do: [ Storage.get_blocks_with_height(Storage.max_height()) |> List.first |> Bitcoin.Block.hash, Bitcoin.Const.genesis_hash()]
+  def block_locator_hashes, do: [ Storage.get_blocks_with_height(Storage.max_height()) |> List.first |> Bitcoin.Block.hash, @genesis_hash]
 
   # FIXME seemingly proper implementation below doesn't seem to work, maybe just switch to get headers directly to save time
   # The implementation above of course sucks heavily and will fail on the first encountered fork

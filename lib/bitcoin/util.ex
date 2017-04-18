@@ -28,8 +28,7 @@ defmodule Bitcoin.Util do
   def binary_reverse(<<>>, acc), do: acc
   def binary_reverse(<<x :: binary-size(1), bin :: binary>>, acc), do: binary_reverse(bin, x <> acc)
 
-  # this needs a better name
-  # it transforms binary hash as used in the Bitcoin protocol to the hex representation that you see everywhere
-  def friendly_hash(hash), do: hash |> binary_reverse |> Base.encode16 |> String.downcase
+  # Transforms binary hash as used in the Bitcoin protocol to the hex representation that you see everywhere
+  def hash_to_hex(hash), do: hash |> binary_reverse |> Base.encode16 |> String.downcase
 
 end

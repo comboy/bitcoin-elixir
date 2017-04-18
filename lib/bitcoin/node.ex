@@ -1,11 +1,13 @@
 defmodule Bitcoin.Node do
+
+  use Bitcoin.Common
   use GenServer
 
   require Logger
 
   @default_config %{
     listen_ip: '0.0.0.0',
-    listen_port: 8333,
+    listen_port: @default_listen_port,
     max_connections: 8,
     user_agent: "/bitcoin-elixir:0.0.0/",
     data_directory: Path.expand("~/.bitcoin-elixir"),
@@ -65,7 +67,6 @@ defmodule Bitcoin.Node do
     }
     {:reply, fields, state}
   end
-
 
   def timestamp do
     {megas, s, _milis} = :os.timestamp

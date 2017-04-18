@@ -9,6 +9,7 @@ defmodule Bitcoin.Node.Supervisor do
 
   def init(:ok) do
     Logger.info "Starting Node subsystems"
+
     children = [
       worker(Bitcoin.Node, []),
       supervisor(Bitcoin.Node.Network.Supervisor, [])

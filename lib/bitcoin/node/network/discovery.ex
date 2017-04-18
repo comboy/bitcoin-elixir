@@ -1,6 +1,9 @@
 defmodule Bitcoin.Node.Network.Discovery do
-  require Logger
+
+  use Bitcoin.Common
   use GenServer
+
+  require Logger
 
   alias Bitcoin.Protocol.Types.NetworkAddress
 
@@ -17,6 +20,8 @@ defmodule Bitcoin.Node.Network.Discovery do
       https://en.bitcoin.it/wiki/Satoshi_Client_Node_Discovery#DNS_Addresses
     """
 
+    use Bitcoin.Common
+
     require Logger
 
     @domains [
@@ -28,7 +33,7 @@ defmodule Bitcoin.Node.Network.Discovery do
       [ "bitcoin.jonasschnelli.ch", 'seed.bitcoin.jonasschnelli.ch' ] # Jonas Schnelli
     ]
 
-    def gather_peers(%{modules: modules} = _opts) do
+    def gather_peers(_opts) do
 
       Enum.map(@domains, fn([seed_name, domain]) -> 
         Logger.info("Starting Peer Discovery via DNS for seed #{seed_name} at domain #{domain}")
@@ -36,7 +41,7 @@ defmodule Bitcoin.Node.Network.Discovery do
           %NetworkAddress{
             address: ip, 
             time: Bitcoin.Node.timestamp()
-          } |> modules[:addr].add
+          } |> @modules[:addr].add
         end)
       end)
 
@@ -44,7 +49,7 @@ defmodule Bitcoin.Node.Network.Discovery do
 
   end
 
-  def start_link(%{modules: _modules} = opts), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  def start_link, do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
 
   # Public Interface
   def begin_discovery, do: GenServer.cast(__MODULE__, :begin_discovery)

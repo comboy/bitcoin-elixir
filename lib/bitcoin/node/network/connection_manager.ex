@@ -3,9 +3,10 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
   # Reagent connection handler
   defmodule ReagentHandler do
     use Reagent
+    use Bitcoin.Common
 
     def handle(%Reagent.Connection{socket: socket}) do
-      {:ok, pid} = Bitcoin.Node.Network.Peer.start(socket)
+      {:ok, pid} = @modules[:peer].start(socket)
       # Potential issue:
       # If the connection gets closed after Peer.start but before switching the controlling process
       # then probably Peer will never receive _:tcp_closed. Not sure if we need to care because
@@ -16,20 +17,20 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
     end
   end
 
+  use Bitcoin.Common
   use GenServer
 
   require Logger
 
   alias Bitcoin.Protocol.Types.NetworkAddress
 
-  def start_link(%{modules: _modules} = opts), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  def start_link, do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   def connect(ip, port \\ 8333), do: GenServer.cast(__MODULE__, {:connect, ip, port})
   def register_peer(), do: GenServer.call(__MODULE__, :register_peer)
   def peers, do: GenServer.call(__MODULE__, :peers)
 
-  def init(opts) do
+  def init(_) do
     state = %{
-      modules: opts.modules,
       config: Bitcoin.Node.config(),
       peers: []
     }
@@ -90,12 +91,12 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
   end
 
   def handle_cast({:connect, ip, port}, state) do
-    Bitcoin.Node.Network.Peer.start(ip, port)
+    @modules[:peer].start(ip, port)
     {:noreply, state}
   end
 
-  def add_peer(%{modules: modules}) do
-    case modules[:addr].get do
+  def add_peer(_state) do
+    case @modules[:addr].get do
       %NetworkAddress{address: ip, port: port} ->
         connect(ip, port)
       nil ->

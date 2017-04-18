@@ -7,14 +7,14 @@ defmodule Bitcoin.Node.Network.Addr do
     maybe some score (e.g. higher for addrs from trusted seeds). Score could also help with blacklisting
     nodes from which we detected abuse.
   """
+
   use GenServer
 
   require Logger
 
   alias Bitcoin.Protocol.Types.NetworkAddress
 
-  # Ignaring opts which contains modules list since we don't currently need it
-  def start_link(_opts \\ %{}), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  def start_link, do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   def add(%NetworkAddress{} = addr), do: GenServer.cast(__MODULE__, {:add, addr})
   def get, do: GenServer.call(__MODULE__, :get)
   def count, do: GenServer.call(__MODULE__, :count)

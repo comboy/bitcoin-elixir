@@ -1,14 +1,15 @@
 defmodule Bitcoin.Node.Storage do
 
   use GenServer
+  use Bitcoin.Common
 
   alias Bitcoin.Protocol.Messages
 
-  @engine Bitcoin.Node.Storage.Engine.Dummy #FIXME dynamic from config
+  @engine @modules[:storage_engine]
 
   def start_link(opts \\ %{}) do
     {:ok, pid} = @engine.start_link(opts)
-    if @engine.max_height() == nil, do: store_block(Bitcoin.Const.genesis_block())
+    if @engine.max_height() == nil, do: store_block(@genesis_block)
     {:ok, pid}
   end
 
@@ -42,7 +43,7 @@ defmodule Bitcoin.Node.Storage do
   def block_height(block) do
     case get_block(block.previous_block) do
       nil   ->
-        if Bitcoin.Block.hash(block) == Bitcoin.Const.genesis_hash() do
+        if Bitcoin.Block.hash(block) == @genesis_hash do
           0
         else
           :error

@@ -1,12 +1,5 @@
 defmodule Bitcoin.Protocol.Message.Header do
 
-  @known_network_identifiers %{
-    main: <<0xF9, 0xBE, 0xB4, 0xD9>>,
-    testnet: <<0xFA, 0xBF, 0xB5, 0xDA>>,
-    testnet3: <<0x0B, 0x11, 0x09, 0x07>>,
-    namecoin: <<0xF9, 0xBE, 0xB4, 0xFE>>
-  } 
-
   defstruct network_identifier: 0,
             command: <<>>,
             payload_size_bytes: 0,

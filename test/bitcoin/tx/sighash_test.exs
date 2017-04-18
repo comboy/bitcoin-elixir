@@ -15,7 +15,7 @@ defmodule Bitocin.Tx.SighashTest do
 
     sub_script = sub_script_hex |> String.upcase |> Base.decode16!
 
-    sighash = :crypto.hash(:sha256, Bitcoin.Tx.sighash(tx, input_index, sub_script, sighash_type)) |> Bitcoin.Util.friendly_hash
+    sighash = :crypto.hash(:sha256, Bitcoin.Tx.sighash(tx, input_index, sub_script, sighash_type)) |> Bitcoin.Util.hash_to_hex
     @sighash sighash
     @result result
 

@@ -3,6 +3,8 @@ defmodule Bitcoin.Protocol.Message do
   @moduledoc """
     https://en.bitcoin.it/wiki/Protocol_documentation#Message_structure
   """
+  
+  use Bitcoin.Common
 
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Protocol.Message.Payload
@@ -79,6 +81,7 @@ defmodule Bitcoin.Protocol.Message do
 
   end
 
+  # TODO we don't check received network magic anywhere, it would be easiest to do but not so elegant to do it at the parser level
   def parse_stream(message) do
 
     <<
@@ -131,7 +134,7 @@ defmodule Bitcoin.Protocol.Message do
   """
   def serialize(%{__struct__: message_type} = struct) when message_type in @message_types do
 
-    << network_identifier :: unsigned-little-integer-size(32) >> = <<0xF9, 0xBE, 0xB4, 0xD9>># TODO read from config (e.g. magic[Node.network()]
+    << network_identifier :: unsigned-little-integer-size(32) >> = @network_magic_bytes
 
     payload = message_type.serialize(struct)
 
