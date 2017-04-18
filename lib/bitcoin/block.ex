@@ -1,4 +1,7 @@
 defmodule Bitcoin.Block do
+
+  use Bitcoin.Common
+
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Block.Validation
 
@@ -14,13 +17,21 @@ defmodule Bitcoin.Block do
       |> merkle_tree_hash
   end
 
+  def total_fees(%Messages.Block{} = block) do
+    [_coinbase | transactions ] = block.transactions
+    transactions |> Enum.reduce(0, fn (tx, acc) ->
+      acc + Bitcoin.Tx.fee(tx, %{block: block})
+    end)
+  end
+
+  def validate(@genesis_block), do: :ok
   def validate(%Messages.Block{} = block) do
     [
       &Validation.has_parent/1,
       &Validation.merkle_root/1,
       &Validation.hash_below_target/1,
-      &Validation.coinbase/1,
       &Validation.transactions/1,
+      &Validation.coinbase_value/1,
     ] |> Bitcoin.Util.run_validations(block)
   end
 

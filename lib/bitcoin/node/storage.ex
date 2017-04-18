@@ -39,6 +39,8 @@ defmodule Bitcoin.Node.Storage do
     end
   end
 
+  def block_height(@genesis_hash), do: 0
+  def block_height(block_hash) when is_binary(block_hash), do: get_block(block_hash) |> block_height
   def block_height(%{height: height} = _block) when height != nil, do: height
   def block_height(block) do
     case get_block(block.previous_block) do

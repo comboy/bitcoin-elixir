@@ -1,4 +1,7 @@
 defmodule Bitcoin.Block.Validation do
+
+  use Bitcoin.Common
+
   alias Bitcoin.Protocol.Messages.Block
 
   def hash_below_target(%Block{} = block) do
@@ -15,7 +18,6 @@ defmodule Bitcoin.Block.Validation do
     end
   end
 
-  def has_parent(%Block{previous_block: <<0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0>>} = _block), do: :ok
   def has_parent(%Block{previous_block: previous_hash} = _block) do
     case Bitcoin.Node.Storage.get_block(previous_hash) do #  FIXME no need to fetch it, just check it exists
       nil -> {:error, :no_parent}
@@ -23,21 +25,33 @@ defmodule Bitcoin.Block.Validation do
     end
   end
 
-  def coinbase(%Block{transactions: []} = _block), do: {:error, :no_coinbase_tx}
-  def coinbase(%Block{} = block) do
-    [_coinbase | _] = block.transactions
-    # TODO validate output value
-    :ok
+  def coinbase_value(%Block{transactions: []} = _block), do: {:error, :no_coinbase_tx}
+  def coinbase_value(%Block{} = block, context \\ []) do
+    [coinbase | _] = block.transactions
+    height = context[:height] || (Bitcoin.Node.Storage.block_height(block.previous_block) + 1)
+
+    # OPTIMIZE: total fees expensive because we need to fetch all prevouts (which are alse fetched for tx validations)
+    if Bitcoin.Tx.total_output_value(coinbase) <= (max_subsidy_for_height(height) + Bitcoin.Block.total_fees(block)) do
+      :ok
+    else
+      {:error, :reward_too_high}
+    end
   end
 
   def transactions(%Block{} = block) do
     [_coinbase | transactions] = block.transactions
     transactions
-    |> Enum.reduce(:ok, fn (tx, result) -> 
+    |> Enum.reduce(:ok, fn (tx, result) ->
       case result do
         :ok -> tx |> Bitcoin.Tx.validate(%{block: block})
         {:error, err}  -> {:error, err}
       end
     end)
+  end
+
+  # Max block reward allowed for given block height
+  def max_subsidy_for_height(height) do
+    reward_era = Float.floor(height / @subsidy_halving_interval)
+    round(@base_subsidy_value / :math.pow(2, reward_era))
   end
 end

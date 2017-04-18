@@ -21,6 +21,16 @@ defmodule Bitcoin.Util do
     end)
   end
 
+  # same as above, but with /0 functions
+  def run_validations(funs) do
+    funs |> Enum.reduce(:ok, fn(fun, status) ->
+      case status do
+          :ok -> fun.()
+        error -> error
+      end
+    end)
+  end
+
   def double_sha256(data), do: :crypto.hash(:sha256, :crypto.hash(:sha256, data))
 
   # reverse bytes order in a binary
