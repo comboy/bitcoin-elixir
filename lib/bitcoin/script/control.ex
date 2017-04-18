@@ -31,19 +31,21 @@ defmodule Bitcoin.Script.Control do
   # To be faster we are appending to the beginning of the list when
   # collecting if and else blocks, so now it's time to reverse them
   defp parse_if(  {if_script, else_script}, [:OP_ENDIF | script], 0), do: {if_script |> Enum.reverse, else_script |> Enum.reverse, script}
-  defp parse_else({if_script, else_script}, [:OP_ENDIF | script], 0), do: {if_script |> Enum.reverse, else_script |> Enum.reverse, script}
 
   # Found else, collect script for the else block
   defp parse_if({if_script, else_script}, [:OP_ELSE | script], 0), do: {if_script, else_script} |> parse_else(script, 0)
 
-  # WHOA Multiple OP_ELSE statements are valid and execution inverts on each OP_ELSE encountered
+  # Collect the if script part, change if_depth when encountering nested IFs
+  defp parse_if({if_script, else_script}, [x | script], if_depth), do: {[x | if_script], else_script} |> parse_if(script, if_depth + if_depth_change(x))
+
+  # OP_ENDIF found (see parse_if OP_ENDIF)
+  defp parse_else({if_script, else_script}, [:OP_ENDIF | script], 0), do: {if_script |> Enum.reverse, else_script |> Enum.reverse, script}
+
+  # Multiple OP_ELSE statements are valid and execution inverts on each OP_ELSE encountered
   defp parse_else({if_script, else_script}, [:OP_ELSE | script], 0), do: {if_script, else_script} |> parse_if(script, 0)
 
   # Collect the else script part, change if_depth when encountering nested IFs
   defp parse_else({if_script, else_script}, [x | script], if_depth), do: {if_script, [x | else_script]} |> parse_else(script, if_depth + if_depth_change(x))
-
-  # Collect the if script part, change if_depth when encountering nested IFs
-  defp parse_if({if_script, else_script}, [x | script], if_depth), do: {[x | if_script], else_script} |> parse_if(script, if_depth + if_depth_change(x))
 
   defp if_depth_change(:OP_IF),    do:  1
   defp if_depth_change(:OP_NOTIF), do:  1

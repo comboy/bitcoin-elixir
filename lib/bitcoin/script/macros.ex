@@ -44,6 +44,15 @@ defmodule Bitcoin.Script.Macros do
   #
   #     run([a, b | stack], [:OP_ADD | script], opts), do: [bin(num(a) + num(b)) | stack] |> run(script, opts)
 
+  # Separate case for when we use underscore variable to avoid compiler warnings
+  defmacro op_num(op, {:_, _, _}, do: stack_expression) when is_atom(op) do
+    quote do
+      def run([_ | stack], [unquote(op) | script], opts) do
+        [bin(unquote(stack_expression)) | stack] |> run(script, opts)
+      end
+    end
+  end
+
   defmacro op_num(op, a, do: stack_expression) when is_atom(op) do
     quote do
       def run([unquote(a) | stack], [unquote(op) | script], opts) do

@@ -31,9 +31,10 @@ defmodule Bitcoin.Script do
 
   import Bitcoin.Script.Macros
   import Bitcoin.Script.Control
+
   alias Bitcoin.Script.Number
-  def bin(x) when is_number(x), do: Number.bin(x)
   defdelegate num(x), to: Number
+  # we also delgate bin(x) when is_number(x), grouped with other bin function definitions down below
 
   use Bitcoin.Script.Opcodes
   use Bitcoin.Script.P2SH
@@ -320,11 +321,11 @@ defmodule Bitcoin.Script do
   op_num :OP_NOT, 0, do: 1
   op_num :OP_NOT, <<0x80>>, do: 1 # negative zero
   op_num :OP_NOT, 1, do: 0
-  op_num :OP_NOT, x, do: 0
+  op_num :OP_NOT, _, do: 0
 
   # OP_0NOTEQUAL 	Returns 0 if the input is 0. 1 otherwise.
   op_num :OP_0NOTEQUAL, 0, do: 0
-  op_num :OP_0NOTEQUAL, x, do: 1
+  op_num :OP_0NOTEQUAL, _, do: 1
 
   # OP_ADD a is added to be
   op_num :OP_ADD, a, b, do: a + b
@@ -464,8 +465,9 @@ defmodule Bitcoin.Script do
   # OP_PUBKEY
   # OP_INVALIDOPCODE
 
-  # Helper to cast boolean result operations to resulting stack element
+  # Cast value to bitcoin script binary
   def bin(x) when is_binary(x), do: x
+  def bin(x) when is_number(x), do: Number.bin(x)
   def bin(true), do: 1
   def bin(false), do: 0
 

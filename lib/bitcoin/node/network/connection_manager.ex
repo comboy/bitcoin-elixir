@@ -46,10 +46,6 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
     {:ok, state}
   end
 
-  def handle_call(:peers, _from, state) do
-    {:reply, state.peers, state}
-  end
-
   def handle_info(:periodical_connectivity_check, state) do
     self() |> send(:check_connectivity)
     self() |> Process.send_after(:periodical_connectivity_check, 10_000)
@@ -80,6 +76,10 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
     Logger.info("[CM] unregistered peer #{peer |> inspect}")
     self() |> send(:check_connectivity)
     {:noreply, state |> Map.put(:peers, state.peers |> List.delete(peer))}
+  end
+
+  def handle_call(:peers, _from, state) do
+    {:reply, state.peers, state}
   end
 
   def handle_call(:register_peer, {peer, _ref}, state) do

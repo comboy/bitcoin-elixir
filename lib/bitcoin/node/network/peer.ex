@@ -23,7 +23,7 @@ defmodule Bitcoin.Node.Network.Peer do
 
   # Initialize Peer asking it to make  connection to specific
   def start(socket), do: GenServer.start(__MODULE__, socket)
-  def start(ip, port \\ 8333), do: GenServer.start(__MODULE__, %{ip: ip, port: port})
+  def start(ip, port), do: GenServer.start(__MODULE__, %{ip: ip, port: port})
 
 
   #
@@ -267,7 +267,7 @@ defmodule Bitcoin.Node.Network.Peer do
     state
   end
 
-  defp disconnect(state, reason \\ :none) do
+  defp disconnect(state, reason) do
     Logger.debug "#{state.ip |> :inet.ntoa} disconnected :#{reason}"
     {:stop, :normal, state |> Map.put(:status, :disconnected)}
   end

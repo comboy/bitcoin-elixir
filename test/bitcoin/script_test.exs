@@ -57,32 +57,32 @@ defmodule Bitcoin.ScriptTest do
       version: 1
     }
 
-    Bitcoin.Script.verify_sig_pk(sig_bin, pk_bin, tx: spend_tx, input_number: 0, sub_script: pk_bin)
+    Script.verify_sig_pk(sig_bin, pk_bin, tx: spend_tx, input_number: 0, sub_script: pk_bin)
   end
 
 
   test "run super simple" do
-    assert true == [2, 3, :OP_ADD, 5, :OP_EQUAL] |> Bitcoin.Script.verify
-    assert false ==[2, 3, :OP_ADD, 4, :OP_EQUAL] |> Bitcoin.Script.verify
+    assert true == [2, 3, :OP_ADD, 5, :OP_EQUAL] |> Script.verify
+    assert false ==[2, 3, :OP_ADD, 4, :OP_EQUAL] |> Script.verify
   end
 
   test "disabled op prpsent" do
-    assert false == [2, :OP_2MUL] |> Bitcoin.Script.verify
+    assert false == [2, :OP_2MUL] |> Script.verify
   end
 
   test "disabled op in unexecuted if branch" do
-    assert false == ([:OP_TRUE, :OP_IF, :OP_TRUE, :OP_ELSE, :OP_2, :OP_2MUL, :OP_ENDIF] |> Bitcoin.Script.to_binary |> Bitcoin.Script.verify)
+    assert false == ([:OP_TRUE, :OP_IF, :OP_TRUE, :OP_ELSE, :OP_2, :OP_2MUL, :OP_ENDIF] |> Script.to_binary |> Script.verify)
   end
 
   test "bitcoin core scripts.json" do
     cases = File.read!("test/data/script_tests.json") |> Poison.decode! |> Enum.filter(fn x -> length(x) != 1 end)
     rets = 
       cases
-      |> Enum.map(fn [sig_script, pk_script, flags, result | comment ] -> 
+      |> Enum.map(fn [sig_script, pk_script, _flags, result | _comment ] -> 
         bool_result = result == "OK"
         run_result = try do # try is a lazy way to handle {:errors from parsing
-          sig_bin = sig_script |> Bitcoin.Script.Serialization.string2_to_binary
-          pk_bin = pk_script |> Bitcoin.Script.Serialization.string2_to_binary
+          sig_bin = sig_script |> Script.Serialization.string2_to_binary
+          pk_bin = pk_script |> Script.Serialization.string2_to_binary
           test_script_verify(sig_bin, pk_bin)
         catch _,_ ->
           false
@@ -104,7 +104,7 @@ defmodule Bitcoin.ScriptTest do
       |> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "DISCOURAGE_UPGRADABLE_NOPS") end)
       #|> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "MINIMALDATA") end)
 
-    rets = scripts  |> Enum.map(fn [result, sig_hex, pk_hex, flags, _comment] ->
+    rets = scripts  |> Enum.map(fn [result, sig_hex, pk_hex, _flags, _comment] ->
 
       pk_bin = pk_hex |> String.upcase |> Base.decode16!
       sig_bin = sig_hex |> String.upcase |> Base.decode16!
@@ -112,8 +112,8 @@ defmodule Bitcoin.ScriptTest do
       if !ret do
         # Uncomment to get list of scripts that failed
         #IO.puts "should be #{result} #[#{flags}] | #{comment} :"
-        #sig_bin |> IO.inspect |> Bitcoin.Script.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
-        #pk_bin |> IO.inspect |> Bitcoin.Script.parse |> IO.inspect(limit: :infinity) #|> Bitcoin.Script.run |> IO.inspect
+        #sig_bin |> IO.inspect |> Script.parse |> IO.inspect(limit: :infinity) #|> Script.run |> IO.inspect
+        #pk_bin |> IO.inspect |> Script.parse |> IO.inspect(limit: :infinity) #|> Script.run |> IO.inspect
         #assert false
       end
       ret
