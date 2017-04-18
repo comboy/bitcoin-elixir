@@ -5,7 +5,8 @@ defmodule Bitcoin.Node.Network.AddrTest do
   alias Bitcoin.Protocol.Types.NetworkAddress, as: NA
 
   test "addrs management" do
-    {:ok, _pid} = Addr.start_link
+    {:ok, node_pid} = Bitcoin.Node.start_link
+    {:ok, addr_pid} = Addr.start_link
     Addr.clear()
     assert Addr.count() == 0
     assert Addr.get() == nil
@@ -19,5 +20,8 @@ defmodule Bitcoin.Node.Network.AddrTest do
     # couldn't figure out how to force :rand.seed (it seems to be local per process?)
     results = (1..100) |> Enum.reduce(MapSet.new, fn(_x, r) -> r |> MapSet.put(Addr.get()) end)
     assert results == MapSet.new([na1, na2])
+
+    node_pid |> GenServer.stop
+    addr_pid |> GenServer.stop
   end
 end
