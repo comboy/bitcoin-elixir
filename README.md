@@ -43,9 +43,9 @@ To avoid abusing the network you may want to only connect to your local node e.g
       connect: [{127.0.0.1}]
     ]
 
-## Licence
+## License
 
-See the LICENCE file in the project root.
+See the LICENSE file in the project root.
 
 ## Contributing
 
