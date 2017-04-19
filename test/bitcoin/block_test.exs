@@ -37,7 +37,7 @@ defmodule Bitcoin.BlockTest do
     assert block |> Map.put(:nonce, 1) |> Bitcoin.Block.Validation.hash_below_target == {:error, :hash_above_target}
 
     assert block |> Bitcoin.Block.Validation.merkle_root == :ok
-    assert block |> Map.put(:merkle_root, block.merkle_root |> Bitcoin.Util.binary_reverse) |> Bitcoin.Block.Validation.merkle_root == {:error, :merkle_root_invalid}
+    assert block |> Map.put(:merkle_root, block.merkle_root |> Binary.reverse) |> Bitcoin.Block.Validation.merkle_root == {:error, :merkle_root_invalid}
   end
 
 end

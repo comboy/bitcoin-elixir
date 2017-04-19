@@ -16,7 +16,7 @@ defmodule Bitcoin.Script.Number do
   # num(binary) - Interpret binary as script integer
   def num(<<>>), do: 0
   # We reverse it and then encode as big endian because it's only possible to match beginning of binary in Elixir
-  def num(x) when is_binary(x), do: x |> Bitcoin.Util.binary_reverse |> rev_num
+  def num(x) when is_binary(x), do: x |> Binary.reverse |> rev_num
   def num(x) when is_number(x), do: x
 
   def rev_num(<< x, bin :: binary >>) when (x &&& 0x80) != 0, do: -1 * rev_num(<< x ^^^ 0x80>> <> bin)
@@ -47,6 +47,6 @@ defmodule Bitcoin.Script.Number do
   # def bin(x) when is_number(x) do
   #  << first, bin :: binary >> = x |> abs |> :binary.encode_unsigned
   #  first = if x < 0, do: first ^^^ 0x80, else: first
-  #  (<< first >> <> bin) |> Bitcoin.Util.binary_reverse
+  #  (<< first >> <> bin) |> Binary.reverse
   # end
 end

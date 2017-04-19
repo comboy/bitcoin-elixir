@@ -489,8 +489,7 @@ defmodule Bitcoin.Script do
 
   def verify_signature(sig, pk, opts) do
     # Last byte is a sighash_type, read it and remove it
-    sighash_type = sig |> :binary.at(byte_size(sig)-1)
-    sig = sig |> :binary.part(0, byte_size(sig)-1)
+    {sig, << sighash_type >>} = sig |> Binary.split_at(-1)
     # Generate sighash (with only single sha256)
     sighash = opts[:tx] |> Bitcoin.Tx.sighash(opts[:input_number], opts[:sub_script], sighash_type)
     # Do sha256 again and verify

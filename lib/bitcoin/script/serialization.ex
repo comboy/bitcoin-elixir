@@ -94,7 +94,7 @@ defmodule Bitcoin.Script.Serialization do
   def parse_string_word("1"), do: :OP_TRUE
   def parse_string_word("0"), do: :OP_FALSE
   def parse_string_word(("OP_" <> _) = op_name), do: op_name |> String.to_atom |> parse_string_op_validate
-  def parse_string_word(hex), do: hex |> String.upcase |> Base.decode16!
+  def parse_string_word(hex), do: hex |> Binary.from_hex
   def parse_string_op_validate(opcode), do: opcode
 
   ##
@@ -117,7 +117,7 @@ defmodule Bitcoin.Script.Serialization do
   @short_op_names @op_names |> Enum.map(&to_string/1) |> Enum.map(fn("OP_" <> name) -> name end)
   def parse_string2_word(opcode) when opcode in @short_op_names, do: <<@op[:"OP_#{opcode}"]>>
   def parse_string2_word(("OP_" <> _) = op_name), do: <<@op[op_name |> String.to_atom]>>
-  def parse_string2_word("0x" <> hex), do: hex |> String.upcase |> Base.decode16!
+  def parse_string2_word("0x" <> hex), do: hex |> Binary.from_hex
   def parse_string2_word("'" <> bin), do: bin |> :binary.part(0, byte_size(bin)-1) |> to_binary_word
   def parse_string2_word(int) do
     {num, _} = int |> Integer.parse

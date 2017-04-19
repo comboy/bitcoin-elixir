@@ -20,14 +20,14 @@ defmodule Bitcoin.Protocol.Message.Header do
 
     %__MODULE__{
       network_identifier: network_identifier,
-      command: command |> String.trim_trailing(<<0>>),
+      command: command |> Binary.trim_trailing,
       payload_size_bytes: payload_size_bytes,
       checksum: checksum
     }
   end
 
   def serialize(%__MODULE__{} = s) do
-    command = s.command |> String.pad_trailing(12, <<0>>)
+    command = s.command |> Binary.pad_trailing(12)
     << 
       s.network_identifier :: unsigned-little-integer-size(32),
       command :: bytes-size(12),

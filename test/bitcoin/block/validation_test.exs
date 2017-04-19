@@ -22,7 +22,7 @@ defmodule Bitcoin.Block.ValidationTest do
 
   test "merkle root" do
     assert @block1 |> Bitcoin.Block.Validation.merkle_root == :ok
-    assert @block1 |> Map.put(:merkle_root, @block1.merkle_root |> Bitcoin.Util.binary_reverse) |> Bitcoin.Block.Validation.merkle_root == {:error, :merkle_root_invalid}
+    assert @block1 |> Map.put(:merkle_root, @block1.merkle_root |> Binary.reverse) |> Bitcoin.Block.Validation.merkle_root == {:error, :merkle_root_invalid}
   end
 
 end

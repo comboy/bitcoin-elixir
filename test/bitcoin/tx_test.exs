@@ -34,7 +34,7 @@ defmodule Bitcoin.TxTest do
       tx = tx_serialized |> String.upcase |> Base.decode16! |> Messages.Tx.parse
 
       previous_outputs = prevouts |> Enum.map(fn [prevout_hash, prevout_index, prevout_pk_script] ->
-        {{prevout_hash |> String.upcase |> Base.decode16! |> Bitcoin.Util.binary_reverse, prevout_index},
+        {{prevout_hash |> String.upcase |> Base.decode16! |> Binary.reverse, prevout_index},
           %Protocol.Types.TxOutput{
             pk_script: prevout_pk_script |> Bitcoin.Script.parse_string2 |> Bitcoin.Script.to_binary,
             value: 0xFF_FF_FF_FF_FF_FF}}

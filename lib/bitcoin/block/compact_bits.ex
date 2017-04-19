@@ -15,8 +15,8 @@ defmodule Bitcoin.Block.CompactBits do
     [num | digits] = int |> Integer.digits(256)
     digits
       |> :binary.list_to_bin
-      |> String.trim_trailing(<<0>>)
-      |> String.pad_trailing(num, <<0>>)
+      |> Binary.trim_trailing
+      |> Binary.pad_trailing(num)
       |> :binary.bin_to_list
       |> Integer.undigits(256)
   end
@@ -27,7 +27,7 @@ defmodule Bitcoin.Block.CompactBits do
     [length(digits) | digits]
       |> Enum.take(4)
       |> :binary.list_to_bin
-      |> String.pad_trailing(4, <<0>>)
+      |> Binary.pad_trailing(4)
       |> :binary.bin_to_list
       |> Integer.undigits(256)
   end
