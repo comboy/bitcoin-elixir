@@ -27,6 +27,8 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
     state = %{
       opts: opts,
       block: %{},
+      max_height: nil,
+      block_by_height: %{}, # we even have an index!
       tx: %{}
     }
     {:ok, state}
@@ -34,9 +36,8 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
 
   def handle_call({:get_blocks_with_height, height}, _from, state) do
     blocks =
-      state.block
-      |> Enum.filter(fn {_hash, b} -> b.height == height end)
-      |> Enum.map(fn {hash, b} -> b |> Map.put(:hash, hash) end)
+      state.block_by_height[height]
+      |> Enum.map(fn hash -> state.block[hash] |> Map.put(:hash, hash) end)
     {:reply, blocks, state}
   end
 
@@ -57,11 +58,7 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
   end
 
   def handle_call(:max_height, _from, state) do
-    max_height =
-      state.block
-      |> Enum.map(fn {_hash, block} -> block.height end)
-      |> Enum.max(fn -> nil end)
-    {:reply, max_height, state}
+    {:reply, state.max_height, state}
   end
 
   defp store_block(state, block) do
@@ -71,6 +68,8 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
     block.transactions
     |> Enum.reduce(state, fn(tx, state) -> state |> store_tx(tx)  end)
     |> put_in([:block, hash], block) # TODO block sholud only store tx hashes
+    |> put_in([:block_by_height, block.height], [hash | (state.block_by_height[block.height] || [])])
+    |> Map.put(:max_height, max(block.height, state.max_height) || block.height)
   end
 
   defp store_tx(state, tx) do
