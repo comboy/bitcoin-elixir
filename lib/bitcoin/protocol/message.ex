@@ -49,6 +49,7 @@ defmodule Bitcoin.Protocol.Message do
     "getheaders" => Messages.GetHeaders,
     "headers"    => Messages.Headers,
     "inv"        => Messages.Inv,
+    "mempool"    => Messages.Mempool,
     "notfound"   => Messages.NotFound,
     "ping"       => Messages.Ping,
     "pong"       => Messages.Pong,
