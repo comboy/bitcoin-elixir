@@ -1,5 +1,7 @@
 defmodule Bitcoin.Protocol.Types.NetworkAddress do
 
+  use Bitcoin.Common
+
   @moduledoc """
     Network address type from the Bitconi protocol ( https://en.bitcoin.it/wiki/Protocol_documentation#Network_address )
 
@@ -10,7 +12,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
   defstruct time: 0, # (uint32) the Time (version >= 31402). Not present in version message.
             services: <<0, 0, 0, 0, 0, 0, 0, 0>>, # (uint64_t) bitfield of features to be enabled for this connection. See Version Message.
             address: {0, 0, 0, 0}, # decoded address tuple, 4 elemnt for IPv4, 8 element for IPv6 (see :inet)
-            port: 8333 # (uint16_t) port number, network byte order
+            port: @default_listen_port # (uint16_t) port number, network byte order
 
   @type t :: %__MODULE__{
     time: non_neg_integer,

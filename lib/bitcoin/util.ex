@@ -36,4 +36,7 @@ defmodule Bitcoin.Util do
   # Transforms binary hash as used in the Bitcoin protocol to the hex representation that you see everywhere
   def hash_to_hex(hash), do: hash |> Binary.reverse |> Binary.to_hex
 
+  # Opposite of hash_to_hex
+  def hex_to_hash(hex), do: hex |> Binary.from_hex |> Binary.reverse
+
 end

@@ -9,13 +9,7 @@ defmodule Bitcoin.Node.Network.Discovery do
 
   defmodule Strategy.DNS do
     @moduledoc """
-      Implements DNS node discovery.
-
-      from Satoshi C Client (chainparams.cpp):
-      * alexykot.me
-      * bitcoin.petertodd.org
-      * bluematt.me
-      * bitcoin.schildbach.de
+      DNS node discovery.
 
       https://en.bitcoin.it/wiki/Satoshi_Client_Node_Discovery#DNS_Addresses
     """
@@ -24,27 +18,23 @@ defmodule Bitcoin.Node.Network.Discovery do
 
     require Logger
 
-    @domains [
-      [ "bitcoin.sipa.be", 'seed.bitcoin.sipa.be' ], # Pieter Wuille
-      [ "bluematt.me", 'dnsseed.bluematt.me' ], # Matt Corallo
-      [ "dashjr.org", 'dnsseed.bitcoin.dashjr.org' ], # Luke Dashjr
-      [ "bitcoinstats.com", 'seed.bitcoinstats.com' ], # Christian Decker
-      [ "xf2.org", 'bitseed.xf2.org' ], # Jeff Garzik
-      [ "bitcoin.jonasschnelli.ch", 'seed.bitcoin.jonasschnelli.ch' ] # Jonas Schnelli
-    ]
-
     def gather_peers(_opts) do
-
-      Enum.map(@domains, fn([seed_name, domain]) -> 
+      @dns_seeds
+      |> Enum.each(fn {seed_name, domain} ->
         Logger.info("Starting Peer Discovery via DNS for seed #{seed_name} at domain #{domain}")
-        Enum.each(:inet_res.lookup(domain, :in, :a), fn(ip) ->
-          %NetworkAddress{
-            address: ip, 
-            time: Bitcoin.Node.timestamp()
-          } |> @modules[:addr].add
-        end)
-      end)
 
+        :inet_res.lookup(domain, :in, :a)
+        |> Enum.map(fn ip ->
+          %NetworkAddress{
+            address: ip,
+            port: @default_listen_port,
+            time: Bitcoin.Node.timestamp()
+          }
+        end)
+        |> Enum.each(fn addr -> @modules[:addr].add(addr) end)
+
+      end)
+      :ok
     end
 
   end

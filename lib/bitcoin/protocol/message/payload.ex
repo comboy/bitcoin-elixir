@@ -32,7 +32,7 @@ defmodule Bitcoin.Protocol.Message.Payload do
   end
 
   def parse(command, data) do
-    Logger.info "Unknown command: #{command |> inspect} data[#{byte_size(data)}]"
+    Logger.error "Unknown command: #{command |> inspect} data[#{byte_size(data)}]"
   end
 
 end
