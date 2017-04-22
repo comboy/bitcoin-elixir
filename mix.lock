@@ -1,5 +1,6 @@
 %{"binary": {:hex, :binary, "0.0.3", "8c7ccdeaa48dfd5bd008ac25016181ec97041e8858f0eedff4579993c1ced72a", [:mix], []},
   "datastructures": {:hex, :datastructures, "0.2.8", "cd9f53bed18f1d9526689a9559676c682b5a3ba230c1e3de187182f4ff86899c", [:mix], []},
+  "dialyxir": {:hex, :dialyxir, "0.5.0", "5bc543f9c28ecd51b99cc1a685a3c2a1a93216990347f259406a910cf048d1d7", [:mix], []},
   "earmark": {:hex, :earmark, "1.2.0", "bf1ce17aea43ab62f6943b97bd6e3dc032ce45d4f787504e3adf738e54b42f3a", [:mix], []},
   "ex_doc": {:hex, :ex_doc, "0.15.1", "d5f9d588fd802152516fccfdb96d6073753f77314fcfee892b15b6724ca0d596", [:mix], [{:earmark, "~> 1.1", [hex: :earmark, optional: false]}]},
   "exlager": {:git, "https://github.com/khia/exlager.git", "dfee7fffcbb44f9ecd79f1237bae0f170bb27d87", [branch: "master"]},

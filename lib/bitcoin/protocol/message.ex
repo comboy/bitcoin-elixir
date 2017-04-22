@@ -1,7 +1,7 @@
 defmodule Bitcoin.Protocol.Message do
 
   @moduledoc """
-    https://en.bitcoin.it/wiki/Protocol_documentation#Message_structure
+  https://en.bitcoin.it/wiki/Protocol_documentation#Message_structure
   """
   
   use Bitcoin.Common
@@ -34,7 +34,7 @@ defmodule Bitcoin.Protocol.Message do
   defstruct header: Header,
             payload: Payload
 
-  @type t :: %{
+  @type t :: %__MODULE__{
     header: Header.t,
     payload: Payload.t
   }
@@ -66,7 +66,7 @@ defmodule Bitcoin.Protocol.Message do
   @doc """
     Reads and deserialises bitcoin message in serialised format and returns the parsed result
   """
-  @spec parse(bitstring) :: Bitcoin.Protocol.Message.t
+  @spec parse(binary) :: t
   def parse(message) do
 
     <<raw_header :: bytes-size(24), # fixed size header

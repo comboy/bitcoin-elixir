@@ -10,13 +10,11 @@ defmodule Bitcoin.Script do
 
     There is still a long road ahead to 100% of valid/invalid scripts test suite (it's really good).
     List of issues to remember can be find in the source file with an upcase 'todo' tag.
-
-    Script.Serialization handles parsing the script from a binary into a list with opcodes as symbols.
-
-    Script.Control implements parsing OP_IF
-
-    Script.Number handles parsing and serializing script integers (CStriptNum)
   """
+
+  # Script.Serialization handles parsing the script from a binary into a list with opcodes as symbols.
+  # Script.Control implements parsing OP_IF
+  # Script.Number handles parsing and serializing script integers (CStriptNum)
 
   # TODO max ops count = 201 - opts can be used to easily increase counter
   # TODO block sigop limit (MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50), so we need to be abel to export that count
@@ -24,10 +22,33 @@ defmodule Bitcoin.Script do
 
   alias Bitcoin.Script.Serialization
 
+  @doc """
+  Parse binary script into a form consumable by the interpreter (ops list). Parsed script looks like this:
+ 
+      [:OP_10, :OP_10, :OP_ADD, <<20>>, :OP_EQUAL]
+  """
   defdelegate parse(binary), to: Serialization
+  @doc """
+  Represent parsed script (list of :OP_CODES and binary data), in it's original binary form.
+  """
   defdelegate to_binary(script), to: Serialization
+  @doc """
+  Returns string representation of the provided parsed script in the same form as bitcoind decodescript command
+  """
   defdelegate to_string(script), to: Serialization
+  @doc """
+  Parse script from the string in a format that is outputed by bitcoid.
+
+  E.g. "2 OP_IF 0 OP_ELSE 1 OP_ENDIF"
+  """
   defdelegate parse_string(string), to: Serialization
+  @doc """
+  Parse script from a strig form familiar from test cases.
+
+  E.g. "128 SIZE 2 EQUAL"
+
+  Binaries appear in the 0x form or literaly in single quotes.
+  """
   defdelegate parse_string2(string), to: Serialization
 
   import Bitcoin.Script.Macros

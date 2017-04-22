@@ -1,6 +1,11 @@
 defmodule Bitcoin do
   use Application
 
+  # Not sure if that's the best place for this tye def, feel free to rename and move
+  @type t_hash :: <<_::32, _::_*8>>
+  @type t_hex_hash :: <<_::64, _::_*8>>
+
+
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do

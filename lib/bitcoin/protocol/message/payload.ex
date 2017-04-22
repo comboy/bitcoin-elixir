@@ -24,6 +24,9 @@ defmodule Bitcoin.Protocol.Message.Payload do
     message: binary
   }
 
+  @spec parse(binary, binary) :: __MODULE__.t
+  def parse(command, data)
+
   def parse(command, data) when command in @command_names do
     %__MODULE__{
       raw_data: data,

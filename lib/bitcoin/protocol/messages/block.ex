@@ -28,14 +28,15 @@ defmodule Bitcoin.Protocol.Messages.Block do
 
   @type t :: %__MODULE__{
     version: integer,
-    previous_block: bitstring,
-    merkle_root: bitstring,
+    previous_block: Bitcoin.Block.t_hash,
+    merkle_root: Bitcoin.t_hash,
     timestamp: non_neg_integer,
     bits: non_neg_integer,
     nonce: non_neg_integer,
     transactions: [Tx]
   }
 
+  @spec parse(binary) :: t
   def parse(data) do
 
     <<version::little-integer-size(32),
@@ -60,6 +61,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
 
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     (s |> serialize_header)
     <>

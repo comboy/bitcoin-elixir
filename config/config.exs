@@ -21,6 +21,38 @@ use Mix.Config
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
+# Bitcoin general options
+#
+# Choose network, :testnet or :bitcoin
+# config :bitcoin, :network, :bitcoin
+#
+# Bitcoin node configuration options.
+#
+# Node will be started automatically when the app is started if
+# any bitcoin.node config is present, so you can run it with default
+# options by just uncommenting the following line:
+#
+# config :bitcoin, :node, []
+#
+# Available configuration options are documented below, You don't have to
+# set all of them, for options not present, defaults are used
+#
+# config :bitcoin, :node [
+#   # IP on which p2p connections will be accepted
+#   listen_ip: '0.0.0.0',
+#
+#   # Port for accepting p2p connections
+#   listen_port: @default_listen_port,
+#
+#   # Maximum number of connections that the node should try to keep open
+#   max_connections: 8,
+#
+#   # User agent that node will be sending in the VErsION packet
+#   user_agent: "/bitcoin-elixir:0.0.0/",
+#
+#   # Directory where known addrs and blockchain are kept
+#   data_directory: Path.expand("~/.bitcoin-elixir/#{@network}"),
+# ]
 
 import_config "#{Mix.env}.exs"
 

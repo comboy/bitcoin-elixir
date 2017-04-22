@@ -7,11 +7,12 @@ defmodule Bitcoin.Protocol.Message.Header do
 
   @type t :: %__MODULE__{
     network_identifier: non_neg_integer,
-    command: String.t,
+    command: binary,
     payload_size_bytes: non_neg_integer,
     checksum: non_neg_integer # sha256(sha256(payload)) first four bytes
   }
 
+  @spec parse(binary) :: __MODULE__.t
   def parse(<<network_identifier :: unsigned-little-integer-size(32),
                     command :: bytes-size(12),
                     payload_size_bytes :: unsigned-little-integer-size(32),

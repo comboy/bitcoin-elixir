@@ -7,10 +7,16 @@ defmodule Bitcoin.Block.CompactBits do
     http://bitcoin.stackexchange.com/questions/2924/how-to-calculate-new-bits-value
   """
 
-  # Encode target integer to compact bits integer
+  @doc """
+  Encode target integer to compact bits integer
+  """
+  @spec encode(integer) :: integer
   def encode(int), do: int |> Integer.digits(256) |> encode_digits
 
-  # Docede compact bits integer to target integer
+  @doc """
+  Docede compact bits integer to target integer
+  """
+  @spec decode(integer) :: integer
   def decode(int) do
     [num | digits] = int |> Integer.digits(256)
     digits

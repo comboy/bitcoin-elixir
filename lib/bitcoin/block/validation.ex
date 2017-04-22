@@ -4,12 +4,14 @@ defmodule Bitcoin.Block.Validation do
 
   alias Bitcoin.Protocol.Messages.Block
 
+  @spec hash_below_target(Blotk.t) :: :ok | {:error, term}
   def hash_below_target(%Block{} = block) do
     << hash_int :: unsigned-little-integer-size(256) >> = Bitcoin.Block.hash(block)
     target_int = block.bits |> Bitcoin.Block.CompactBits.decode
     if hash_int <= target_int, do: :ok, else: {:error, :hash_above_target}
   end
 
+  @spec merkle_root(Blotk.t) :: :ok | {:error, term}
   def merkle_root(%Block{} = block) do
     if Bitcoin.Block.merkle_root(block) == block.merkle_root do
       :ok
@@ -18,6 +20,7 @@ defmodule Bitcoin.Block.Validation do
     end
   end
 
+  @spec has_parent(Blotk.t) :: :ok | {:error, term}
   def has_parent(%Block{previous_block: previous_hash} = _block) do
     case Bitcoin.Node.Storage.get_block(previous_hash) do #  FIXME no need to fetch it, just check it exists
       nil -> {:error, :no_parent}
@@ -25,8 +28,11 @@ defmodule Bitcoin.Block.Validation do
     end
   end
 
-  def coinbase_value(%Block{transactions: []} = _block), do: {:error, :no_coinbase_tx}
-  def coinbase_value(%Block{} = block, context \\ []) do
+  @spec coinbase_value(Block.t) :: :ok | {:error, term}
+  def coinbase_value(block, context \\ [])
+
+  def coinbase_value(%Block{transactions: []} = _block, _context), do: {:error, :no_coinbase_tx}
+  def coinbase_value(%Block{} = block, context) do
     [coinbase | _] = block.transactions
     height = context[:height] || (Bitcoin.Node.Storage.block_height(block.previous_block) + 1)
 
@@ -38,6 +44,7 @@ defmodule Bitcoin.Block.Validation do
     end
   end
 
+  @spec transactions(Blotk.t) :: :ok | {:error, term}
   def transactions(%Block{} = block) do
     [_coinbase | transactions] = block.transactions
     transactions

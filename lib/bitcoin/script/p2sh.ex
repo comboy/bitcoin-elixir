@@ -1,4 +1,9 @@
 defmodule Bitcoin.Script.P2SH do
+  @moduledoc """
+  Handler for Pay to Script Hash scripts.
+
+  More info can be faund in the BIP: https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki
+  """
   defmacro __using__(_opts) do
     quote do
 
