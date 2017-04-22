@@ -5,7 +5,7 @@ defmodule Bitcoin.Script.Serialization do
   # PUSHDATA with size > @max_element_size makes the script invalid
   @max_element_size 520
   # scripts > 10,000 bytes are invalid
-  @max_script_size 10_000 
+  @max_script_size 10_000
 
   # Value returned when the script is invalid
   @invalid [:invalid]
@@ -96,6 +96,17 @@ defmodule Bitcoin.Script.Serialization do
   def parse_string_word(("OP_" <> _) = op_name), do: op_name |> String.to_atom |> parse_string_op_validate
   def parse_string_word(hex), do: hex |> Binary.from_hex
   def parse_string_op_validate(opcode), do: opcode
+
+  def to_string(script) do
+    script
+    |> Enum.map(&to_string_word/1)
+    |> Enum.join(" ")
+  end
+
+  def to_string_word(:OP_FALSE), do: "0"
+  def to_string_word(:OP_TRUE), do: "1"
+  def to_string_word(op) when is_atom(op), do: op |> Kernel.to_string
+  def to_string_word(bin) when is_binary(bin), do: bin |> Binary.to_hex
 
   ##
   ## Parsing alternative string representation

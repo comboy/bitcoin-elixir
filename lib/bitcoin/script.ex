@@ -26,8 +26,9 @@ defmodule Bitcoin.Script do
 
   defdelegate parse(binary), to: Serialization
   defdelegate to_binary(script), to: Serialization
-  defdelegate parse_string(script), to: Serialization
-  defdelegate parse_string2(script), to: Serialization
+  defdelegate to_string(script), to: Serialization
+  defdelegate parse_string(string), to: Serialization
+  defdelegate parse_string2(string), to: Serialization
 
   import Bitcoin.Script.Macros
   import Bitcoin.Script.Control

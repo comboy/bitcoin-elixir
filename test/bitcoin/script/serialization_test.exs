@@ -32,6 +32,7 @@ defmodule Bitcoin.Script.SerializationTest do
       {"6365675168", "OP_IF OP_VERIF OP_ELSE 1 OP_ENDIF"} # :invalid
     ] |> Enum.map(fn {hex, string} ->
       assert Bitcoin.Script.parse(hex |> Base.decode16!) == Bitcoin.Script.parse_string(string)
+      assert Bitcoin.Script.parse(hex |> Base.decode16!) |> Bitcoin.Script.Serialization.to_string == string
     end)
   end
 
