@@ -16,9 +16,10 @@ defmodule Bitcoin.Protocol.Messages.GetData do
   defstruct inventory_vectors: []
 
   @type t :: %__MODULE__{
-    inventory_vectors: [InventoryVector]
+    inventory_vectors: [InventoryVector.t]
   }
 
+  @spec parse(binary) :: t
   def parse(payload) do
     {inventory_vectors, _} = payload |> collect_items(InventoryVector)
 
@@ -27,6 +28,7 @@ defmodule Bitcoin.Protocol.Messages.GetData do
     }
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     s.inventory_vectors |> serialize_items
   end

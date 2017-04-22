@@ -26,14 +26,15 @@ defmodule Bitcoin.Protocol.Messages.Version do
     version: non_neg_integer,
     services: bitstring,
     timestamp: non_neg_integer,
-    address_of_receiving_node: binary,
-    address_of_sending_node: binary,
+    address_of_receiving_node: NetworkAddress.t,
+    address_of_sending_node: NetworkAddress.t,
     nonce: non_neg_integer,
-    user_agent: String.t,
+    user_agent: binary,
     start_height: non_neg_integer,
     relay: boolean
   }
 
+  @spec parse(binary) :: t
   def parse(data) do
 
     <<version :: unsigned-little-integer-size(32),
@@ -71,7 +72,8 @@ defmodule Bitcoin.Protocol.Messages.Version do
 
   end
 
-  def serialize(%Bitcoin.Protocol.Messages.Version{} = s) do
+  @spec serialize(t) :: binary
+  def serialize(%__MODULE__{} = s) do
     <<
       s.version :: unsigned-little-integer-size(32),
       s.services :: bitstring-size(64),

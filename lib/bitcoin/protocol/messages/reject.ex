@@ -9,14 +9,14 @@ defmodule Bitcoin.Protocol.Messages.Reject do
   alias Bitcoin.Protocol.Types.VarString
 
   @reject_reasons %{
-    0x01 => :MALFORMED,
-    0x10 => :INVALID,
-    0x11 => :OBSOLETE,
-    0x12 => :DUPLICATE,
-    0x40 => :NONSTANDARD,
-    0x41 => :DUST,
-    0x42 => :INSUFFICIENTFEE,
-    0x43 => :CHECKPOINT
+    0x01 => :malformed,
+    0x10 => :invalid,
+    0x11 => :obsolete,
+    0x12 => :duplicate,
+    0x40 => :nonstandard,
+    0x41 => :dust,
+    0x42 => :insufficientfee,
+    0x43 => :checkpoint
   }
 
   defstruct message: "", # type of message rejected
@@ -26,12 +26,13 @@ defmodule Bitcoin.Protocol.Messages.Reject do
                        # fill it with the TXID or block header hash of the object being rejected, so the field is 32 bytes.
 
   @type t :: %__MODULE__{
-    message: bitstring,
+    message: binary,
     code: non_neg_integer,
-    reason: bitstring,
-    data: { nil, bitstring }
+    reason: binary,
+    data: binary
   }
 
+  @spec parse(binary) :: t
   def parse(data) do
 
     {message, payload} = VarString.parse_stream(data)

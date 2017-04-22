@@ -23,11 +23,12 @@ defmodule Bitcoin.Protocol.Messages.Tx do
 
   @type t :: %__MODULE__{
     version: integer, # note, this is signed
-    inputs: [],
-    outputs: [],
+    inputs: list(TxInput.t),
+    outputs: list(TxOutput.t),
     lock_time: non_neg_integer
   }
 
+  @spec parse_stream(binary) :: {t, binary}
   def parse_stream(data) do
 
     <<version :: little-integer-size(32), payload :: binary>> = data
@@ -47,11 +48,13 @@ defmodule Bitcoin.Protocol.Messages.Tx do
     {struct, remaining}
   end
 
+  @spec parse(binary) :: t
   def parse(data) do
     {struct, ""} = parse_stream(data)
     struct
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     << s.version :: little-integer-size(32) >>
     <>

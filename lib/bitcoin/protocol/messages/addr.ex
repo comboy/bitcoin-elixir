@@ -13,9 +13,10 @@ defmodule Bitcoin.Protocol.Messages.Addr do
   defstruct address_list: []
 
   @type t :: %__MODULE__{
-    address_list: [NetworkAddress]
+    address_list: [NetworkAddress.t]
   }
 
+  @spec parse(binary) :: t
   def parse(payload) do
 
     {address_list, _payload} = payload |> collect_items(NetworkAddress)
@@ -25,6 +26,7 @@ defmodule Bitcoin.Protocol.Messages.Addr do
     }
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     s.address_list |> serialize_items
   end

@@ -5,6 +5,9 @@ defmodule Bitcoin.Protocol do
   # This function parses it and returns [collection_of_items, remaining_payload]
   # Aruments are payload and a parser. Parser can be a module with the parse_stream function
   # or a function that takes payload and returns [item, remaining_payload]
+  @spec collect_items(binary, term) :: {list, binary}
+  def collect_items(payload, parser)
+
   def collect_items(payload, :hash) do
     payload |> collect_items(fn payload ->
       <<element :: bytes-size(32), payload :: binary>> = payload

@@ -9,7 +9,7 @@ defmodule Bitcoin.Tx do
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Tx.Sighash
 
-  @type hash :: Bitcoin.t_hash
+  @type t_hash :: Bitcoin.t_hash
 
   @doc """
   Calculate hash for signing. `sighash_type` is provided as a byte value.
@@ -22,7 +22,7 @@ defmodule Bitcoin.Tx do
   @doc """
   Calculates hash of the transaction.
   """
-  @spec hash(Messages.Tx.t) :: hash 
+  @spec hash(Messages.Tx.t) :: t_hash
   def hash(%Messages.Tx{} = tx) do
     tx
       |> Messages.Tx.serialize

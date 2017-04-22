@@ -13,6 +13,7 @@ defmodule Bitcoin.Protocol.Messages.Ping do
     nonce: non_neg_integer
   }
 
+  @spec parse(binary) :: t
   def parse(<<nonce::unsigned-little-integer-size(64)>>) do
 
     %__MODULE__{
@@ -21,6 +22,7 @@ defmodule Bitcoin.Protocol.Messages.Ping do
 
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     <<
       s.nonce :: unsigned-little-integer-size(64)

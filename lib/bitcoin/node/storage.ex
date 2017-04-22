@@ -1,5 +1,16 @@
 defmodule Bitcoin.Node.Storage do
 
+  @moduledoc """
+  Handles blocks and transactions persistance.
+
+  This module is responsible for logic of storage, engine below should only do simple tasks.
+
+  TODO ponder we want validation to be done in the specific blockchain context, which
+  Storage GenServer could provide (at least for blocks storage), but not sure if blocking
+  whole storage for the whole validation time is a good idea. Maybe just put blocks storage
+  inside GenServer (remember timeout)?
+  """
+
   use GenServer
   use Bitcoin.Common
 
@@ -7,10 +18,14 @@ defmodule Bitcoin.Node.Storage do
 
   @engine @modules[:storage_engine]
 
+  @spec start_link(map) :: {:ok, pid} | {:error, term}
   def start_link(opts \\ %{}) do
-    {:ok, pid} = @engine.start_link(opts)
-    if @engine.max_height() == nil, do: store_block(@genesis_block)
-    {:ok, pid}
+    case @engine.start_link(opts) do
+      {:ok, pid} ->
+        if @engine.max_height() == nil, do: store_block(@genesis_block)
+        {:ok, pid}
+      {:error, error} -> {:error, error}
+    end
   end
 
   def store(%Messages.Block{} = block), do: store_block(block)
@@ -19,13 +34,16 @@ defmodule Bitcoin.Node.Storage do
 
   def get_blocks_with_height(height) when is_number(height) and height >= 0, do: @engine.get_blocks_with_height(height)
 
-  def store_block(block) do
+  @spec store_block(Messages.Block.t) :: :ok | {:error, term}
+  def store_block(%Messages.Block{} = block) do
     # TODO do we do validationo here or elsewhere?
     # To ensure consistency it would be good to have validation here. If Node.Storage is a genserver,
     # (Node.Storage is not currently)
     # we can be sure that after we're done with validation, chain state didn't change.
     # On the other hand we could make use of the fact that transactions are alerady validated
     # and only try to recheck after reorg? (check how core does this)
+    # TODO where do we decide the main chain? Sum of difficulty could be cached with the stored block but
+    # maybe that's implementation detail of the engine that doesn't need to be exposed here?
     case block |> Bitcoin.Block.validate do
       :ok ->
         # TODO also add hash to the struct, we need the storage struct

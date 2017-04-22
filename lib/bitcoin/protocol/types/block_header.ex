@@ -12,19 +12,21 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
 
   @type t :: %__MODULE__{
     version: integer,
-    previous_block: bitstring,
-    merkle_root: bitstring,
+    previous_block: Bitcoin.Block.t_hash,
+    merkle_root: Bitcoin.t_hash,
     timestamp: non_neg_integer,
     bits: non_neg_integer,
     nonce: non_neg_integer,
     transaction_count: non_neg_integer
   }
 
+  @spec parse(binary) :: t
   def parse(payload) do
     {data, <<>>} = parse_stream(payload)
     data
   end
 
+  @spec parse_stream(binary) :: {t, binary}
   def parse_stream(data) do
     <<version::little-integer-size(32),
       previous_block::bytes-size(32),
@@ -47,6 +49,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
      }, payload}
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     <<
       s.version :: little-integer-size(32),

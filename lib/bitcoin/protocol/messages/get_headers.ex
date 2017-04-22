@@ -21,10 +21,11 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
 
   @type t :: %__MODULE__{
     version: non_neg_integer,
-    block_locator_hashes: list,
-    hash_stop: bitstring
+    block_locator_hashes: list(Bitcoin.Block.t_hash),
+    hash_stop: Bitcoin.Block.t_hash
   }
 
+  @spec parse(binary) :: t
   def parse(data) do
 
     <<version :: unsigned-little-integer-size(32), payload :: binary>> = data
@@ -41,6 +42,7 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
 
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     << s.version :: unsigned-little-integer-size(32) >> 
     <>

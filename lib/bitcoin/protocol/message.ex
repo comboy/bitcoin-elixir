@@ -3,7 +3,7 @@ defmodule Bitcoin.Protocol.Message do
   @moduledoc """
   https://en.bitcoin.it/wiki/Protocol_documentation#Message_structure
   """
-  
+
   use Bitcoin.Common
 
   alias Bitcoin.Protocol.Messages
@@ -83,6 +83,7 @@ defmodule Bitcoin.Protocol.Message do
   end
 
   # TODO we don't check received network magic anywhere, it would be easiest to do but not so elegant to do it at the parser level
+  @spec parse_stream(binary) :: {t, binary} | {nil, binary}
   def parse_stream(message) do
 
     <<
@@ -114,11 +115,13 @@ defmodule Bitcoin.Protocol.Message do
   @doc """
     Returns message type associated with given command
   """
+  @spec message_type(binary) :: module
   def message_type(command), do: @commands[command]
 
   @doc """
     Returns command associated with given message type
   """
+  @spec command_name(module) :: binary
   def command_name(message_type) when message_type in @message_types do
     @commands
       |> Enum.find(fn {_k,v} -> v == message_type end)
@@ -128,11 +131,13 @@ defmodule Bitcoin.Protocol.Message do
   @doc """
     List of supported commands
   """
+  @spec command_names :: list(binary)
   def command_names, do: @command_names
 
   @doc """
     Serialize message type struct into a full binary message that is ready to be send over the network
   """
+  @spec serialize(struct) :: binary
   def serialize(%{__struct__: message_type} = struct) when message_type in @message_types do
 
     << network_identifier :: unsigned-little-integer-size(32) >> = @network_magic_bytes

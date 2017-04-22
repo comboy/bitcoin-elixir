@@ -12,7 +12,7 @@ defmodule Bitcoin.Protocol.Message.Header do
     checksum: non_neg_integer # sha256(sha256(payload)) first four bytes
   }
 
-  @spec parse(binary) :: __MODULE__.t
+  @spec parse(binary) :: t
   def parse(<<network_identifier :: unsigned-little-integer-size(32),
                     command :: bytes-size(12),
                     payload_size_bytes :: unsigned-little-integer-size(32),
@@ -27,6 +27,7 @@ defmodule Bitcoin.Protocol.Message.Header do
     }
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     command = s.command |> Binary.pad_trailing(12)
     << 
@@ -37,6 +38,7 @@ defmodule Bitcoin.Protocol.Message.Header do
     >>
   end
 
+  @spec checksum(binary) :: non_neg_integer
   def checksum(payload) do
     << result :: unsigned-little-integer-size(32), _ :: binary >> = :crypto.hash(:sha256, :crypto.hash(:sha256, payload))
     result

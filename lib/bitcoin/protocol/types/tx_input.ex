@@ -9,7 +9,7 @@ defmodule Bitcoin.Protocol.Types.TxInput do
 
   @type t :: %__MODULE__{
     previous_output: Outpoint.t,
-    signature_script: bitstring,
+    signature_script: binary,
     sequence: non_neg_integer
   }
 
@@ -19,6 +19,7 @@ defmodule Bitcoin.Protocol.Types.TxInput do
     end
   end
 
+  @spec parse_stream(binary) :: {t, binary}
   def parse_stream(payload) do
 
     {outpoint, payload} = Outpoint.parse_stream(payload)
@@ -33,6 +34,7 @@ defmodule Bitcoin.Protocol.Types.TxInput do
 
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     (s.previous_output |> Outpoint.serialize) <>
     (s.signature_script |> VarString.serialize) <>

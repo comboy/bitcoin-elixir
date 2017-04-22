@@ -21,9 +21,10 @@ defmodule Bitcoin.Protocol.Messages.Headers do
   defstruct headers: [] # Bitcoin.Protocol.Types.BlockHeader[], https://en.bitcoin.it/wiki/Protocol_specification#Block_Headers
 
   @type t :: %__MODULE__{
-    headers: [BlockHeader]
+    headers: list(BlockHeader.t)
   }
 
+  @spec parse(binary) :: t
   def parse(payload) do
     {headers, _payload} = payload |> collect_items(BlockHeader)
 
@@ -32,6 +33,7 @@ defmodule Bitcoin.Protocol.Messages.Headers do
     }
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     s.headers |> serialize_items
   end

@@ -33,7 +33,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
     timestamp: non_neg_integer,
     bits: non_neg_integer,
     nonce: non_neg_integer,
-    transactions: [Tx]
+    transactions: list(Tx.t)
   }
 
   @spec parse(binary) :: t
@@ -70,6 +70,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
 
   # Serialization of header fields is separated so that we can compute the block hash
   # Note that these differ from Types.BlockHeader by transaction_count field
+  @spec serialize_header(t) :: binary
   def serialize_header(%__MODULE__{} = s) do
     <<
       s.version :: little-integer-size(32),
@@ -82,6 +83,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
   end
 
   # Transform Block struct to Types.BlockHeader struct
+  @spec header(t) :: Bitcoin.Protocol.Types.BlockHeader.t
   def header(%__MODULE__{} = block) do
     %Bitcoin.Protocol.Types.BlockHeader{} |> Map.merge(
       block

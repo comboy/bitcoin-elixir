@@ -7,7 +7,7 @@ defmodule Bitcoin.Protocol.Types.TxOutput do
 
   @type t :: %__MODULE__{
     value: non_neg_integer,
-    pk_script: bitstring
+    pk_script: binary
   }
 
   defimpl Inspect, for: __MODULE__ do
@@ -16,6 +16,7 @@ defmodule Bitcoin.Protocol.Types.TxOutput do
     end
   end
 
+  @spec parse_stream(binary) :: {t, binary}
   def parse_stream(payload) do
     << value::unsigned-little-integer-size(64), payload :: binary >> = payload
     {pk_script, payload} = VarString.parse_stream(payload)
@@ -26,6 +27,7 @@ defmodule Bitcoin.Protocol.Types.TxOutput do
     }, payload}
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     << s.value :: unsigned-little-integer-size(64) >>
     <> (s.pk_script |> VarString.serialize)

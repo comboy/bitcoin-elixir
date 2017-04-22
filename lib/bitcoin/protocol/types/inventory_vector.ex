@@ -12,7 +12,7 @@ defmodule Bitcoin.Protocol.Types.InventoryVector do
 
   @type t :: %__MODULE__{
     reference_type: atom,
-    hash: String.t
+    hash: Bitcoin.t_hash
   }
 
   defimpl Inspect, for: __MODULE__ do
@@ -21,20 +21,23 @@ defmodule Bitcoin.Protocol.Types.InventoryVector do
     end
   end
 
+  @spec parse(binary) :: t
   def parse(<<type_id :: unsigned-little-integer-size(32), hash :: bytes-size(32)>>) do
-    %Bitcoin.Protocol.Types.InventoryVector{
+    %__MODULE__{
       reference_type: type_id |> get_type_name,
       hash: hash
     }
   end
 
+  @spec parse_stream(binary) :: {t, binary}
   def parse_stream(<<type_id :: unsigned-little-integer-size(32), hash :: bytes-size(32), remaining_stream :: binary>>) do
-    {%Bitcoin.Protocol.Types.InventoryVector{
+    {%__MODULE__{
       reference_type: type_id |> get_type_name,
       hash: hash
     }, remaining_stream}
   end
 
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     type_id = s.reference_type |> get_type_id
     <<

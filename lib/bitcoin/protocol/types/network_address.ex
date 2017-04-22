@@ -21,11 +21,13 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
     port: non_neg_integer
   }
 
+  @spec parse(binary) :: t
   def parse(payload) do
     {data, <<>>} = payload |> parse_stream
     data
   end
 
+  @spec parse_stream(binary) :: {t, binary}
   def parse_stream(payload) do
     << 
       time :: unsigned-native-integer-size(32),
@@ -46,11 +48,13 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
     }
   end
 
+  @spec parse_version(binary) :: t
   def parse_version(payload) do
     {data, <<>>} = payload |> parse_version_stream
     data
   end
 
+  @spec parse_version_stream(binary) :: {t, binary}
   def parse_version_stream(payload) do
     <<
       services :: bitstring-size(64),
@@ -70,6 +74,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
   end
 
   # Binary representation as it is used in the Addr message
+  @spec serialize(t) :: binary
   def serialize(%__MODULE__{} = s) do
     <<
       s.time :: unsigned-native-integer-size(32),
@@ -80,6 +85,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
   end
 
   # Binary representation as it is used in the Version message
+  @spec serialize_version(t) :: binary
   def serialize_version(%__MODULE__{} = s) do
     <<
       s.services :: bitstring-size(64),
