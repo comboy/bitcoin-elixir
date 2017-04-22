@@ -25,7 +25,7 @@ defmodule Bitcoin.Protocol.Messages.Headers do
   }
 
   def parse(payload) do
-    [headers, _payload] = payload |> collect_items(BlockHeader)
+    {headers, _payload} = payload |> collect_items(BlockHeader)
 
     %__MODULE__{
       headers: headers

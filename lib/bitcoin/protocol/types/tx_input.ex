@@ -21,15 +21,15 @@ defmodule Bitcoin.Protocol.Types.TxInput do
 
   def parse_stream(payload) do
 
-    [outpoint, payload] = Outpoint.parse_stream(payload)
-    [sig_script, payload] = VarString.parse_stream(payload)
+    {outpoint, payload} = Outpoint.parse_stream(payload)
+    {sig_script, payload} = VarString.parse_stream(payload)
     << sequence :: unsigned-little-integer-size(32), payload :: binary >> = payload
 
-    [%__MODULE__{
+    {%__MODULE__{
       previous_output: outpoint,
       signature_script: sig_script,
       sequence: sequence
-    }, payload]
+    }, payload}
 
   end
 

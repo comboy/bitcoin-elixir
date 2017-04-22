@@ -29,7 +29,7 @@ defmodule Bitcoin.Protocol.Messages.GetHeaders do
 
     <<version :: unsigned-little-integer-size(32), payload :: binary>> = data
 
-    [block_locator_hashes, payload] = payload |> collect_items(:hash)
+    {block_locator_hashes, payload} = payload |> collect_items(:hash)
 
     << hash_stop :: bytes-size(32) >> = payload
 

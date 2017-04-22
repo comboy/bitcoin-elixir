@@ -32,8 +32,8 @@ defmodule Bitcoin.Protocol.Messages.Tx do
 
     <<version :: little-integer-size(32), payload :: binary>> = data
 
-    [inputs, payload] =  payload |> collect_items(TxInput)
-    [outputs, payload] = payload |> collect_items(TxOutput)
+    {inputs, payload} =  payload |> collect_items(TxInput)
+    {outputs, payload} = payload |> collect_items(TxOutput)
 
     <<lock_time::unsigned-little-integer-size(32), remaining :: binary>> = payload
 
@@ -44,11 +44,11 @@ defmodule Bitcoin.Protocol.Messages.Tx do
       lock_time: lock_time
     }
 
-    [struct, remaining]
+    {struct, remaining}
   end
 
   def parse(data) do
-    [struct, ""] = parse_stream(data)
+    {struct, ""} = parse_stream(data)
     struct
   end
 

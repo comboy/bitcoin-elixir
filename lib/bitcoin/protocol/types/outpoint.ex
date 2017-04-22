@@ -15,10 +15,10 @@ defmodule Bitcoin.Protocol.Types.Outpoint do
   end
 
   def parse_stream(<<hash::bytes-size(32), index::unsigned-little-integer-size(32), remainder::binary>>) do
-    [%__MODULE__{
+    {%__MODULE__{
       hash: hash,
       index: index
-    }, remainder]
+    }, remainder}
   end
 
   def parse(<<hash::bytes-size(32), index::unsigned-little-integer-size(32)>>) do

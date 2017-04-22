@@ -18,7 +18,7 @@ defmodule Bitcoin.Protocol.Messages.Inv do
 
 
   def parse(payload) do
-    [inventory_vectors, _] = payload |> collect_items(InventoryVector)
+    {inventory_vectors, _} = payload |> collect_items(InventoryVector)
 
     %__MODULE__{
       inventory_vectors: inventory_vectors

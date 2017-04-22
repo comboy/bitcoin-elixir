@@ -93,7 +93,7 @@ defmodule Bitcoin.Protocol.Message do
     header  = Header.parse(raw_header)
 
     if byte_size(data) < header.payload_size_bytes do
-      [nil, message]
+      {nil, message}
     else
       size = header.payload_size_bytes
       <<
@@ -106,7 +106,7 @@ defmodule Bitcoin.Protocol.Message do
         payload: Payload.parse(header.command, payload)
       }
 
-      [message, remaining]
+      {message, remaining}
     end
 
   end

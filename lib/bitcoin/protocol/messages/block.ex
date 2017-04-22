@@ -47,7 +47,7 @@ defmodule Bitcoin.Protocol.Messages.Block do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transactions, _] = payload |> collect_items(Tx)
+    {transactions, _} = payload |> collect_items(Tx)
 
     %__MODULE__{
       version: version,

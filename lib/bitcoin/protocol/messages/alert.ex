@@ -51,7 +51,7 @@ defmodule Bitcoin.Protocol.Messages.Alert do
 
   def parse(data) do
 
-    [alert_payload_bytes, alert_data] = Bitcoin.Protocol.Types.VarInteger.parse_stream(data)
+    {alert_payload_bytes, alert_data} = Bitcoin.Protocol.Types.VarInteger.parse_stream(data)
 
     << alert_payload :: bytes-size(alert_payload_bytes), alert_signature_payload :: binary >> = alert_data
 
@@ -64,7 +64,7 @@ defmodule Bitcoin.Protocol.Messages.Alert do
       remaining_payload :: binary
     >> = alert_payload
 
-    [set_cancel, set_cancel_payload] = Bitcoin.Protocol.Types.IntegerArray.parse_stream(remaining_payload)
+    {set_cancel, set_cancel_payload} = Bitcoin.Protocol.Types.IntegerArray.parse_stream(remaining_payload)
 
     <<
       min_ver :: unsigned-little-integer-size(32),
@@ -72,20 +72,20 @@ defmodule Bitcoin.Protocol.Messages.Alert do
       ver_payload :: binary
     >> = set_cancel_payload
 
-    [set_sub_ver, sub_ver_payload] = Bitcoin.Protocol.Types.StringArray.parse_stream(ver_payload)
+    {set_sub_ver, sub_ver_payload} = Bitcoin.Protocol.Types.StringArray.parse_stream(ver_payload)
 
     <<
       priority :: unsigned-little-integer-size(32),
       priority_payload :: binary
     >> = sub_ver_payload
 
-    [comment, comment_payload] = Bitcoin.Protocol.Types.VarString.parse_stream(priority_payload)
+    {comment, comment_payload} = Bitcoin.Protocol.Types.VarString.parse_stream(priority_payload)
 
-    [status_bar, status_bar_payload] = Bitcoin.Protocol.Types.VarString.parse_stream(comment_payload)
+    {status_bar, status_bar_payload} = Bitcoin.Protocol.Types.VarString.parse_stream(comment_payload)
 
-    [reserved, _] = Bitcoin.Protocol.Types.VarString.parse_stream(status_bar_payload)
+    {reserved, _} = Bitcoin.Protocol.Types.VarString.parse_stream(status_bar_payload)
 
-    [alert_signature_bytes, alert_signature_payload] = Bitcoin.Protocol.Types.VarInteger.parse_stream(alert_signature_payload)
+    {alert_signature_bytes, alert_signature_payload} = Bitcoin.Protocol.Types.VarInteger.parse_stream(alert_signature_payload)
 
     << alert_signature :: bytes-size(alert_signature_bytes) >> = alert_signature_payload
 

@@ -8,7 +8,7 @@ defmodule BitcoinTest.Protocol.Types.StringTest do
 
     payload = <<0, 0, 1, 0>>
 
-    assert ["", <<0, 1, 0>>] ==
+    assert {"", <<0, 1, 0>>} ==
              VarString.parse_stream(payload)
 
   end
@@ -17,7 +17,7 @@ defmodule BitcoinTest.Protocol.Types.StringTest do
 
     payload = <<1, 97 ,0, 1, 0>>
 
-    assert ["a", <<0, 1, 0>>] ==
+    assert {"a", <<0, 1, 0>>} ==
              VarString.parse_stream(payload)
 
   end
@@ -26,13 +26,13 @@ defmodule BitcoinTest.Protocol.Types.StringTest do
 
     payload = <<2, 97, 98, 1, 1, 0>>
 
-    assert ["ab", <<1, 1, 0>>] ==
+    assert {"ab", <<1, 1, 0>>} ==
              VarString.parse_stream(payload)
 
   end
 
   test "parse 0 length string" do
-    assert ["", <<>>] = VarString.parse_stream(VarInteger.serialize(0))
+    assert {"", <<>>} = VarString.parse_stream(VarInteger.serialize(0))
   end
 
   test "serialization" do

@@ -8,24 +8,24 @@ defmodule Bitcoin.Protocol do
   def collect_items(payload, :hash) do
     payload |> collect_items(fn payload ->
       <<element :: bytes-size(32), payload :: binary>> = payload
-      [element, payload]
+      {element, payload}
     end)
   end
 
   def collect_items(payload, parser) do
-    [count, payload] = payload |> VarInteger.parse_stream
+    {count, payload} = payload |> VarInteger.parse_stream
     collect_items(payload, parser, count, [])
   end
 
-  def collect_items(payload, _parser, 0, items), do: [items |> Enum.reverse, payload]
+  def collect_items(payload, _parser, 0, items), do: {items |> Enum.reverse, payload}
 
   def collect_items(payload, parser, count, items) when is_atom(parser) do
-    [item, payload] = payload |> parser.parse_stream
+    {item, payload} = payload |> parser.parse_stream
     collect_items(payload, parser, count - 1, [item | items])
   end
 
   def collect_items(payload, parser, count, items) when is_function(parser) do
-    [item, payload] = payload |> parser.()
+    {item, payload} = payload |> parser.()
     collect_items(payload, parser, count - 1, [item | items])
   end
 

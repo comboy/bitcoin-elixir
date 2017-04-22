@@ -9,7 +9,7 @@ defmodule BitcoinTest.Protocol.Types.IntegerArrayTest do
                 1, 1, 0  # remaining stream
               >>
 
-    assert [ [], <<1, 1, 0>> ] ==
+    assert { [], <<1, 1, 0>> } ==
       IntegerArray.parse_stream(payload)
 
   end
@@ -20,12 +20,12 @@ defmodule BitcoinTest.Protocol.Types.IntegerArrayTest do
                   1 :: unsigned-little-integer-size(32),     # first element
                 0, 1, 0  # remaining stream
               >>
-    assert [
+    assert {
              [
                1
              ],
              <<0, 1, 0>>
-           ] ==
+           } ==
              IntegerArray.parse_stream(payload)
 
   end
@@ -37,13 +37,13 @@ defmodule BitcoinTest.Protocol.Types.IntegerArrayTest do
                     56619 :: unsigned-little-integer-size(32),             # second element
                   1, 1, 0  # remaining stream
                 >>
-      assert [
+      assert {
                [
                  1,
                  56619
                ],
                <<1, 1, 0>>
-             ] ==
+             } ==
                IntegerArray.parse_stream(payload)
 
     end
@@ -54,14 +54,14 @@ defmodule BitcoinTest.Protocol.Types.IntegerArrayTest do
                   1 :: unsigned-little-integer-size(32), 56619 :: unsigned-little-integer-size(32), 1305992491 :: unsigned-little-integer-size(32),  # elements
                   1, 1, 1                # remaining stream
                 >>
-      assert [
+      assert {
                [
                  1,
                  56619,
                  1305992491
                ],
                <<1, 1, 1>>
-             ] ==
+             } ==
                IntegerArray.parse_stream(payload)
 
     end

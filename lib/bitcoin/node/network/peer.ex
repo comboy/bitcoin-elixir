@@ -233,7 +233,7 @@ defmodule Bitcoin.Node.Network.Peer do
 
   def process_buffer(buffer) when byte_size(buffer) < 24, do: buffer # 24 is the header size
   def process_buffer(buffer) do
-    [msg, remaining] = buffer |> Bitcoin.Protocol.Message.parse_stream
+    {msg, remaining} = buffer |> Bitcoin.Protocol.Message.parse_stream
     case msg do
       nil -> remaining
       _   ->

@@ -29,10 +29,10 @@ defmodule Bitcoin.Protocol.Types.InventoryVector do
   end
 
   def parse_stream(<<type_id :: unsigned-little-integer-size(32), hash :: bytes-size(32), remaining_stream :: binary>>) do
-    [%Bitcoin.Protocol.Types.InventoryVector{
+    {%Bitcoin.Protocol.Types.InventoryVector{
       reference_type: type_id |> get_type_name,
       hash: hash
-    }, remaining_stream]
+    }, remaining_stream}
   end
 
   def serialize(%__MODULE__{} = s) do

@@ -21,7 +21,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
   }
 
   def parse(payload) do
-    [data, <<>>] = parse_stream(payload)
+    {data, <<>>} = parse_stream(payload)
     data
   end
 
@@ -34,9 +34,9 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
       nonce::unsigned-little-integer-size(32),
       payload::binary>> = data
 
-    [transaction_count, payload] = VarInteger.parse_stream(payload)
+    {transaction_count, payload} = VarInteger.parse_stream(payload)
 
-    [%__MODULE__{
+    {%__MODULE__{
         version: version,
         previous_block: previous_block,
         merkle_root: merkle_root,
@@ -44,7 +44,7 @@ defmodule Bitcoin.Protocol.Types.BlockHeader do
         bits: bits,
         nonce: nonce,
         transaction_count: transaction_count
-     }, payload]
+     }, payload}
   end
 
   def serialize(%__MODULE__{} = s) do

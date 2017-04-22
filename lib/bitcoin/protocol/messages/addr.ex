@@ -18,7 +18,7 @@ defmodule Bitcoin.Protocol.Messages.Addr do
 
   def parse(payload) do
 
-    [address_list, _payload] = payload |> collect_items(NetworkAddress)
+    {address_list, _payload} = payload |> collect_items(NetworkAddress)
 
     %__MODULE__{
       address_list: address_list

@@ -42,14 +42,14 @@ defmodule Bitcoin.Protocol.Messages.Version do
       remaining :: binary
     >> = data
 
-    [address_of_receiving_node, remaining] = NetworkAddress.parse_version_stream(remaining)
-    [address_of_sending_node, remaining] = NetworkAddress.parse_version_stream(remaining)
+    {address_of_receiving_node, remaining} = NetworkAddress.parse_version_stream(remaining)
+    {address_of_sending_node, remaining} = NetworkAddress.parse_version_stream(remaining)
 
     <<nonce :: unsigned-little-integer-size(64),
       remaining :: binary
     >> = remaining
 
-    [user_agent, remaining] = VarString.parse_stream(remaining)
+    {user_agent, remaining} = VarString.parse_stream(remaining)
 
     <<start_height :: unsigned-little-integer-size(32),
       relay :: binary

@@ -34,9 +34,9 @@ defmodule Bitcoin.Protocol.Messages.Reject do
 
   def parse(data) do
 
-    [message, payload] = VarString.parse_stream(data)
+    {message, payload} = VarString.parse_stream(data)
     <<code::bytes-size(1),payload::binary>> = payload
-    [reason, data] = VarString.parse_stream(payload)
+    {reason, data} = VarString.parse_stream(payload)
 
     %__MODULE__{
       message: message,

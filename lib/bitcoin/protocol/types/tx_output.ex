@@ -18,12 +18,12 @@ defmodule Bitcoin.Protocol.Types.TxOutput do
 
   def parse_stream(payload) do
     << value::unsigned-little-integer-size(64), payload :: binary >> = payload
-    [pk_script, payload] = VarString.parse_stream(payload)
+    {pk_script, payload} = VarString.parse_stream(payload)
 
-    [%__MODULE__{
+    {%__MODULE__{
       value: value,
       pk_script: pk_script
-    }, payload]
+    }, payload}
   end
 
   def serialize(%__MODULE__{} = s) do

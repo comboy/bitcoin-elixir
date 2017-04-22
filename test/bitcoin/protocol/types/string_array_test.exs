@@ -9,7 +9,7 @@ defmodule BitcoinTest.Protocol.Types.StringArrayTest do
                 1, 1, 0  # remaining stream
               >>
 
-    assert [ [], <<1, 1, 0>> ] ==
+    assert { [], <<1, 1, 0>> } ==
       StringArray.parse_stream(payload)
 
   end
@@ -20,12 +20,12 @@ defmodule BitcoinTest.Protocol.Types.StringArrayTest do
                   1, 97, # first element, << Integer byte count, string 'a' >>
                 0, 1, 0  # remaining stream
               >>
-    assert [
+    assert {
              [
                "a"
              ],
              <<0, 1, 0>>
-           ] ==
+           } ==
              StringArray.parse_stream(payload)
 
   end
@@ -37,13 +37,13 @@ defmodule BitcoinTest.Protocol.Types.StringArrayTest do
                     0,      # second element, empty string
                   1, 1, 0  # remaining stream
                 >>
-      assert [
+      assert {
                [
                  "a",
                  ""
                ],
                <<1, 1, 0>>
-             ] ==
+             } ==
                StringArray.parse_stream(payload)
 
     end
@@ -56,14 +56,14 @@ defmodule BitcoinTest.Protocol.Types.StringArrayTest do
                     2, 97, 98, # third element, << Integer byte count, string 'ab' >>
                   1, 1, 1  # remaining stream
                 >>
-      assert [
+      assert {
                [
                  "a",
                  "",
                  "ab"
                ],
                <<1, 1, 1>>
-             ] ==
+             } ==
                StringArray.parse_stream(payload)
 
     end

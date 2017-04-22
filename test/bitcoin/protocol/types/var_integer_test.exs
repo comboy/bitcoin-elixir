@@ -7,7 +7,7 @@ defmodule BitcoinTest.Protocol.Types.VarIntegerTest do
 
     payload = <<255, 43, 221, 215, 77, 0, 0, 0, 0, 1, 1, 0>>
 
-    assert [1305992491, <<1, 1, 0>>] ==
+    assert {1305992491, <<1, 1, 0>>} ==
              VarInteger.parse_stream(payload)
 
   end
@@ -16,7 +16,7 @@ defmodule BitcoinTest.Protocol.Types.VarIntegerTest do
 
     payload = <<254, 43, 221, 215, 77, 0, 1, 0>>
 
-    assert [1305992491, <<0, 1, 0>>] ==
+    assert {1305992491, <<0, 1, 0>>} ==
              VarInteger.parse_stream(payload)
 
   end
@@ -25,7 +25,7 @@ defmodule BitcoinTest.Protocol.Types.VarIntegerTest do
 
     payload = <<253, 43, 221, 0, 1, 0>>
 
-    assert [56619, <<0, 1, 0>>] ==
+    assert {56619, <<0, 1, 0>>} ==
              VarInteger.parse_stream(payload)
 
   end
@@ -34,7 +34,7 @@ defmodule BitcoinTest.Protocol.Types.VarIntegerTest do
 
     payload = <<0xF0, 0, 1, 0>>
 
-    assert [0xF0, <<0, 1, 0>>] ==
+    assert {0xF0, <<0, 1, 0>>} ==
              VarInteger.parse_stream(payload)
 
   end

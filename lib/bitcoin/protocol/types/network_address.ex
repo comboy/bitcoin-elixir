@@ -22,7 +22,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
   }
 
   def parse(payload) do
-    [data, <<>>] = payload |> parse_stream
+    {data, <<>>} = payload |> parse_stream
     data
   end
 
@@ -35,7 +35,7 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
       payload :: binary
     >> = payload
 
-    [
+    {
       %__MODULE__{
         time: time,
         services: services,
@@ -43,11 +43,11 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
         port: port
       },
       payload
-    ]
+    }
   end
 
   def parse_version(payload) do
-    [data, <<>>] = payload |> parse_version_stream
+    {data, <<>>} = payload |> parse_version_stream
     data
   end
 
@@ -59,14 +59,14 @@ defmodule Bitcoin.Protocol.Types.NetworkAddress do
       payload :: binary
     >> = payload
 
-    [
+    {
       %__MODULE__{
         services: services,
         address: address |> addr_to_inet,
         port: port
       },
       payload
-    ]
+    }
   end
 
   # Binary representation as it is used in the Addr message
