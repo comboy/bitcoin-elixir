@@ -9,14 +9,20 @@ defmodule Bitcoin.Script.P2SH do
 
       # Match Pay to script hash pattern
       # https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki
-      # TODO validate that there were no operations other than pushdata in sigscript
       # TODO only match if opts[:flags] include :p2sh
-      def run([serialized_script | stack], [:OP_HASH160, << hash :: binary-size(20) >>, :OP_EQUAL], opts) do
-        # TODO move to function to share with OP_HASH160
-        if :crypto.hash(:ripemd160, :crypto.hash(:sha256, bin(serialized_script))) == hash do
-          run(stack, serialized_script |> parse, opts)
-        else
-          {:error, :p2sh_hash_invalid} # hash of the serialzed script doesn't watch
+      # TODO we hshould have some run_sig_pk or another way to get more specific errors
+      def verify_sig_pk([serialized_script | sig_script], [:OP_HASH160, << hash :: binary-size(20) >>, :OP_EQUAL], opts) when is_binary(serialized_script) and sig_script != [] do
+        cond do
+          # Only push data allowed
+          # TODO check what about OP_1-OP_16 OP_FALSE and OP_RESERVED - seems not to be covered in script tests
+          sig_script |> Enum.any?(& is_atom(&1) ) ->
+            false # {:error, :onlp_pushdata_in_p2sh_sig}
+          # Hash must still match
+          :crypto.hash(:ripemd160, :crypto.hash(:sha256, serialized_script)) == hash ->
+            verify_sig_pk(sig_script, serialized_script |> parse, opts)
+          # If hash doesn't match, the script is invalid
+          true ->
+            false # {:error, :p2sh_hash_invalid}
         end
       end
 

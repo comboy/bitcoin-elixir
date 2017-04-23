@@ -71,7 +71,9 @@ defmodule Bitcoin.Script do
   # The reason for this function is that we need to parse sig script and pk separately.
   # Otherwise sig script could do some nasty stuff with malformed PUSHDATA
   # Then we have to run it separately
-  def verify_sig_pk(sig_bin, pk_bin, opts \\[])
+
+  # default opts aredone this weird way because additional function cases come from uses above (to avoid warnings)
+  def verify_sig_pk(sig_bin, pk_bin), do: verify_sig_pk(sig_bin, pk_bin, %{})
   def verify_sig_pk(sig_bin, pk_bin, opts) when is_binary(sig_bin) and is_binary(pk_bin), do: verify_sig_pk(sig_bin |> parse, pk_bin |> parse, opts)
   def verify_sig_pk(sig_script, pk_script, opts) do
     try do
