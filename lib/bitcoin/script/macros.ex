@@ -96,6 +96,28 @@ defmodule Bitcoin.Script.Macros do
     end
   end
 
+  # `op_hash` macro is like `op`, but makes sure input is binary and handles special case of empty stack
+  #
+  #     op_hash :OP_SHA1, x, do: :crypto.hash(:sha, x)
+  #
+  # expands to
+  #
+  #     run([], [:OP_SHA1 | _script] = script, opts), do: run([""], script, opts)
+  #     run([x | stack], [:OP_SHA1 | script], opts), do: x = bin(x); [:crypto.hash(:sha, x) | stack] |> run(script, opts)
+
+
+  defmacro op_hash(op, a, do: stack_expression) when is_atom(op) do
+    quote do
+      def run([], [unquote(op) | _script] = script, opts) do
+        run([""], script, opts)
+      end
+
+      def run([unquote(a) | stack], [unquote(op) | script], opts) do
+        unquote(a) = bin(unquote(a))
+        [unquote(stack_expression) | stack] |> run(script, opts)
+      end
+    end
+  end
   # changes opcode in the script to list of provided opcodes
 
   defmacro op_alias(op, list) when is_atom(op) and is_list(list) do

@@ -16,7 +16,7 @@ defmodule Bitcoin.Script.P2SH do
         if :crypto.hash(:ripemd160, :crypto.hash(:sha256, bin(serialized_script))) == hash do
           run(stack, serialized_script |> parse, opts)
         else
-          :invalid # hash of the serialzed script doesn't watch
+          {:error, :p2sh_hash_invalid} # hash of the serialzed script doesn't watch
         end
       end
 

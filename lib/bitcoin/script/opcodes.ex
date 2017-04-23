@@ -174,6 +174,9 @@ defmodule Bitcoin.Script.Opcodes do
 
       @disabled_op_values @disabled_op |> Enum.map(fn name -> @op[name] end)
 
+      # These op are not counted towards @max_ops limit
+      @not_counted_ops [:OP_FALSE] ++ (0x50..0x60 |> Enum.map(& @op_name[&1]))
+
     end
   end
 end

@@ -24,7 +24,7 @@ defmodule Bitcoin.Script do
 
   @doc """
   Parse binary script into a form consumable by the interpreter (ops list). Parsed script looks like this:
- 
+
       [:OP_10, :OP_10, :OP_ADD, <<20>>, :OP_EQUAL]
   """
   defdelegate parse(binary), to: Serialization
@@ -95,7 +95,7 @@ defmodule Bitcoin.Script do
   end
 
   # Cast stack to boolean
-  def cast_to_bool(:invalid), do: false
+  def cast_to_bool({:error, _}), do: false
   def cast_to_bool([]), do: false
   def cast_to_bool([x | _]), do: bool(x)
 
@@ -110,12 +110,13 @@ defmodule Bitcoin.Script do
 
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
   # Parser returns [:invalid] if the script couldn't be parsed
-  def run(:invalid, _script, _opts), do: :invalid
-  def run(_, [:invalid | _], _opts), do: :invalid
+  def run({:error, err}, _script, _opts), do: {:error, err}
+  def run(_, [:invalid | _], _opts), do: {:error, :invalid}
+  def run(_, [{:error, err} | _], _opts), do: {:error, err}
 
   # Stack size limit
   # TODO should include altstack
-  def run(stack, _script, _opts) when length(stack) > @max_stacks_size, do: :invalid
+  def run(stack, _script, _opts) when length(stack) > @max_stacks_size, do: {:error, :max_stacks_size}
 
   # When no script is left to run, return the stack
   def run(stack, [], _opts), do: stack
@@ -128,9 +129,15 @@ defmodule Bitcoin.Script do
   def validate(script) do
     cond do
       # Script invalid if any of disabled ops is present
-      script |> Enum.any?(fn op -> op in @disabled_op end) -> [:invalid]
+      script |> Enum.any?(fn op -> op in @disabled_op end) -> [{:error, :disabled_op}]
       # Scirpt max ops
-      script |> length > @max_ops -> [:invalid] # TODO op count excludes OP_1 - OP_16
+      script
+      # OP_0..OP_16 + OP_RESERVED are not counted towards the limit
+      # The akwkard binary size filter is due to the fact that OP_PUSHDATAs should count, but we don't have them anymore here
+      # So any binary above 0x4b size had to use opcode to be here. Those below could have used 0x01 - 0x4b byte to push
+      # Maybe we should have OP_PUSHADATAs in the parsed script.
+      |> Enum.filter(& !(is_binary(&1) && byte_size(&1) <= 0x4b) && !(&1 in @not_counted_ops))
+      |> length > @max_ops -> [{:error, :max_ops}]
       true -> script
     end
   end
@@ -169,18 +176,16 @@ defmodule Bitcoin.Script do
   op :OP_NOP, stack, do: stack
 
   # OP_RESERVED Transaction is invalid unless occuring in an unexecuted OP_IF branch
-  op :OP_RESERVED, _, do: :invalid
+  op :OP_RESERVED, _, do: {:error, :OP_RESERVED}
 
   # OP_VER Transaction is invalid unless occuring in an unexecuted OP_IF branch
-  op :OP_VER, _, do: :invalid
+  op :OP_VER, _, do: {:error, :OP_VER}
 
-  # OPVERIF Transaction is invalid even when occuring in an unexecuted OP_IF branch
-  # Because of that, it's handled by the parser same as disabled OPs
-  op :OP_VERIF, _, do: :invalid
+  # OP_VERIF Transaction is invalid even when occuring in an unexecuted OP_IF branch
+  # Because of that, it's handled by validation same as disabled OPs
 
-  # OPVERIF transaction is invalid even when occuring in an unexecuted OP_IF branch
-  # Because of that, it's handled by the parser same as disabled OPs
-  op :OP_VERNOTIF, _, do: :invalid
+  # OP_VERNOTIF transaction is invalid even when occuring in an unexecuted OP_IF branch
+  # Because of that, it's handled by validation same as disabled OPs
 
   # OP_IF If the top stack value is not False, the statements are executed. The top stack value is removed.
   def run([x | stack], [:OP_IF | script], opts) do
@@ -204,11 +209,11 @@ defmodule Bitcoin.Script do
   # OP_ELSE implemented as part of the OP_IF
 
   # OP_VERIFY Marks transaction as invalid if top stack value is not true.
-  op :OP_VERIFY, [0 | _], do: :invalid
+  op :OP_VERIFY, [0 | _], do: {:error, :verify_failed}
   op :OP_VERIFY, [_ | stack], do: stack
 
   # OP_RETURN Marks transaction as invalid.
-  op :OP_RETURN, _, do: :invalid
+  op :OP_RETURN, _, do: {:error, :OP_RETURN}
 
   ##
   ## STACKOPS
@@ -255,6 +260,7 @@ defmodule Bitcoin.Script do
   op :OP_DROP, [_ | stack], do: stack
 
   # OP_DUP Duplicates the top stack item.
+  op :OP_DUP, [], do: ["", ""] # special case
   op :OP_DUP, [x | stack], do: [x, x | stack]
 
   # OP_NIP Removes the second-to-top stack item
@@ -315,10 +321,10 @@ defmodule Bitcoin.Script do
   op_alias :OP_EQUALVERIFY, [:OP_EQUAL, :OP_VERIFY]
 
   # OP_RESERVED1 Transaction is invalid unless occuring in an unexecuted OP_IF branch
-  op :OP_RESERVED1, _, do: :invalid
+  op :OP_RESERVED1, _, do: {:error, :OP_RESERVED1}
 
   # OP_RESERVED2 Transaction is invalid unless occuring in an unexecuted OP_IF branch
-  op :OP_RESERVED2, _, do: :invalid
+  op :OP_RESERVED2, _, do: {:error, :OP_RESERVED2}
 
   ##
   ## NUMERIC
@@ -403,19 +409,19 @@ defmodule Bitcoin.Script do
   ##
 
   # OP_RIPEMD160 The input is hashed using RIPEMD-160.
-  op :OP_RIPEMD160, [x | stack], do: [:crypto.hash(:ripemd160, bin(x)) | stack]
+  op_hash :OP_RIPEMD160, x, do: :crypto.hash(:ripemd160, x)
 
   # OP_SHA1 The input is hashed using SHA-1.
-  op :OP_SHA1, [x | stack], do: [:crypto.hash(:sha, bin(x)) | stack]
+  op_hash :OP_SHA1, x, do: :crypto.hash(:sha, x)
 
   # OP_SHA256 The input is hashed using SHA-256
-  op :OP_SHA256, [x | stack], do: [:crypto.hash(:sha256, bin(x)) | stack]
+  op_hash :OP_SHA256, x, do: :crypto.hash(:sha256, x)
 
   # OP_HASH160 The input is hashed twice: first with SHA-256 and then with RIPEMD-160.
-  op :OP_HASH160, [x | stack], do: [:crypto.hash(:ripemd160, :crypto.hash(:sha256, bin(x))) | stack]
+  op_hash :OP_HASH160, x, do: :crypto.hash(:ripemd160, :crypto.hash(:sha256, x))
 
   # OP_HASH256 The input is hashed two times with SHA-256.
-  op :OP_HASH256, [x | stack], do: [:crypto.hash(:sha256, :crypto.hash(:sha256, bin(x))) | stack]
+  op_hash :OP_HASH256, x, do: :crypto.hash(:sha256, :crypto.hash(:sha256, x))
 
   # TODO OP_CODESEPARATOR All of the signature checking words will only match signatures
   # to the data after the most recently-executed OP_CODESEPARATOR.
@@ -424,7 +430,7 @@ defmodule Bitcoin.Script do
   # OP_CHECKSIG The entire transaction's outputs, inputs, and script (from the most recently-executed OP_CODESEPARATOR
   # to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key.
   # If it is, 1 is returned, 0 otherwise.
-  op :OP_CHECKSIG, [pk, sig | stack], opts, do: [verify_signature(sig, pk, opts) |> bin | stack]
+  op :OP_CHECKSIG, [pk, sig | stack], opts, do: [verify_signature(bin(sig), bin(pk), opts) |> bin | stack]
 
   # OP_CHEKSIGVERIFY Same as OP_CHECKSIG, but OP_VERIFY is executed afterward.
   op_alias :OP_CHECKSIGVERIFY, [:OP_CHECKSIG, :OP_VERIFY]
@@ -451,7 +457,7 @@ defmodule Bitcoin.Script do
     # with nsigs > npubkeys it must make the script invalid (it's not enough that it returns false)
     # same if number of pubkeys is > 20
     if length(pks) > @max_pubkeys_per_multisig || length(sigs) > length(pks) do
-      :invalid
+      {:error, :max_pubkeys_per_multisig}
     else
       [verify_all_signatures(sigs, pks, opts) |> bin | stack]
     end
@@ -505,10 +511,17 @@ defmodule Bitcoin.Script do
     if n >= 0 do
       stack |> Enum.at(n)
     else
-      :invalid
+      {:error, :index_outside_stack}
     end
   end
 
+  # these two cases are only necessary because we can keep some numebrs on the stack intsead of binary exclusively
+  # and can be romevod when that's fixed
+  def verify_signature(sig, pk, opts) when not is_binary(sig), do: verify_signature(bin(sig), pk, opts)
+  def verify_signature(sig, pk, opts) when not is_binary(pk), do: verify_signature(sig, bin(pk), opts)
+
+  # No place for sighash byte so it should be invalid but TODO check core behavior (no DERSIG)
+  def verify_signature("", _pk, _opts), do: false
   def verify_signature(sig, pk, opts) do
     # Last byte is a sighash_type, read it and remove it
     {sig, << sighash_type >>} = sig |> Binary.split_at(-1)

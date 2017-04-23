@@ -8,7 +8,8 @@ defmodule Bitcoin.Script.Serialization do
   @max_script_size 10_000
 
   # Value returned when the script is invalid
-  @invalid [:invalid]
+  # TODO replace @invalid with more specific errors
+  @invalid [{:error, :parser}]
 
   ##
   ## Parsing binary script (as it appears in the transaction)
@@ -76,7 +77,6 @@ defmodule Bitcoin.Script.Serialization do
 
   def to_binary_word(word) when is_binary(word) and byte_size(word) >= 0x01 and byte_size(word) <= 0x4b, do: << byte_size(word) >> <> word
   def to_binary_word(word) when is_binary(word) and byte_size(word) <= 0xff , do: << @op_pushdata1, byte_size(word) >> <> word
-  def to_binary_word(word) when is_binary(word) and byte_size(word) > @max_element_size , do: {:error, :max_element_size}
   def to_binary_word(word) when is_binary(word), do: << @op_pushdata2, byte_size(word) ::unsigned-little-integer-size(16) >> <> word
   # OP_PUSHDATA4 currently unused because of @max_element_size
   def to_binary_word(word) when word in @op_names, do: << @op[word] >>
@@ -116,6 +116,7 @@ defmodule Bitcoin.Script.Serialization do
 
   def parse_string2(string), do: string |> string2_to_binary |> parse
 
+  def string2_to_binary("''"), do: ""
   def string2_to_binary(string) do
     string
     |> String.split(" ")
