@@ -9,11 +9,14 @@ defmodule Bitcoin.Script.Number do
   # Maximum size of integer accepted by arithmetic operations is 4 bytes, however result of these
   # operations may overflow.
   #
-  # TODO integers must be encoded with the minimum possible number of bytes (otherwise script should be invalid)
+  # TODO MINIMALDATA flag integers must be encoded with the minimum possible 
+  # number of bytes (otherwise script should be invalid)
 
   use Bitwise
 
   # num(binary) - Interpret binary as script integer
+  # Do not that while bin(num) can convert any size integer into binary,
+  # num will fail with numbers > int32 (this is according to the script spec)
   def num(<<>>), do: 0
   # We reverse it and then encode as big endian because it's only possible to match beginning of binary in Elixir
   def num(x) when is_binary(x), do: x |> Binary.reverse |> rev_num
@@ -28,25 +31,18 @@ defmodule Bitcoin.Script.Number do
 
   # Serialize integer into the script representation
   def bin(0), do: <<>>
-
-  # If number is negative xor the last byte with 0x80
-  def bin(x) when is_number(x) and x < 0 do
-    r = x |> abs |> bin
-    s = r |> byte_size
-    :binary.part(r, 0, s-1) <> << :binary.at(r, s-1) ^^^ 0x80 >>
-  end
-
   def bin(x) when is_number(x) do
-    size = (:math.log2(x)+1) |> Float.floor |> round
-    size = size - rem(size,8) + 8
-    << x :: unsigned-little-integer-size(size) >>
-  end
+   # Unsigned int representation (big endian)
+   << first, bin :: binary >> = x |> abs |> Binary.from_integer
 
-  # This cleaner implementation doesn't replicate core behavior properly
-  # E.g. 4294967294 gives <<254, 255, 255, 255>> but should <<254, 255, 255, 255, 0>>
-  # def bin(x) when is_number(x) do
-  #  << first, bin :: binary >> = x |> abs |> :binary.encode_unsigned
-  #  first = if x < 0, do: first ^^^ 0x80, else: first
-  #  (<< first >> <> bin) |> Binary.reverse
-  # end
+   append = if (first &&& 0x80) == 0x80 do
+     # if sign bit is already 1 then we need to append additional byte with sign information
+     << x < 0 && 0x80 || 0x00, first >>
+   else
+     # otherwise just put sign to the appropriate bit
+     << x < 0 && (first ^^^ 0x80) || first >>
+   end
+   # reverse making it little endian
+   (append <> bin) |> Binary.reverse
+  end
 end
