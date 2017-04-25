@@ -1,4 +1,4 @@
-%{"binary": {:hex, :binary, "0.0.3", "8c7ccdeaa48dfd5bd008ac25016181ec97041e8858f0eedff4579993c1ced72a", [:mix], []},
+%{"binary": {:hex, :binary, "0.0.4", "dd077db70c0ded3e85c132b802338e14b80694684a7e2277666bfa4004b7fa66", [:mix], []},
   "datastructures": {:hex, :datastructures, "0.2.8", "cd9f53bed18f1d9526689a9559676c682b5a3ba230c1e3de187182f4ff86899c", [:mix], []},
   "dialyxir": {:hex, :dialyxir, "0.5.0", "5bc543f9c28ecd51b99cc1a685a3c2a1a93216990347f259406a910cf048d1d7", [:mix], []},
   "earmark": {:hex, :earmark, "1.2.0", "bf1ce17aea43ab62f6943b97bd6e3dc032ce45d4f787504e3adf738e54b42f3a", [:mix], []},

@@ -46,7 +46,7 @@ defmodule Bitcoin.Mixfile do
      # Socket acceptor pool
      {:reagent, "~> 0.1.5"},
      # Binary handling
-     {:binary, "0.0.3"},
+     {:binary, "0.0.4"},
      # JSON library, used to decode test cases
      {:poison, "~> 3.0", only: :test},
      # Docs generator
