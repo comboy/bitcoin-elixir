@@ -1,4 +1,7 @@
 defmodule Bitcoin.Script.P2SH do
+
+  alias Bitcoin.Script
+
   @moduledoc """
   Handler for Pay to Script Hash scripts.
 
@@ -19,7 +22,7 @@ defmodule Bitcoin.Script.P2SH do
             false # {:error, :onlp_pushdata_in_p2sh_sig}
           # Hash must still match
           :crypto.hash(:ripemd160, :crypto.hash(:sha256, serialized_script)) == hash ->
-            verify_sig_pk(sig_script, serialized_script |> parse, opts)
+            verify_sig_pk(sig_script, serialized_script |> Script.parse, opts)
           # If hash doesn't match, the script is invalid
           true ->
             false # {:error, :p2sh_hash_invalid}
