@@ -6,6 +6,8 @@ defmodule Bitcoin.ScriptTest do
 
   alias Bitcoin.Script
 
+  import Test.Helper
+
 
   # From script test cases json file:
   #["It is evaluated as if there was a crediting coinbase transaction with two 0"],
@@ -13,7 +15,7 @@ defmodule Bitcoin.ScriptTest do
   #["followed by a spending transaction which spends this output as only input (and"],
   #["correct prevout hash), using the given scriptSig. All nLockTimes are 0, all"],
   #["nSequences are max."],
-  def test_script_verify(sig_bin, pk_bin) do
+  def test_script_verify(sig_bin, pk_bin, opts \\ %{}) do
 
     cred_tx = %Messages.Tx{
       inputs: [
@@ -57,7 +59,7 @@ defmodule Bitcoin.ScriptTest do
       version: 1
     }
 
-    Script.verify_sig_pk(sig_bin, pk_bin, tx: spend_tx, input_number: 0, sub_script: pk_bin)
+    Script.verify_sig_pk(sig_bin, pk_bin, %{tx: spend_tx, input_number: 0, sub_script: pk_bin} |> Map.merge(opts))
   end
 
 
@@ -76,14 +78,15 @@ defmodule Bitcoin.ScriptTest do
 
   test "bitcoin core scripts.json" do
     cases = File.read!("test/data/script_tests.json") |> Poison.decode! |> Enum.filter(fn x -> length(x) != 1 end)
-    rets = 
+    rets =
       cases
-      |> Enum.map(fn [sig_script, pk_script, _flags, result | _comment ] -> 
+      |> Enum.map(fn [sig_script, pk_script, flags, result | _comment ] ->
+        flags = flags |> flags_string_to_map
         bool_result = result == "OK"
         run_result = try do # try is a lazy way to handle {:errors from parsing
           sig_bin = sig_script |> Script.Serialization.string2_to_binary
           pk_bin = pk_script |> Script.Serialization.string2_to_binary
-          test_script_verify(sig_bin, pk_bin)
+          test_script_verify(sig_bin, pk_bin, %{flags: flags})
         catch _,_ ->
           false
         end
@@ -104,11 +107,12 @@ defmodule Bitcoin.ScriptTest do
       |> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "DISCOURAGE_UPGRADABLE_NOPS") end)
       #|> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "MINIMALDATA") end)
 
-    rets = scripts  |> Enum.map(fn [result, sig_hex, pk_hex, _flags, _comment] ->
+    rets = scripts  |> Enum.map(fn [result, sig_hex, pk_hex, flags, _comment] ->
+      flags = flags |> flags_string_to_map
 
       pk_bin = pk_hex |> String.upcase |> Base.decode16!
       sig_bin = sig_hex |> String.upcase |> Base.decode16!
-      ret = test_script_verify(sig_bin, pk_bin) == result
+      ret = test_script_verify(sig_bin, pk_bin, %{flags: flags}) == result
       if !ret do
         # Uncomment to get list of scripts that failed
         #IO.puts "should be #{result} #[#{flags}] | #{comment} :"

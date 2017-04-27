@@ -4,6 +4,8 @@ defmodule Bitcoin.TxTest do
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Protocol
 
+  import Test.Helper
+
   # Hash gets more thoroughly tested in other places e.g. Block.merkle_root()
   test "hash" do
     {:ok, payload} = File.read("test/data/blk_100000.dat")
@@ -29,7 +31,8 @@ defmodule Bitcoin.TxTest do
     # no segwit implementation yet
     |> Enum.filter(fn {_, [_,_,flags]} -> !String.contains?(flags, "WITNESS") end)
 
-    rets = txs |> Enum.map(fn {result, [prevouts, tx_serialized, _flags]} ->
+    rets = txs |> Enum.map(fn {result, [prevouts, tx_serialized, flags]} ->
+      flags = flags |> flags_string_to_map
 
       tx = tx_serialized |> String.upcase |> Base.decode16! |> Messages.Tx.parse
 
@@ -40,7 +43,7 @@ defmodule Bitcoin.TxTest do
             value: 0xFF_FF_FF_FF_FF_FF}}
       end) |> Enum.into(%{})
 
-      tx_result = Bitcoin.Tx.validate(tx, %{previous_outputs: previous_outputs}) == :ok
+      tx_result = Bitcoin.Tx.validate(tx, %{previous_outputs: previous_outputs, flags: flags}) == :ok
       tx_result == result
     end)
 
