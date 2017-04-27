@@ -61,6 +61,7 @@ defmodule Bitcoin.Tx do
   * previous outputs exists
   * scripts execute with proper result
   * sum of previous output values is greater or equal than the sum of outputs
+  * TODO output is not already spent
 
   `opts` can be used to provide validation context:
 

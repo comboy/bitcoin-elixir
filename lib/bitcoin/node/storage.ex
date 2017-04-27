@@ -44,16 +44,21 @@ defmodule Bitcoin.Node.Storage do
     # and only try to recheck after reorg? (check how core does this)
     # TODO where do we decide the main chain? Sum of difficulty could be cached with the stored block but
     # maybe that's implementation detail of the engine that doesn't need to be exposed here?
-    case block |> Bitcoin.Block.validate do
-      :ok ->
-        # TODO also add hash to the struct, we need the storage struct
-        case block |> block_height() do
-          :error ->
-            {:error, :no_previous}
-          height when is_number(height) ->
-            @engine.store_block(block |> Map.put(:height, height))
-        end
-      {:error, reason} -> {:error, reason}
+    hash = block |> Bitcoin.Block.hash
+    if has_block?(hash) do
+      :ok # or should it be {:error, :already_stored} ?
+    else
+      case block |> Bitcoin.Block.validate do
+        :ok ->
+          # TODO also add hash to the struct, we need the storage struct
+          case block |> block_height() do
+            :error ->
+              {:error, :no_parent}
+            height when is_number(height) ->
+              @engine.store_block(block |> Map.put(:height, height))
+          end
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 
@@ -75,6 +80,8 @@ defmodule Bitcoin.Node.Storage do
     end
   end
 
+  # TODO proper has_block?
+  def has_block?(hash), do: @engine.get_block(hash) != nil
   def get_block(hash), do: @engine.get_block(hash)
   def get_tx(hash), do: @engine.get_tx(hash)
 end
