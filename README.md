@@ -40,7 +40,7 @@ To start a node uncomment the following line in the dev.exs
 To avoid abusing the network you may want to only connect to your local node e.g.:
 
     config :bitcoin, :node, [
-      connect: [{127.0.0.1}]
+      connect: [{127,0,0,1}]
     ]
 
 ## License

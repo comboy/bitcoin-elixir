@@ -4,10 +4,18 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
   """
 
   use GenServer
+  use Bitcoin.Common
 
   require Logger
 
   alias Bitcoin.Protocol.Messages
+
+  # warning: this storage is really dumb, it will take some inodes (each block is a separate file)
+  @persistence true
+  @persistence_dir "tmp/blocks/#{@network}"
+
+  # I don't like it here, I don't know how to avoid it without impacting performance
+  if Mix.env == :test, do: @persistence false
 
   # TODO behavior
   # TODO storage model:
@@ -31,6 +39,12 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
       block_by_height: %{}, # we even have an index!
       tx: %{}
     }
+    state = if @persistence do
+      File.mkdir_p(@persistence_dir)
+      state |> load_stored
+    else
+      state
+    end
     {:ok, state}
   end
 
@@ -61,10 +75,10 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
     {:reply, state.max_height, state}
   end
 
-  defp store_block(state, block) do
+  defp store_block(state, block, opts \\ []) do
     hash = block |> Bitcoin.Block.hash
-    Logger.info "Storing block #{block.height} | #{hash |> Bitcoin.Util.hash_to_hex}"
-    #File.write("tmp/block_#{block.height}.dat", block |> Messages.Block.serialize)
+    Logger.info "Storing block #{block.height} | #{hash |> Bitcoin.Util.hash_to_hex} #{opts[:loading] && "(loading stored)" || ""}"
+    if !opts[:loading] && @persistence, do: File.write(block.height |> block_path, block |> Messages.Block.serialize)
     block.transactions
     |> Enum.reduce(state, fn(tx, state) -> state |> store_tx(tx)  end)
     |> put_in([:block, hash], block) # TODO block sholud only store tx hashes
@@ -72,9 +86,26 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
     |> Map.put(:max_height, max(block.height, state.max_height) || block.height)
   end
 
+  defp load_stored(state), do: load_stored(state, 0)
+
+  defp load_stored(state, height) do
+    case height |> block_path |> File.read do
+      {:ok, block_data} ->
+        block = Messages.Block.parse(block_data) |> Map.put(:height, height)
+        state
+        |> store_block(block, loading: true)
+        |> load_stored(height + 1)
+      {:error, _} -> state
+    end
+  end
+
   defp store_tx(state, tx) do
     hash = tx |> Bitcoin.Tx.hash
     state |> put_in([:tx, hash], tx)
+  end
+
+  def block_path(height) do
+    Path.join(@persistence_dir, "block_#{height}.dat")
   end
 
 end
