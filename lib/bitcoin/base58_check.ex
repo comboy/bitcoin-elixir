@@ -35,16 +35,9 @@ defmodule Bitcoin.Base58Check do
   """
   @spec decode(String.t) :: {:ok, binary} | {:error, term}
   def decode(string) do
-    case string |> base_decode do
-      {:ok, bin} ->
-         {payload, checksum} = bin |> Binary.split_at(-4)
-         if payload |> checksum == checksum do
-           {:ok, payload}
-         else
-           {:error, :invalid_checksum}
-         end
-      {:error, err} -> {:error, err}
-    end
+    with {:ok, bin} <- base_decode(string),
+         {:ok, payload} <- validate_checksum(bin),
+         do: {:ok, payload}
   end
 
   @doc """
@@ -127,6 +120,12 @@ defmodule Bitcoin.Base58Check do
 
   def base_valid?(""), do: true
   def base_valid?(<<char>> <> string), do: char in @code && base_valid?(string)
+
+  @spec validate_checksum(binary) :: {:ok, binary} | {:error, :invalid_checksum}
+  defp validate_checksum(bin) do
+    {payload, checksum} = Binary.split_at(bin, -4)
+    if checksum(payload) == checksum, do: {:ok, payload}, else: {:error, :invalid_checksum}
+  end
 
 
   defp checksum(payload), do: payload |> Bitcoin.Util.double_sha256 |> Binary.take(4)
