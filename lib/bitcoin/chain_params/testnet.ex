@@ -25,6 +25,11 @@ defmodule Bitcoin.ChainParams.Testnet do
         { "bitcoin.schildbach.de", "testnet-seed.bitcoin.schildbach.de"}
       ]
 
+      # BIPs activation conditions
+
+      # P2SH
+      @bip16_switch_time 1333238400
+
     end
   end
 end

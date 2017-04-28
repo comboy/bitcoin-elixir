@@ -27,6 +27,11 @@ defmodule Bitcoin.ChainParams.Bitcoin do
         { "bitcoin.jonasschnelli.ch", 'seed.bitcoin.jonasschnelli.ch' } # Jonas Schnelli
       ]
 
+      # BIPs activation conditions
+
+      # P2SH
+      @bip16_switch_time 1333238400
+
     end
   end
 end

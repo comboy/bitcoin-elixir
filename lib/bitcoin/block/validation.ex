@@ -29,7 +29,7 @@ defmodule Bitcoin.Block.Validation do
   end
 
   @spec coinbase_value(Block.t) :: :ok | {:error, term}
-  def coinbase_value(block, context \\ [])
+  def coinbase_value(block, context \\ %{})
 
   def coinbase_value(%Block{transactions: []} = _block, _context), do: {:error, :no_coinbase_tx}
   def coinbase_value(%Block{} = block, context) do
@@ -45,12 +45,12 @@ defmodule Bitcoin.Block.Validation do
   end
 
   @spec transactions(Blotk.t) :: :ok | {:error, term}
-  def transactions(%Block{} = block) do
+  def transactions(%Block{} = block, opts \\ %{}) do
     [_coinbase | transactions] = block.transactions
     transactions
     |> Enum.reduce(:ok, fn (tx, result) ->
       case result do
-        :ok -> tx |> Bitcoin.Tx.validate(%{block: block})
+        :ok -> tx |> Bitcoin.Tx.validate(opts |> Map.put(:block, block))
         {:error, err}  -> {:error, err}
       end
     end)

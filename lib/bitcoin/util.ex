@@ -15,10 +15,14 @@ defmodule Bitcoin.Util do
   # Helper to run series of functions as a validation.
   # It returns :ok if all functions return :ok
   # Otherwise, first encountered error is returned.
-  def run_validations(funs, struct) do
+  def run_validations(funs, struct, opts \\ %{}) do
     funs |> Enum.reduce(:ok, fn(fun, status) ->
       case status do
-          :ok -> fun.(struct)
+          :ok ->
+            case :erlang.fun_info(fun)[:arity] do
+              1 -> fun.(struct)
+              2 -> fun.(struct, opts)
+            end
         error -> error
       end
     end)
@@ -58,7 +62,7 @@ defmodule Bitcoin.Util do
   Calculate the root hash of the merkle tree built from given list of hashes"
   """
   @spec merkle_tree_hash(list(Bitcoin.t_hash)) :: Bitcoin.t_hash
-  def merkle_tree_hash(list) 
+  def merkle_tree_hash(list)
 
   def merkle_tree_hash([hash]), do: hash
   def merkle_tree_hash(list) when rem(length(list), 2) == 1, do: (list ++ [List.last(list)]) |> merkle_tree_hash

@@ -48,16 +48,16 @@ defmodule Bitcoin.Node.Storage do
     if has_block?(hash) do
       :ok # or should it be {:error, :already_stored} ?
     else
-      case block |> Bitcoin.Block.validate do
-        :ok ->
-          # TODO also add hash to the struct, we need the storage struct
-          case block |> block_height() do
-            :error ->
-              {:error, :no_parent}
-            height when is_number(height) ->
-              @engine.store_block(block |> Map.put(:height, height))
+      case block |> block_height() do
+        :error ->
+          {:error, :no_parent}
+        height when is_number(height) ->
+          case block |> Bitcoin.Block.validate(%{height: height})  do
+            :ok ->
+               # TODO also add hash to the struct, we need the storage struct
+               @engine.store_block(block |> Map.put(:height, height))
+            {:error, reason} -> {:error, reason}
           end
-        {:error, reason} -> {:error, reason}
       end
     end
   end
@@ -66,6 +66,7 @@ defmodule Bitcoin.Node.Storage do
   def block_height(block_hash)
 
   def block_height(@genesis_hash), do: 0
+  def block_height(@genesis_block), do: 0
   def block_height(block_hash) when is_binary(block_hash), do: get_block(block_hash) |> block_height
   def block_height(%{height: height} = _block) when height != nil, do: height
   def block_height(block) do

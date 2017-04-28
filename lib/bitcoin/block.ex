@@ -48,19 +48,29 @@ defmodule Bitcoin.Block do
   * has coinbase transaction
   * block reward is correct
   """
-  @spec validate(Message.Block.t) :: :ok | {:error, term}
-  def validate(block)
+  @spec validate(Message.Block.t, map) :: :ok | {:error, term}
+  def validate(block, opts \\ %{})
 
-  def validate(@genesis_block), do: :ok
+  def validate(@genesis_block, opts), do: :ok
 
-  def validate(%Messages.Block{} = block) do
+  def validate(%Messages.Block{} = block, opts) do
+    flags = validation_flags(block, opts)
+    opts = %{flags: flags} |> Map.merge(opts)
     [
       &Validation.has_parent/1,
       &Validation.merkle_root/1,
       &Validation.hash_below_target/1,
-      &Validation.transactions/1,
-      &Validation.coinbase_value/1,
-    ] |> Bitcoin.Util.run_validations(block)
+      &Validation.transactions/2,
+      &Validation.coinbase_value/2,
+    ] |> Bitcoin.Util.run_validations(block, opts)
+  end
+
+  def validation_flags(%Messages.Block{} = block, _opts) do
+    %{
+      p2sh: fn -> block.timestamp >= @bip16_switch_time end
+    } |> Enum.reduce(%{}, fn {flag, fun}, map ->
+      if fun.(), do: Map.put(map, flag, true), else: map
+    end)
   end
 
 end
