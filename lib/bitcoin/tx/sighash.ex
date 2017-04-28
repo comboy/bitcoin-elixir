@@ -12,9 +12,6 @@ defmodule Bitcoin.Tx.Sighash do
 
   # Calculate transaction hash for signing
   # documentation: https://en.bitcoin.it/wiki/OP_CHECKSIG#cite_note-1
-  # WARNING This is actually sighash without last sha256 hash. The reason is that erlang :crypto.verify
-  # will hash it with sha256, so that makes two hashes already. If you know how to use :crypto.verify
-  # with some kind of digest :none, then we can return Bitcoun.Util.double_sha256 here
   def sighash(tx, input_number, sub_script, sighash_type \\ @sighash_all) do
     tx = tx |> Map.put(:inputs,
       # Set scripts for all transaction inputs to an empty script
@@ -32,8 +29,8 @@ defmodule Bitcoin.Tx.Sighash do
       tx ->
         # Append sighash as int32 to the serialized transaction
         buf = Messages.Tx.serialize(tx) <> << sighash_type :: little-integer-size(32) >>
-        # Hash only once because the second hash is done by :crypto.verify
-        :crypto.hash(:sha256, buf)
+        # Double sha256
+        buf |> Bitcoin.Util.double_sha256
     end
   end
 

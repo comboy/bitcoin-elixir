@@ -448,10 +448,10 @@ defmodule Bitcoin.Script.Interpreter do
   def verify_signature(sig, pk, opts) do
     # Last byte is a sighash_type, read it and remove it
     {sig, << sighash_type >>} = sig |> Binary.split_at(-1)
-    # Generate sighash (with only single sha256)
+    # Compute sighash
     sighash = opts[:tx] |> Bitcoin.Tx.sighash(opts[:input_number], opts[:sub_script], sighash_type)
-    # Do sha256 again and verify
-    :crypto.verify(:ecdsa, :sha256, sighash, sig, [pk, :secp256k1])
+    # Verify signature
+    :crypto.verify(:ecdsa, :sha256, {:digest, sighash}, sig, [pk, :secp256k1])
   end
 
   # No sigs to verify
