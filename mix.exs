@@ -16,7 +16,7 @@ defmodule Bitcoin.Mixfile do
      name: "bitcoin-elixir",
      source_url: "https://github.com/comboy/bitcoin-elixir",
      homepage_url: "https://github.com/comboy/bitcoin-elixir",
-     docs: [main: "README",
+     docs: [main: "readme",
           extras: ["README.md"]]
    ]
   end

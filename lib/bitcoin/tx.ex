@@ -6,8 +6,12 @@ defmodule Bitcoin.Tx do
   Transaction structure is defined in `Bitcoin.Protocol.Messages.Tx`
   """
 
+  use Bitcoin.Common
+
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Tx.Sighash
+
+  require Logger
 
   @type t_hash :: Bitcoin.t_hash
 
@@ -70,6 +74,7 @@ defmodule Bitcoin.Tx do
   * `:previous_outputs` - already fetched previous outputs in the form of a map
              `%{{hash, index} => pk_script}`, currently used for tests, may be used for
              optimizations later
+  & `:flags` - validation flags (dependent on bips activation)
   """
   @spec validate(Messages.Tx.t, map) :: :ok | {:error, term}
   def validate(%Messages.Tx{} = tx, %{} = opts \\ %{}) do
@@ -100,7 +105,9 @@ defmodule Bitcoin.Tx do
       prev_out ->
         case Bitcoin.Script.verify_sig_pk(input.signature_script, prev_out.pk_script, opts |> Map.merge(%{tx: tx, sub_script: prev_out.pk_script, input_number: input_number})) do
           true  -> :ok
-          false -> {:error, {:sig_script, input_number}}
+          false ->
+            save_as_test_case(tx, opts) # only saves if enabled in config
+            {:error, {:sig_script, tx |> hash |> Bitcoin.Util.hash_to_hex, input_number}}
         end
     end
   end
@@ -130,6 +137,24 @@ defmodule Bitcoin.Tx do
       # Found it in storage
       prev_tx ->
         prev_tx.outputs |> Enum.at(index)
+    end
+  end
+
+  # Serialize validation context to JSON in the form that is present in test/data/tx_valid.json
+  # tx_test runs all these test cases collected in "test/data/auto"
+  # TODO move to some Bitcoin.Util.Dev or somtething, it's too messy to be here
+  defp save_as_test_case(tx, opts) do
+    if (Application.get_env(:bitcoin, :util) || [])[:save_as_test_case] do
+      Logger.warn "TX validation failed for #{tx |> hash |> Bitcoin.Util.hash_to_hex}, saving context to test/data/auto"
+      json = [
+        tx.inputs |> Enum.map(fn i -> [i.previous_output.hash |> Bitcoin.Util.hash_to_hex, i.previous_output.index, find_previous_output(i, opts).pk_script |> Binary.to_hex] end),
+        tx |> Messages.Tx.serialize |> Binary.to_hex,
+        (opts[:flags] || %{}) |> Map.keys |> Enum.map(& &1 |> to_string |> String.upcase) |> Enum.join(",")
+      ] |> Poison.encode!
+      File.mkdir_p("test/data/auto/#{@network}")
+      "test/data/auto/#{@network}/tx_#{tx |> hash |> Bitcoin.Util.hash_to_hex}.json" |> File.write(json)
+    else
+      :ok
     end
   end
 

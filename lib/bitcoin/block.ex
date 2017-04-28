@@ -51,7 +51,7 @@ defmodule Bitcoin.Block do
   @spec validate(Message.Block.t, map) :: :ok | {:error, term}
   def validate(block, opts \\ %{})
 
-  def validate(@genesis_block, opts), do: :ok
+  def validate(@genesis_block, _opts), do: :ok
 
   def validate(%Messages.Block{} = block, opts) do
     flags = validation_flags(block, opts)

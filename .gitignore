@@ -3,5 +3,8 @@
 /doc
 /log
 /tmp
+# automatically generated test cases
+# consider putting it in the repo but then we should keep them in a single file
+/test/data/auto
 erl_crash.dump
 *.ez
