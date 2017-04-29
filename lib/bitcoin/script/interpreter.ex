@@ -443,15 +443,21 @@ defmodule Bitcoin.Script.Interpreter do
   def verify_signature(sig, pk, opts) when not is_binary(sig), do: verify_signature(bin(sig), pk, opts)
   def verify_signature(sig, pk, opts) when not is_binary(pk), do: verify_signature(sig, bin(pk), opts)
 
-  # No place for sighash byte so it should be invalid but TODO check core behavior (no DERSIG)
+  # Empty signature is invalid
   def verify_signature("", _pk, _opts), do: false
   def verify_signature(sig, pk, opts) do
-    # Last byte is a sighash_type, read it and remove it
+    # Separate last byte which is a a sighash_type
     {sig, << sighash_type >>} = sig |> Binary.split_at(-1)
+
     # Compute sighash
     sighash = opts[:tx] |> Bitcoin.Tx.sighash(opts[:input_number], opts[:sub_script], sighash_type)
-    # Verify signature
-    Bitcoin.Secp256k1.verify(sighash, sig, pk)
+
+    # Verify if signature is a strict DER signature if :dersig flag is set
+    if opts[:flags] && opts[:flags][:dersig] && !Bitcoin.DERSig.strict?(sig) do
+      {:error, :nonstrict_der}
+    else
+      Bitcoin.Secp256k1.verify(sighash, sig, pk)
+    end
   end
 
   # No sigs to verify

@@ -67,7 +67,11 @@ defmodule Bitcoin.Block do
 
   def validation_flags(%Messages.Block{} = block, _opts) do
     %{
-      p2sh: fn -> block.timestamp >= @bip16_switch_time end
+      p2sh:
+        fn -> block.timestamp >= @bip16_switch_time end,
+      # TODO some sane way to get block height here, perhaps opts[:height] || Block.hegiht(block)?
+      #dersig:
+        #fn -> block.height >= @bip66_height end,
     } |> Enum.reduce(%{}, fn {flag, fun}, map ->
       if fun.(), do: Map.put(map, flag, true), else: map
     end)

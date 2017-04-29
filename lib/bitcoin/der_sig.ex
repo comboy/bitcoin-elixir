@@ -52,8 +52,8 @@ defmodule Bitcoin.DERSig do
   `length` from the struct is used in serialization, even if it's incorrect.
   """
   @spec serialize(t) :: binary
-  def serialize(%__MODULE__{} = sig) do
-    <<sig.type, sig.length, 0x02, byte_size(sig.r), sig.r :: binary, 0x02, byte_size(sig.s), sig.s :: binary>>
+  def serialize(%__MODULE__{} = der) do
+    <<der.type, der.length, 0x02, byte_size(der.r), der.r :: binary, 0x02, byte_size(der.s), der.s :: binary>>
   end
 
   @doc """
@@ -72,13 +72,81 @@ defmodule Bitcoin.DERSig do
     |> serialize
   end
 
-  def normalize(%__MODULE__{} = sig) do
-    r = trim(sig.r)
-    s = trim(sig.s)
-    sig
+  def normalize(%__MODULE__{} = der) do
+    r = trim(der.r)
+    s = trim(der.s)
+    der
     |> Map.put(:r, r)
     |> Map.put(:s, s)
     |> Map.put(:length, byte_size(r) + byte_size(s) + 4)
+  end
+
+  @doc """
+  Check if the signature is a strict DER signature (BIP66)
+
+  https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki
+
+  Note that we operate on sig that already has the sighash byte stripped.
+  """
+  @spec strict?(binary) :: boolean
+  def strict?(sig) when is_binary(sig) do
+    der = parse(sig)
+    cond do
+      # Minimum size constraint
+      byte_size(sig) < 8
+        -> false
+
+      # Maximum size constraint
+      byte_size(sig) > 72
+        -> false
+
+      # A signature is of type 0x30 (compound).
+      der.type != 0x30
+        -> false
+
+      # Length covers the entire signature
+      der.length != byte_size(sig) - 2
+        -> false
+
+      # Make sure the length of the S element is still inside the signature
+      # -> Our parser will currently raise if it's not
+
+      # Length of the signature matches the sum of the length of the elements
+      # -> Parser does not allow any bytes left unused
+
+      # R element is an integer.
+      # -> Parser already makes sure the byte before R length is 0x02
+
+      # R length > 0
+      der.r == <<>>
+        -> false
+
+      # R is positive
+      (Binary.at(sig, 4) &&& 0x80) == 0x80
+        -> false
+
+      # No unecessary null bytes at the start of R
+      trim(der.r) != der.r
+        -> false
+
+      # Check whether the S element is an integer.
+      # -> Parser already makes sure the byte before S length is 0x02
+
+      # S length > 0
+      der.s == <<>>
+        -> false
+
+      # S is not negative
+      (Binary.at(der.s, 0) &&& 0x80) == 0x80
+        -> false
+
+      # No unecessary null bytes at the start of S
+      trim(der.s) != der.s
+        -> false
+
+      # All passed
+      true -> true
+    end
   end
 
   # Trim leading null bytes
@@ -88,5 +156,4 @@ defmodule Bitcoin.DERSig do
   defp trim(<<0, bin :: binary>>), do: trim(bin)
   defp trim(bin), do: bin
 
-  #TODO def strict?(sig) https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki
 end

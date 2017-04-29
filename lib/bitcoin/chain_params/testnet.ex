@@ -30,6 +30,9 @@ defmodule Bitcoin.ChainParams.Testnet do
       # P2SH
       @bip16_switch_time 1333238400
 
+      # Strict DER
+      @bip66_height 330776
+
     end
   end
 end

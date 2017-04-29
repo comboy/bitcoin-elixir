@@ -20,4 +20,7 @@ defmodule Bitcoin.DERSigTest do
 
     assert DERSig.normalize(sig) == sig_norm
   end
+
+  # DERSig.strict?/1 tests included in bitcoin core sript tests
+
 end

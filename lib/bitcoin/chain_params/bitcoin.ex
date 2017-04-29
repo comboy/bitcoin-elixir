@@ -32,6 +32,8 @@ defmodule Bitcoin.ChainParams.Bitcoin do
       # P2SH
       @bip16_switch_time 1333238400
 
+      # Strict DER
+      @bip66_height 363725
     end
   end
 end
