@@ -451,7 +451,7 @@ defmodule Bitcoin.Script.Interpreter do
     # Compute sighash
     sighash = opts[:tx] |> Bitcoin.Tx.sighash(opts[:input_number], opts[:sub_script], sighash_type)
     # Verify signature
-    :crypto.verify(:ecdsa, :sha256, {:digest, sighash}, sig, [pk, :secp256k1])
+    Bitcoin.Secp256k1.verify(sighash, sig, pk)
   end
 
   # No sigs to verify
