@@ -19,8 +19,6 @@ defmodule Bitcoin.Secp256k1 do
 
   I haven't yet prepared a proper lib, if you want to compare libsecp256k1 behaviour,
   check out this gist: https://gist.github.com/comboy/018e15c574d44b2bbc0992d4e42a119d
-
-  Currently still more script/tx tests are passing with libsecp256k1 than with the na(t)ive implementation.
   """
 
   alias Bitcoin.DERSig

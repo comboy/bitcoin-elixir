@@ -9,6 +9,8 @@ defmodule Bitcoin.DERSigTest do
       length: 72,
       r: Binary.from_hex("00002b83d59c1d23c08efd82ee0662fec23309c3adbcbd1f0b8695378db4b14e7366"),
       s: Binary.from_hex("0000334a96676e58b1bb01784cb7c556dd8ce1c220171904da22e18fe1e7d1510db5"),
+      r_type: 0x02,
+      s_type: 0x02,
       type: 0x30
     }
     assert DERSig.parse(sig) == struct
