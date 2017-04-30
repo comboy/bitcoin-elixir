@@ -44,7 +44,7 @@ defmodule Bitcoin.Block.Validation do
     end
   end
 
-  @spec transactions(Blotk.t) :: :ok | {:error, term}
+  @spec transactions(Block.t) :: :ok | {:error, term}
   def transactions(%Block{} = block, opts \\ %{}) do
     [_coinbase | transactions] = block.transactions
     transactions
@@ -54,6 +54,19 @@ defmodule Bitcoin.Block.Validation do
         {:error, err}  -> {:error, err}
       end
     end)
+  end
+
+  @spec block_size(Block.t) :: :ok | {:error, term}
+  def block_size(%Block{} = block) do
+    # OPTIMIZE we received block serialized, parsed it and now we are serializing it again - it's expensive
+    # Parser could put block size in the struct (somewhat redundant)
+    # or we could try to pass serialized block here in the opts somehow
+    size = block |> Block.serialize |> byte_size
+    if size > @max_block_size do
+      {:error, :max_block_size}
+    else
+      :ok
+    end
   end
 
   # Max block reward allowed for given block height

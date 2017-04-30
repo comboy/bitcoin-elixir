@@ -43,6 +43,7 @@ defmodule Bitcoin.Block do
 
   * parent block exists
   * merkle root hash matches with the calculated one
+  * block size is within the limit
   * block hash below target
   * TODO target matches difficulty algorithm
   * has coinbase transaction
@@ -59,6 +60,7 @@ defmodule Bitcoin.Block do
     [
       &Validation.has_parent/1,
       &Validation.merkle_root/1,
+      &Validation.block_size/1,
       &Validation.hash_below_target/1,
       &Validation.transactions/2,
       &Validation.coinbase_value/2,

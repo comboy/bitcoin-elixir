@@ -17,6 +17,9 @@ defmodule Bitcoin.Const do
       # Block reward before the first halving
       @base_subsidy_value 50*@coin
 
+      # Maximum block size
+      @max_block_size 1_000_000
+
       # Network specific chain params
       case @network do
         :bitcoin -> use Bitcoin.ChainParams.Bitcoin
