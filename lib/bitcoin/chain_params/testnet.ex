@@ -18,6 +18,13 @@ defmodule Bitcoin.ChainParams.Testnet do
 
       @default_rpc_port 18332
 
+      # bytes to append before base56check encoding
+      @address_prefix [
+        public: 111,
+        script: 196,
+        private:  239,
+      ]
+
       @dns_seeds [
         { "testnetbitcoin.jonasschnelli.ch", 'testnet-seed.bitcoin.jonasschnelli.ch' },
         { "petertodd.org", "seed.tbtc.petertodd.org"},

@@ -22,4 +22,16 @@ defmodule Bitcoin.Key.PublicTest do
     assert true == PK.strict?(key1)
     assert true == PK.strict?(key2)
   end
+
+  test "to address" do
+    %{
+      "0450863AD64A87AE8A2FE83C1AF1A8403CB53F53E486D8511DAD8A04887E5B23522CD470243453A299FA9E77237716103ABC11A1DF38855ED6F2EE187E9C582BA6"
+      => "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM",
+      "04F888B5BB6DC10B4F607A0D41DBB929C0496747084C40DD92A6C95FAE0188FC4AAEB6B512F8A3799911DE57923427A5695E0F847CD055A817876D943C98D95339"
+      => "1KY9DEJRiaKwmnZ5GqJWD45RaP8BK2PGdS"
+
+    } |> Enum.each(fn {pk, addr} ->
+      assert pk |> Binary.from_hex |> PK.to_address == addr
+    end)
+  end
 end

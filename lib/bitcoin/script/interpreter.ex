@@ -17,6 +17,7 @@ defmodule Bitcoin.Script.Interpreter do
   import Bitcoin.Script.Macros
   import Bitcoin.Script.Control
 
+  alias Bitcoin.Crypto
   alias Bitcoin.Script.Number
   defdelegate num(x), to: Number
   # we also delgate bin(x) when is_number(x), grouped with other bin function definitions down below
@@ -334,19 +335,19 @@ defmodule Bitcoin.Script.Interpreter do
   ##
 
   # OP_RIPEMD160 The input is hashed using RIPEMD-160.
-  op_hash :OP_RIPEMD160, x, do: :crypto.hash(:ripemd160, x)
+  op_hash :OP_RIPEMD160, x, do: x |> Crypto.ripemd160
 
   # OP_SHA1 The input is hashed using SHA-1.
-  op_hash :OP_SHA1, x, do: :crypto.hash(:sha, x)
+  op_hash :OP_SHA1, x, do: x |> Crypto.sha1
 
   # OP_SHA256 The input is hashed using SHA-256
-  op_hash :OP_SHA256, x, do: :crypto.hash(:sha256, x)
+  op_hash :OP_SHA256, x, do: x |> Crypto.sha256
 
   # OP_HASH160 The input is hashed twice: first with SHA-256 and then with RIPEMD-160.
-  op_hash :OP_HASH160, x, do: :crypto.hash(:ripemd160, :crypto.hash(:sha256, x))
+  op_hash :OP_HASH160, x, do: x |> Crypto.sha256 |> Crypto.ripemd160
 
   # OP_HASH256 The input is hashed two times with SHA-256.
-  op_hash :OP_HASH256, x, do: :crypto.hash(:sha256, :crypto.hash(:sha256, x))
+  op_hash :OP_HASH256, x, do: x |> Crypto.sha256 |> Crypto.sha256
 
   # TODO OP_CODESEPARATOR All of the signature checking words will only match signatures
   # to the data after the most recently-executed OP_CODESEPARATOR.

@@ -18,6 +18,13 @@ defmodule Bitcoin.ChainParams.Bitcoin do
 
       @default_rpc_port 8332
 
+      # bytes to append before base56check encoding
+      @address_prefix [
+        public: 0,
+        script: 5,
+        private: 128
+      ]
+
       @dns_seeds [
         { "bitcoin.sipa.be", 'seed.bitcoin.sipa.be' }, # Pieter Wuille
         { "bluematt.me", 'dnsseed.bluematt.me' }, # Matt Corallo
