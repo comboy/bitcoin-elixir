@@ -13,13 +13,16 @@ defmodule Bitcoin.Script.Interpreter do
   """
 
   use Bitcoin.Script.Opcodes
+  use Bitcoin.Script.Minimaldata
 
   import Bitcoin.Script.Macros
   import Bitcoin.Script.Control
 
   alias Bitcoin.Crypto
   alias Bitcoin.Script.Number
+
   defdelegate num(x), to: Number
+  defdelegate num(x, opts), to: Number
   # we also delgate bin(x) when is_number(x), grouped with other bin function definitions down below
 
   # Max number of items in stack + altstack
@@ -37,6 +40,7 @@ defmodule Bitcoin.Script.Interpreter do
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
   # Parser returns [:invalid] if the script couldn't be parsed
   def run({:error, err}, _script, _opts), do: {:error, err}
+  def run([{:error, err} | _], _script, _opts), do: {:error, err}
   def run(_, [:invalid | _], _opts), do: {:error, :invalid}
   def run(_, [{:error, err} | _], _opts), do: {:error, err}
 
@@ -199,10 +203,10 @@ defmodule Bitcoin.Script.Interpreter do
   op :OP_OVER, [a, b | stack], do: [b, a, b | stack]
 
   # OP_PICK The item n back in the stack is copied to the top
-  op :OP_PICK, [n | stack], do: [stack |> nth_element(n) | stack]
+  op :OP_PICK, [n | stack], opts, do: [stack |> nth_element(n, opts) | stack]
 
   # OP_ROLL The item n back in the stack is moved to the top.
-  op :OP_ROLL, [n | stack], do: [stack |> nth_element(n) | stack |> List.delete_at(num(n))]
+  op :OP_ROLL, [n | stack], opts, do: [stack |> nth_element(n, opts) | stack |> List.delete_at(num(n, opts))]
 
   # OP_ROT The top three items on the stack are rotated to the left.
   op :OP_ROT, [a, b, c | stack], do: [c, a, b | stack]
@@ -258,6 +262,8 @@ defmodule Bitcoin.Script.Interpreter do
   ##
   ## NUMERIC
   ##
+  ## All arguments for arithmetic OP codes arguments are interpreted as numbers
+  ## (that's the magic that op_num does, calling num() on each arg and checking if it didn't return error)
 
   # OP_1ADD 1 is added to the input.
   op_num :OP_1ADD, x, do: x + 1
@@ -278,11 +284,11 @@ defmodule Bitcoin.Script.Interpreter do
   op_num :OP_NOT, 0, do: 1
   op_num :OP_NOT, <<0x80>>, do: 1 # negative zero
   op_num :OP_NOT, 1, do: 0
-  op_num :OP_NOT, _, do: 0
+  op_num :OP_NOT, x, do: 0
 
   # OP_0NOTEQUAL 	Returns 0 if the input is 0. 1 otherwise.
   op_num :OP_0NOTEQUAL, 0, do: 0
-  op_num :OP_0NOTEQUAL, _, do: 1
+  op_num :OP_0NOTEQUAL, x, do: 1
 
   # OP_ADD a is added to be
   op_num :OP_ADD, a, b, do: a + b
@@ -297,41 +303,40 @@ defmodule Bitcoin.Script.Interpreter do
   # OP_RSHIFT disabled
 
   # OP_BOOLAND If both a and b are not 0, the output is 1. Otherwise 0.
-  # We cast to num because it's in arithmetic ops category, so it should fail if arg is not a proper int
-  op_bool :OP_BOOLAND, a, b, do: num(a) != 0 and num(b) != 0
+  op_num :OP_BOOLAND, a, b, do: a != 0 and b != 0
 
   # OP_BOOLOR If a or b is not 0, the output is 1. Otherwise 0.
-  op_bool :OP_BOOLOR, a, b, do: num(a) != 0 or num(b) != 0
+  op_num :OP_BOOLOR, a, b, do: a != 0 or b != 0
 
   # OP_NUMEQUAL Returns 1 if the numbers are equal, 0 otherwise.
-  op_bool :OP_NUMEQUAL, a, b, do: num(a) == num(b)
+  op_num :OP_NUMEQUAL, a, b, do: a == b
 
   # OP_NUMNOTEQUAL Returns 1 if the numbers are not equal, 0 otherwise.
-  op_bool :OP_NUMNOTEQUAL, a, b, do: num(a) != num(b)
+  op_num :OP_NUMNOTEQUAL, a, b, do: a != b
 
   # OP_NUMEQUAVERIFY Same as OP_NUMEQUAL, but runs OP_VERIFY afterward.
   op_alias :OP_NUMEQUALVERIFY, [:OP_NUMEQUAL, :OP_VERIFY]
 
-  # OP_NUMLESSTHAN Returns 1 if a is less than b, 0 otherwise.
-  op_bool :OP_LESSTHAN, b, a, do: num(a) < num(b)
+  # OP_LESSTHAN Returns 1 if a is less than b, 0 otherwise.
+  op_num :OP_LESSTHAN, b, a, do: a < b
 
-  # OP_NUMGREATERTHAN Returns 1 if a is greater than b, 0 otherwise.
-  op_bool :OP_GREATERTHAN, b, a, do: num(a) > num(b)
+  # OP_GREATERTHAN Returns 1 if a is greater than b, 0 otherwise.
+  op_num :OP_GREATERTHAN, b, a, do: a > b
 
-  # OP_NUMLESSTHANOREQUAL Returns 1 if a is less than  or equal b, 0 otherwise.
-  op_bool :OP_LESSTHANOREQUAL, b, a, do: num(a) <= num(b)
+  # OP_LESSTHANOREQUAL Returns 1 if a is less than  or equal b, 0 otherwise.
+  op_num :OP_LESSTHANOREQUAL, b, a, do: a <= b
 
-  # OP_NUMGREATERTHANOREQUAL Returns 1 if a is greater than b, 0 otherwise.
-  op_bool :OP_GREATERTHANOREQUAL, b, a, do: num(a) >= num(b)
+  # OP_GREATERTHANOREQUAL Returns 1 if a is greater than b, 0 otherwise.
+  op_num :OP_GREATERTHANOREQUAL, b, a, do: a >= b
 
   # OP_MIN Returns the smaller of a and b
-  op :OP_MIN, [a, b | stack], do: [(if (num(a) <=  num(b)), do: a, else: b) | stack]
+  op_num :OP_MIN, a, b, do: if a <= b, do: a, else: b
 
-  # OP_MOX Returns the bigger of a and b
-  op :OP_MAX, [a, b | stack], do: [(if (num(a) >=  num(b)), do: a, else: b) | stack]
+  # OP_MAX Returns the bigger of a and b
+  op_num :OP_MAX, a, b, do: if a >= b, do: a, else: b
 
   # OP_WITHIN Returns 1 if x is within the specified range (left-inclusive), 0 otherwise.
-  op_bool :OP_WITHIN, b, a, x, do: num(x) >= num(a) and num(x) < num(b)
+  op_num :OP_WITHIN, b, a, x, do: x >= a and x < b
 
   ##
   ## CRYPTO
@@ -367,7 +372,7 @@ defmodule Bitcoin.Script.Interpreter do
   # Used to get multiple keys or signatures from the stack
   # First item is the number of them and then it's alist of binaries
   # Returs {items, remaining_stack}
-  def get_multi([ n | stack]), do: stack |> Enum.split(num(n))
+  def get_multi([ n | stack], opts), do: stack |> Enum.split(num(n, opts))
 
   # OP_CHECKMULTISIG
   # Compares the first signature against each public key until it finds an ECDSA match.
@@ -378,8 +383,8 @@ defmodule Bitcoin.Script.Interpreter do
   # using the same order as their corresponding public keys were placed in the scriptPubKey or redeemScript.
   # If all signatures are valid, 1 is returned, 0 otherwise.
   op :OP_CHECKMULTISIG, stack, opts do
-    {pks, stack} = stack |> get_multi
-    {sigs, stack} = stack |> get_multi
+    {pks, stack} = stack |> get_multi(opts)
+    {sigs, stack} = stack |> get_multi(opts)
     [bug | stack] = stack # Due to a bug, one extra unused value is removed from the stack.
     cond do
       # With NULLDUMMY flag set, the dropped stack item must be an empty byte array
@@ -443,13 +448,9 @@ defmodule Bitcoin.Script.Interpreter do
   def bool(<<0x80>>), do: false
   def bool(_), do: true
 
-  def nth_element(stack, n) do
-    n = num(n)
-    if n >= 0 do
-      stack |> Enum.at(n)
-    else
-      {:error, :index_outside_stack}
-    end
+  def nth_element(stack, n, opts) do
+    with n when is_number(n) <- num(n, opts),
+      do: if n >= 0, do: Enum.at(stack, n), else: {:error, :index_outside_stack}
   end
 
   # these two cases are only necessary because we can keep some numebrs on the stack intsead of binary exclusively

@@ -8,15 +8,16 @@ defmodule Bitcoin.Script.Number do
   #
   # Maximum size of integer accepted by arithmetic operations is 4 bytes, however result of these
   # operations may overflow.
-  #
-  # TODO MINIMALDATA flag integers must be encoded with the minimum possible 
-  # number of bytes (otherwise script should be invalid)
 
   use Bitwise
 
+  # Version with the opts argument can be used to alter num behaviour depending on the validation flags
+  # this is done by Script.Minimaldata which implements num(x, %{flags: %{minimaldata: true}})
+  def num(x, _opts), do: num(x)
+
   # num(binary) - Interpret binary as script integer
-  # Do not that while bin(num) can convert any size integer into binary,
-  # num will fail with numbers > int32 (this is according to the script spec)
+  # Do note that while bin/1 can convert any size integer into binary,
+  # num/1 will fail with numbers > int32 (this is according to the script spec)
   def num(<<>>), do: 0
   # We reverse it and then encode as big endian because it's only possible to match beginning of binary in Elixir
   def num(x) when is_binary(x), do: x |> Binary.reverse |> rev_num

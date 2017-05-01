@@ -43,21 +43,14 @@ defmodule Bitcoin.Script.Macros do
   # expands to
   #
   #     run([a, b | stack], [:OP_ADD | script], opts), do: [bin(num(a) + num(b)) | stack] |> run(script, opts)
-
-  # Separate case for when we use underscore variable to avoid compiler warnings
-  defmacro op_num(op, {:_, _, _}, do: stack_expression) when is_atom(op) do
-    quote do
-      def run([_ | stack], [unquote(op) | script], opts) do
-        [bin(unquote(stack_expression)) | stack] |> run(script, opts)
-      end
-    end
-  end
+  #
+  # small update: we additionally check if num returns a number (it may return :error for invalid int encoding)
 
   defmacro op_num(op, a, do: stack_expression) when is_atom(op) do
     quote do
       def run([unquote(a) | stack], [unquote(op) | script], opts) do
-        unquote(a) = num(unquote(a))
-        [bin(unquote(stack_expression)) | stack] |> run(script, opts)
+        with unquote(a) when is_number(unquote(a)) <- num(unquote(a), opts),
+          do: [bin(unquote(stack_expression)) | stack] |> run(script, opts)
       end
     end
   end
@@ -65,33 +58,20 @@ defmodule Bitcoin.Script.Macros do
   defmacro op_num(op, a, b, do: stack_expression) when is_atom(op) do
     quote do
       def run([unquote(a), unquote(b) | stack], [unquote(op) | script], opts) do
-        unquote(a) = num(unquote(a))
-        unquote(b) = num(unquote(b))
-        [bin(unquote(stack_expression)) | stack] |> run(script, opts)
+        with unquote(a) when is_number(unquote(a)) <- num(unquote(a), opts),
+             unquote(b) when is_number(unquote(b)) <- num(unquote(b), opts),
+          do: [bin(unquote(stack_expression)) | stack] |> run(script, opts)
       end
     end
   end
 
-  # `op_bool` macro is like `op`, but serializes function boolean result
-  #
-  #     op_bool :OP_BOOLAND, a, b, do: a != 0 and b != 0
-  #
-  # expands to
-  #
-  #     run([a, b | stack], [:OP_BOOLAND | script], opts), do: [bin( a != 0 and b != 0) | stack] |> run(script, opts)
-
-  defmacro op_bool(op, a, b, do: stack_expression) when is_atom(op) do
-    quote do
-      def run([unquote(a), unquote(b) | stack], [unquote(op) | script], opts) do
-        [bin(unquote(stack_expression)) | stack] |> run(script, opts)
-      end
-    end
-  end
-
-  defmacro op_bool(op, a, b, c, do: stack_expression) when is_atom(op) do
+  defmacro op_num(op, a, b, c, do: stack_expression) when is_atom(op) do
     quote do
       def run([unquote(a), unquote(b), unquote(c) | stack], [unquote(op) | script], opts) do
-        [bin(unquote(stack_expression)) | stack] |> run(script, opts)
+        with unquote(a) when is_number(unquote(a)) <- num(unquote(a), opts),
+             unquote(b) when is_number(unquote(b)) <- num(unquote(b), opts),
+             unquote(c) when is_number(unquote(c)) <- num(unquote(c), opts),
+          do: [bin(unquote(stack_expression)) | stack] |> run(script, opts)
       end
     end
   end
