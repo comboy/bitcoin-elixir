@@ -24,6 +24,8 @@ defmodule Bitcoin.Script do
   # Script.Control implements parsing OP_IF
   # Script.Number handles parsing and serializing script integers (CStriptNum)
 
+  use Bitcoin.Script.Opcodes
+
   # TODO block sigop limit (MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50), so we need to be abel to export that count
   # TODO verify signature encoding https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki
   use Bitcoin.Script.P2SH

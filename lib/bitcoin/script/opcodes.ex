@@ -174,8 +174,9 @@ defmodule Bitcoin.Script.Opcodes do
 
       @disabled_op_values @disabled_op |> Enum.map(fn name -> @op[name] end)
 
-      # These op are not counted towards @max_ops limit
-      @not_counted_ops [:OP_FALSE] ++ (0x50..0x60 |> Enum.map(& @op_name[&1]))
+      # "push data" OPs. Not counted towards OPs limit, allowed in P2SH sigscript
+      # OP_0..OP16 + OP_RESERVED + OP_1NEGATE + OP_PUSHDATAx
+      @push_data_ops @op_names |> Enum.filter(fn name -> @op[name] <= @op[:OP_16] end)
 
     end
   end

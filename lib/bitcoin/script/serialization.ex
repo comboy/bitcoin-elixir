@@ -39,21 +39,21 @@ defmodule Bitcoin.Script.Serialization do
   # OP_PUSHDATA1 The next byte contains the number of bytes to be pushed onto the stack.1
   def parse(script, << @op_pushdata1, size, bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
-    [data | script] |> parse(bin)
+    [data, :OP_PUSHDATA1 | script] |> parse(bin)
   end
 
   # OP_PUSHDATA2 The next two bytes contain the number of bytes to be pushed onto the stack.
   def parse(_script, << @op_pushdata2, size :: unsigned-little-integer-size(16), _bin :: binary >>) when size > @max_element_size, do: @invalid
   def parse(script, << @op_pushdata2, size :: unsigned-little-integer-size(16), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
-    [data | script] |> parse(bin)
+    [data, :OP_PUSHDATA2 | script] |> parse(bin)
   end
 
   # OP_PUSHDATA5 The next four bytes contain the number of bytes to be pushed onto the stack.
   def parse(_script, << @op_pushdata4, size :: unsigned-little-integer-size(32), _bin :: binary >>) when size > @max_element_size, do: @invalid
   def parse(script, << @op_pushdata4, size :: unsigned-little-integer-size(32), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
-    [data | script] |> parse(bin)
+    [data, :OP_PUSHDATA4 | script] |> parse(bin)
   end
 
   # Other opcodes

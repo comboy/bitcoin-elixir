@@ -1,13 +1,14 @@
 defmodule Bitcoin.Script.P2SH do
 
-  alias Bitcoin.Script
-  alias Bitcoin.Crypto
-
   @moduledoc """
   Handler for Pay to Script Hash scripts.
 
   More info can be faund in the BIP: https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki
   """
+
+  alias Bitcoin.Script
+  alias Bitcoin.Crypto
+
   defmacro __using__(_opts) do
     quote do
 
@@ -18,8 +19,7 @@ defmodule Bitcoin.Script.P2SH do
       def verify_sig_pk([serialized_script | sig_script], [:OP_HASH160, << hash :: binary-size(20) >>, :OP_EQUAL], %{flags: %{p2sh: true}} = opts) when is_binary(serialized_script) and sig_script != [] do
         cond do
           # Only push data allowed
-          # TODO check what about OP_1-OP_16 OP_FALSE and OP_RESERVED - seems not to be covered in script tests
-          sig_script |> Enum.any?(& is_atom(&1) ) ->
+          sig_script |> Enum.any?(& is_atom(&1) && !(&1 in @push_data_ops)) ->
             false # {:error, :onlp_pushdata_in_p2sh_sig}
           # Hash must still match
           serialized_script |> Crypto.sha256 |> Crypto.ripemd160 == hash ->

@@ -47,7 +47,13 @@ defmodule Bitcoin.Script.Interpreter do
   # When no script is left to run, return the stack
   def run(stack, [], _opts), do: stack
 
+  # OP_PUSHDATA
+  def run(stack, [:OP_PUSHDATA1, data | script], opts), do: run([data | stack], script, opts)
+  def run(stack, [:OP_PUSHDATA2, data | script], opts), do: run([data | stack], script, opts)
+  def run(stack, [:OP_PUSHDATA4, data | script], opts), do: run([data | stack], script, opts)
+
   # Binary blob, put it on the stack
+  # In case of a parsed script this should only by a single byte
   def run(stack, [data | script], opts) when is_binary(data) or is_number(data), do: run([data | stack], script, opts)
 
   # VAlidate sanityf of the script
@@ -59,10 +65,7 @@ defmodule Bitcoin.Script.Interpreter do
       # Scirpt max ops
       script
       # OP_0..OP_16 + OP_RESERVED are not counted towards the limit
-      # The akwkard binary size filter is due to the fact that OP_PUSHDATAs should count, but we don't have them anymore here
-      # So any binary above 0x4b size had to use opcode to be here. Those below could have used 0x01 - 0x4b byte to push
-      # Maybe we should have OP_PUSHADATAs in the parsed script.
-      |> Enum.filter(& !(is_binary(&1) && byte_size(&1) <= 0x4b) && !(&1 in @not_counted_ops))
+      |> Enum.filter(& is_atom(&1) && !(&1 in @push_data_ops))
       |> length > @max_ops -> [{:error, :max_ops}]
       true -> script
     end
