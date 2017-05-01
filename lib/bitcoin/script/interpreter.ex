@@ -377,15 +377,23 @@ defmodule Bitcoin.Script.Interpreter do
   op :OP_CHECKMULTISIG, stack, opts do
     {pks, stack} = stack |> get_multi
     {sigs, stack} = stack |> get_multi
-    # TODO when BIP 147 applies (:nulldummy flag), ensure that _bug == <<>>
-    [_bug | stack] = stack # Due to a bug, one extra unused value is removed from the stack.
+    [bug | stack] = stack # Due to a bug, one extra unused value is removed from the stack.
+    cond do
+      # With NULLDUMMY flag set, the dropped stack item must be an empty byte array
+      # see BIP147, BIP62 rule no 7
+      opts[:flags][:nulldummy] && bug != "" ->
+        {:error, :nulldummy}
 
-    # with nsigs > npubkeys it must make the script invalid (it's not enough that it returns false)
-    # same if number of pubkeys is > 20
-    if length(pks) > @max_pubkeys_per_multisig || length(sigs) > length(pks) do
-      {:error, :max_pubkeys_per_multisig}
-    else
-      [verify_all_signatures(sigs, pks, opts) |> bin | stack]
+      # With nsigs > npubkeys script becomes is invalid
+      length(sigs) > length(pks) ->
+        {:error, :more_sigs_than_pubkeys}
+
+      # Max number of pubkeys is 20
+      length(pks) > @max_pubkeys_per_multisig ->
+        {:error, :max_pubkeys_per_multisig}
+
+      true ->
+        [verify_all_signatures(sigs, pks, opts) |> bin | stack]
     end
   end
 
