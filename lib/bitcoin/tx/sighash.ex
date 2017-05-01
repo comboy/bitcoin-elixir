@@ -1,5 +1,11 @@
 defmodule Bitcoin.Tx.Sighash do
 
+  @moduledoc """
+  Transaction signature hash.
+
+  Hash of the transaction data used for signing.
+  """
+
   @sighash_all          0x01
   @sighash_none         0x02
   @sighash_single       0x03
@@ -10,9 +16,13 @@ defmodule Bitcoin.Tx.Sighash do
   alias Bitcoin.Protocol.Types
   alias Bitcoin.Protocol.Messages
 
-  # Calculate transaction hash for signing
-  # documentation: https://en.bitcoin.it/wiki/OP_CHECKSIG#cite_note-1
-  def sighash(tx, input_number, sub_script, sighash_type \\ @sighash_all) do
+  @doc """
+  Calculate transaction hash for signing
+
+  documentation: https://en.bitcoin.it/wiki/OP_CHECKSIG#cite_note-1
+  """
+  @spec sighash(Messages.Tx.t, non_neg_integer, binary, byte) :: binary
+  def sighash(%Messages.Tx{} = tx, input_number, sub_script, sighash_type \\ @sighash_all) do
     tx = tx |> Map.put(:inputs,
       # Set scripts for all transaction inputs to an empty script
       tx.inputs
@@ -20,7 +30,7 @@ defmodule Bitcoin.Tx.Sighash do
         # Set script for current transaction input to sub_script
         |> List.replace_at(input_number, tx.inputs |> Enum.at(input_number) |> Map.put(:signature_script, sub_script |> remove_op_codeseparator))
     )
-    case tx |> sighash_preparation(input_number, sighash_type) do
+    case tx |> prepare_tx(input_number, sighash_type) do
       # Due to a bug in bitcoin core, in case of error (more inputs than outputs for @sighash_single
       # instead of failing, sighash returns hash like below
       # some more info  https://bitcointalk.org/index.php?topic=260595.0
@@ -34,19 +44,34 @@ defmodule Bitcoin.Tx.Sighash do
     end
   end
 
+  @doc """
+  Check if given sighash byte is valid (defined type).
+  """
+  @spec valid_type?(byte) :: boolean
+  # TODO added @sighash_anyonecanpay as a valid value, but I'm not sure bitcoin core also accepts it,
+  # looking at the code it doesn't seem to: https://github.com/bitcoin/bitcoin/blob/80c3a734298e824f9321c4efdd446086a3baad89/src/script/interpreter.cpp#L184
+  def valid_type?(@sighash_anyonecanpay), do: true
+  def valid_type?(type) do
+    type = type &&& (~~~@sighash_anyonecanpay)
+    type in [@sighash_all, @sighash_single, @sighash_none]
+  end
+
+  @spec prepare_tx(Messages.Tx.t, non_neg_integer, byte) :: Messages.Tx.t | :error
+  defp prepare_tx(tx, input_number, sighash_type)
+
   # SIGHASH_NONE - sign none of the outputs
-  def sighash_preparation(tx, input_number, sighash_type) when (sighash_type &&& 0x1f) == @sighash_none do
+  defp prepare_tx(%Messages.Tx{} = tx, input_number, sighash_type) when (sighash_type &&& 0x1f) == @sighash_none do
     tx
     # Remove all outtputs
     |> Map.put(:outputs, [])
     # Set all inputs sequence number to 0
     |> zero_sequence_numbers(input_number)
     # Remove sighash none and call it again, we still may need to apply ANYONECANPAY
-    |> sighash_preparation(input_number, sighash_type ^^^ @sighash_none)
+    |> prepare_tx(input_number, sighash_type ^^^ @sighash_none)
   end
 
   # SIGHASH_NONE - sign only one of the outputs
-  def sighash_preparation(tx, input_number, sighash_type) when (sighash_type &&& 0x1f) == @sighash_single do
+  defp prepare_tx(%Messages.Tx{} = tx, input_number, sighash_type) when (sighash_type &&& 0x1f) == @sighash_single do
     if input_number >= length(tx.outputs) do
       :error
     else
@@ -61,19 +86,20 @@ defmodule Bitcoin.Tx.Sighash do
       # Set all inputs sequence number to 0
       |> zero_sequence_numbers(input_number)
       # Remove sighash none and call it again, we still may need to apply ANYONECANPAY
-      |> sighash_preparation(input_number, sighash_type ^^^ @sighash_single)
+      |> prepare_tx(input_number, sighash_type ^^^ @sighash_single)
     end
   end
 
   # SIGHASH_ANYONECANPAY - only sign the script transaction input
-  def sighash_preparation(tx, input_number, sighash_type) when (sighash_type &&& @sighash_anyonecanpay) == @sighash_anyonecanpay do
+  defp prepare_tx(%Messages.Tx{} = tx, input_number, sighash_type) when (sighash_type &&& @sighash_anyonecanpay) == @sighash_anyonecanpay do
     tx
     |> Map.put(:inputs, [tx.inputs |> Enum.at(input_number)])
   end
 
   # SIGHASH_ALL - nothing to do
-  def sighash_preparation(tx, _input_number, _sighash_type), do: tx
+  defp prepare_tx(tx, _input_number, _sighash_type), do: tx
 
+  @spec remove_op_codeseparator(binary) :: binary
   defp remove_op_codeseparator(script) do
     script
     |> Bitcoin.Script.parse
@@ -81,7 +107,8 @@ defmodule Bitcoin.Tx.Sighash do
     |> Bitcoin.Script.to_binary
   end
 
-  defp zero_sequence_numbers(tx, input_number) do
+  @spec zero_sequence_numbers(Messages.Tx.t, non_neg_integer) :: Messages.Tx.t
+  defp zero_sequence_numbers(%Messages.Tx{} = tx, input_number) do
     tx
     |> Map.put(:inputs,
       tx.inputs

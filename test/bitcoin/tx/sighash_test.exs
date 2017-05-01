@@ -1,5 +1,19 @@
 defmodule Bitocin.Tx.SighashTest do
+
   use ExUnit.Case
+  use Bitwise
+
+  alias Bitcoin.Tx.Sighash
+
+  test "defined_type?" do
+    valid = [0x01, 0x02, 0x03, 0x80, 0x01 ^^^ 0x80, 0x02 ^^^ 0x80, 0x03 ^^^ 0x80]
+    invalid = [0x04, 0x04 ^^^ 0x80, 0xFF, 0x00, 0x32]
+
+    valid |> Enum.each(fn byte ->
+      assert true == Sighash.valid_type?(byte), "#{byte} should be valid"
+    end)
+  end
+
 
   File.read!("test/data/sighash.json") 
   |> Poison.decode! 

@@ -28,8 +28,10 @@ defmodule Bitcoin.Script.Interpreter do
   # (excluding opcodes with byte value equal or below OP_16)
   @max_ops 201
 
+  @default_opts %{flags: %{}}
+
   # Run the parsed script
-  def run(script, opts), do: run([], script |> validate, opts)
+  def run(script, opts), do: run([], script |> validate, @default_opts |> Map.merge(opts))
 
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
   # Parser returns [:invalid] if the script couldn't be parsed
@@ -443,20 +445,37 @@ defmodule Bitcoin.Script.Interpreter do
   def verify_signature(sig, pk, opts) when not is_binary(sig), do: verify_signature(bin(sig), pk, opts)
   def verify_signature(sig, pk, opts) when not is_binary(pk), do: verify_signature(sig, bin(pk), opts)
 
+  # TODO figure this out - from bitcoin core code it seems that with strict enc, empty sig should fail the whole
+  # script not just return false (IsDefinedHashtypeSignature called from CheckSignatureEncoding)
+  # but it makes 2 test cases fail from script_tests.json (interestingly makes one more case pass in bitcore-lib tests)
+  # def verify_signature("", _pk, %{flags: %{strictenc: true}}), do: {:error, :empty_signature}
+
   # Empty signature is invalid
   def verify_signature("", _pk, _opts), do: false
-  def verify_signature(sig, pk, opts) do
+  def verify_signature(sig, pk, %{flags: flags} = opts) do
     # Separate last byte which is a a sighash_type
     {sig, << sighash_type >>} = sig |> Binary.split_at(-1)
 
     # Compute sighash
     sighash = opts[:tx] |> Bitcoin.Tx.sighash(opts[:input_number], opts[:sub_script], sighash_type)
 
-    # Verify if signature is a strict DER signature if :dersig flag is set
-    if opts[:flags] && opts[:flags][:dersig] && !Bitcoin.DERSig.strict?(sig) do
-      {:error, :nonstrict_der}
-    else
-      Bitcoin.Secp256k1.verify(sighash, sig, pk)
+    # Signature verification
+    cond do
+      # with STRICTENC or DERSIG, BIP66 strict signature encoding must be met
+      (flags[:dersig] || flags[:strictenc]) && !Bitcoin.DERSig.strict?(sig) ->
+        {:error, :nonstrict_der}
+
+      # with STRICTENC pk must be either compressed or uncompresed
+      flags[:strictenc] && !Bitcoin.Key.Public.strict?(pk) ->
+        {:error, :nonstrict_pk}
+
+      # with STRICTENC sighash byte must be a known value
+      flags[:strictenc] && !Bitcoin.Tx.Sighash.valid_type?(sighash_type) ->
+        {:error, :invalid_sighash_type} # TODO does'n't seem to be covered by script any test cases
+
+      # If all conditions are met do the actual sig verification
+      true ->
+        Bitcoin.Secp256k1.verify(sighash, sig, pk)
     end
   end
 

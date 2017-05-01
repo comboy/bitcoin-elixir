@@ -94,7 +94,7 @@ defmodule Bitcoin.Script do
   end
 
   # Returns true if top item of the stack is non-zero
-  def verify(script, opts \\ []) do
+  def verify(script, opts \\ %{}) do
     # TODO we should get rid of exceptions, make parser return {:error and non matched script cases should just be :invalid
     try do
       script |> run(opts) |> cast_to_bool
