@@ -28,41 +28,41 @@ defmodule Bitcoin.Script.Serialization do
   # not a binry
   def parse(_), do: @invalid
 
-  def parse(script, <<>>), do: script
+  def parse(script, <<>>), do: script |> Enum.reverse
 
   # Opcode 0x01-0x4b: The next opcode bytes is data to be pushed onto the stack
   def parse(script, << size, bin :: binary >>) when size >= 0x01 and size <= 0x4b do
     << data :: binary-size(size), bin :: binary >> = bin
-    (script ++ [data]) |> parse(bin)
+    [data | script] |> parse(bin)
   end
 
   # OP_PUSHDATA1 The next byte contains the number of bytes to be pushed onto the stack.1
   def parse(script, << @op_pushdata1, size, bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
-    (script ++ [data]) |> parse(bin)
+    [data | script] |> parse(bin)
   end
 
   # OP_PUSHDATA2 The next two bytes contain the number of bytes to be pushed onto the stack.
   def parse(_script, << @op_pushdata2, size :: unsigned-little-integer-size(16), _bin :: binary >>) when size > @max_element_size, do: @invalid
   def parse(script, << @op_pushdata2, size :: unsigned-little-integer-size(16), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
-    (script ++ [data]) |> parse(bin)
+    [data | script] |> parse(bin)
   end
 
   # OP_PUSHDATA5 The next four bytes contain the number of bytes to be pushed onto the stack.
   def parse(_script, << @op_pushdata4, size :: unsigned-little-integer-size(32), _bin :: binary >>) when size > @max_element_size, do: @invalid
   def parse(script, << @op_pushdata4, size :: unsigned-little-integer-size(32), bin :: binary >>) do
     << data :: binary-size(size), bin :: binary >> = bin
-    (script ++ [data]) |> parse(bin)
+    [data | script] |> parse(bin)
   end
 
   # Other opcodes
   def parse(script, << op_code, bin :: binary >>) when op_code in @op_values do
-    (script ++ [@op_name[op_code]]) |> parse(bin)
+    [@op_name[op_code] | script] |> parse(bin)
   end
 
   def parse(script, << op_code, bin :: binary >>) when not (op_code in @op_values) do
-    (script ++ [:OP_UNKNOWN]) |> parse(bin)
+    [:OP_UNKNOWN | script] |> parse(bin)
   end
 
   ##
