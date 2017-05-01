@@ -34,6 +34,9 @@ defmodule Bitcoin.DERSig do
 
   @type t :: %__MODULE__{}
 
+  # Upper bound for what's considered a low S value, inclusive (see BIP62)
+  @low_s_max 0x7FFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_5D576E73_57A4501D_DFE92F46_681B20A0
+
   @doc """
   Parse binary signature into %DERSig{} struct.
   """
@@ -76,6 +79,16 @@ defmodule Bitcoin.DERSig do
     |> Map.put(:s, s)
     |> Map.put(:length, byte_size(r) + byte_size(s) + 4)
   end
+
+  @doc """
+  Returns false when S > order/2
+
+  See https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Low_S_values_in_signatures for details.
+  """
+  @spec low_s?(t | binary) :: boolean
+  def low_s?(sig)
+  def low_s?(sig) when is_binary(sig), do: sig |> parse |> low_s?
+  def low_s?(der), do: der.s <= @low_s_max
 
   @doc """
   Check if the signature is a strict DER signature (BIP66)

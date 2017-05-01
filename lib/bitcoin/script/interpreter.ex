@@ -474,6 +474,10 @@ defmodule Bitcoin.Script.Interpreter do
       flags[:strictenc] && !Bitcoin.Tx.Sighash.valid_type?(sighash_type) ->
         {:error, :invalid_sighash_type} # TODO does'n't seem to be covered by script any test cases
 
+      # with LOW_S flag, S must use the low value
+      flags[:low_s] && !Bitcoin.DERSig.low_s?(sig) ->
+        {:error, :high_s}
+
       # If all conditions are met do the actual sig verification
       true ->
         Bitcoin.Secp256k1.verify(sighash, sig, pk)
