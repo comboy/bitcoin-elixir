@@ -103,7 +103,7 @@ defmodule Bitcoin.Tx do
       {:error, err} ->
         {:error, err}
       prev_out ->
-        case Bitcoin.Script.verify_sig_pk(input.signature_script, prev_out.pk_script, opts |> Map.merge(%{tx: tx, sub_script: prev_out.pk_script, input_number: input_number})) do
+        case Bitcoin.Script.verify_sig_pk(input.signature_script, prev_out.pk_script, opts |> Map.merge(%{tx: tx, input_number: input_number})) do
           true  -> :ok
           false ->
             save_as_test_case(tx, opts) # only saves if enabled in config

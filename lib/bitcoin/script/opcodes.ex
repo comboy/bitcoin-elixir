@@ -176,7 +176,7 @@ defmodule Bitcoin.Script.Opcodes do
 
       # "push data" OPs. Not counted towards OPs limit, allowed in P2SH sigscript
       # OP_0..OP16 + OP_RESERVED + OP_1NEGATE + OP_PUSHDATAx
-      @push_data_ops @op_names |> Enum.filter(fn name -> @op[name] <= @op[:OP_16] end)
+      @push_data_ops @op_names |> Enum.filter(fn name -> @op[name] <= @op_16 end)
 
     end
   end

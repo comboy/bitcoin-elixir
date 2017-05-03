@@ -34,8 +34,19 @@ defmodule Bitcoin.Script.Interpreter do
 
   @default_opts %{flags: %{}}
 
+  # Start running the parsed script
+  def exec(script, opts), do: exec([], script, opts)
+  def exec(stack, script, opts) do
+    script = validate(script)
+    opts =
+      @default_opts
+      |> Map.merge(opts)
+      |> Map.put(:script, script)
+    run(stack, script, opts)
+  end
+
   # Run the parsed script
-  def run(script, opts), do: run([], script |> validate, @default_opts |> Map.merge(opts))
+  def run(script, opts), do: run([], script, opts)
 
   # Opcodes return :invalid instead of returning new stack in case execution should stop and script should fail
   # Parser returns [:invalid] if the script couldn't be parsed
@@ -364,7 +375,27 @@ defmodule Bitcoin.Script.Interpreter do
   # OP_CHECKSIG The entire transaction's outputs, inputs, and script (from the most recently-executed OP_CODESEPARATOR
   # to the end) are hashed. The signature used by OP_CHECKSIG must be a valid signature for this hash and public key.
   # If it is, 1 is returned, 0 otherwise.
-  op :OP_CHECKSIG, [pk, sig | stack], opts, do: [verify_signature(bin(sig), bin(pk), opts) |> bin | stack]
+  def run([pk, sig | stack], [:OP_CHECKSIG | script], opts) do
+    opts = opts |> Map.put(:sub_script, sub_script(opts, [sig]))
+
+    [verify_signature(bin(sig), bin(pk), opts) |> bin | stack]
+    |> run(script, opts)
+  end
+
+  # Get subscript that is used to compute the sighash
+  # FIXME this is not even a correct implementation, it just splits on the first OP_CODESEPARATOR when
+  # in fact it should be the last previously encountered OP_CODESEPARATOR. Plus it's a pretty ugly way
+  # to do it. Ah, and OP_CODESEPARATOR in unexecuted OP_IF branch doesn't count.
+  # Leaving it until the script rewrite, with some more complex state, then we can have something similar
+  # to pbegincodehash
+  def sub_script(%{script: script} = opts, sigs) do
+    idx = script |> Enum.find_index(& &1 == :OP_CODESEPARATOR)
+    script
+    |> Enum.split(idx || 0)
+    |> elem(1)
+    |> Kernel.--(sigs)
+    |> Bitcoin.Script.to_binary
+  end
 
   # OP_CHEKSIGVERIFY Same as OP_CHECKSIG, but OP_VERIFY is executed afterward.
   op_alias :OP_CHECKSIGVERIFY, [:OP_CHECKSIG, :OP_VERIFY]
@@ -382,7 +413,7 @@ defmodule Bitcoin.Script.Interpreter do
   # keys are not checked again if they fail any signature comparison, signatures must be placed in the scriptSig
   # using the same order as their corresponding public keys were placed in the scriptPubKey or redeemScript.
   # If all signatures are valid, 1 is returned, 0 otherwise.
-  op :OP_CHECKMULTISIG, stack, opts do
+  def run(stack, [:OP_CHECKMULTISIG | script], opts) do
     {pks, stack} = stack |> get_multi(opts)
     {sigs, stack} = stack |> get_multi(opts)
     [bug | stack] = stack # Due to a bug, one extra unused value is removed from the stack.
@@ -401,8 +432,10 @@ defmodule Bitcoin.Script.Interpreter do
         {:error, :max_pubkeys_per_multisig}
 
       true ->
+        opts = opts |> Map.put(:sub_script, sub_script(opts, sigs))
         [verify_all_signatures(sigs, pks, opts) |> bin | stack]
     end
+    |> run(script, opts)
   end
 
   # Same as OP_CHECKMULTISIG, but OP_VERIFY is executed afterward.

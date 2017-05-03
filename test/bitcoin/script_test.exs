@@ -59,7 +59,7 @@ defmodule Bitcoin.ScriptTest do
       version: 1
     }
 
-    Script.verify_sig_pk(sig_bin, pk_bin, %{tx: spend_tx, input_number: 0, sub_script: pk_bin} |> Map.merge(opts))
+    Script.verify_sig_pk(sig_bin, pk_bin, %{tx: spend_tx, input_number: 0} |> Map.merge(opts))
   end
 
 
@@ -77,7 +77,13 @@ defmodule Bitcoin.ScriptTest do
   end
 
   test "bitcoin core scripts.json" do
-    cases = File.read!("test/data/script_tests.json") |> Poison.decode! |> Enum.filter(fn x -> length(x) != 1 end)
+    cases = 
+      File.read!("test/data/script_tests.json") |> Poison.decode! 
+      # remove comments
+      |> Enum.filter(fn x -> length(x) != 1 end)
+      # we'll focus on segwit once we got the basics
+      |> Enum.filter(fn [_,_,flags | _] -> !String.contains?(flags, "WITNESS") end)
+
     rets =
       cases
       |> Enum.map(fn [sig_script, pk_script, flags, result | _comment ] ->
@@ -107,15 +113,15 @@ defmodule Bitcoin.ScriptTest do
       |> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "DISCOURAGE_UPGRADABLE_NOPS") end)
       #|> Enum.filter(fn [_,_,_,flags,_] -> !String.contains?(flags, "MINIMALDATA") end)
 
-    rets = scripts  |> Enum.map(fn [result, sig_hex, pk_hex, flags, _comment] ->
-      flags = flags |> flags_string_to_map
+    rets = scripts  |> Enum.map(fn [result, sig_hex, pk_hex, flags_str, comment] ->
+      flags = flags_str |> flags_string_to_map
 
       pk_bin = pk_hex |> String.upcase |> Base.decode16!
       sig_bin = sig_hex |> String.upcase |> Base.decode16!
       ret = test_script_verify(sig_bin, pk_bin, %{flags: flags}) == result
       if !ret do
-        # Uncomment to get list of scripts that failed
-        #IO.puts "should be #{result} #[#{flags}] | #{comment} :"
+        #Uncomment to get list of scripts that failed
+        #IO.puts "\n\nshould be #{result} #[#{flags_str |> inspect}] => #{flags |> inspect} | #{comment} :"
         #sig_bin |> IO.inspect |> Script.parse |> IO.inspect(limit: :infinity) #|> Script.run |> IO.inspect
         #pk_bin |> IO.inspect |> Script.parse |> IO.inspect(limit: :infinity) #|> Script.run |> IO.inspect
         #assert false

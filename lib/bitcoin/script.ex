@@ -67,14 +67,14 @@ defmodule Bitcoin.Script do
   defdelegate parse_string2(string), to: Serialization
 
   @doc """
-  Run the provided script. Returns the resulting stack or {:error, reason} tuple.
+  Execute the provided script. Returns the resulting stack or {:error, reason} tuple.
   """
-  @spec run(list | binary, map) :: list | {:error, term}
-  def run(script, opts \\ %{})
+  @spec exec(list | binary, map) :: list | {:error, term}
+  def exec(script, opts \\ %{})
 
-  def run(binary, opts) when is_binary(binary), do: binary |> parse |> run(opts)
-  defdelegate run(script, opts), to: Interpreter
-  defdelegate run(stack, script, opts), to: Interpreter
+  def exec(binary, opts) when is_binary(binary), do: binary |> parse |> exec(opts)
+  defdelegate exec(script, opts), to: Interpreter
+  defdelegate exec(stack, script, opts), to: Interpreter
 
   # The reason for this function is that we need to parse sig script and pk separately.
   # Otherwise sig script could do some nasty stuff with malformed PUSHDATA
@@ -86,9 +86,8 @@ defmodule Bitcoin.Script do
   def verify_sig_pk(sig_script, pk_script, opts) do
     try do
       sig_script
-      |> run(opts)
-      # TODO this validate function is so out of place
-      |> run(pk_script |> Interpreter.validate, opts)
+      |> exec(opts)
+      |> exec(pk_script, opts)
       |> cast_to_bool
     catch _,_ ->
       false
@@ -99,7 +98,7 @@ defmodule Bitcoin.Script do
   def verify(script, opts \\ %{}) do
     # TODO we should get rid of exceptions, make parser return {:error and non matched script cases should just be :invalid
     try do
-      script |> run(opts) |> cast_to_bool
+      script |> exec(opts) |> cast_to_bool
     catch _, _ ->
       false
     end
