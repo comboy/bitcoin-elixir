@@ -75,8 +75,8 @@ defmodule Bitcoin.DERSig do
   end
 
   def normalize(%__MODULE__{} = der) do
-    r = der.r |> trim
-    s = der.s |> trim |> fix_negative
+    r = der.r |> trim |> normalize_r
+    s = der.s |> trim |> normalize_s
     der
     |> Map.put(:r, r)
     |> Map.put(:s, s)
@@ -193,11 +193,16 @@ defmodule Bitcoin.DERSig do
 
   # S should not be negative. But you can find it negative e.g in tx 70f7c15c6f62139cc41afa858894650344eda9975b46656d893ee59df8914a3d
   # OpenSSL accepted it, so now we have to deal with this
-  defp fix_negative(<<b, bin :: binary>> = s) when (b &&& 0x80) == 0x80 do
+  defp normalize_s(<<b, bin :: binary>> = s) when (b &&& 0x80) == 0x80 do
     s = Binary.to_integer(s)
     s = Secp256k1.params[:n] - s # poor man's modulo, rem/2 returns negative values
     Binary.from_integer(s)
   end
-  defp fix_negative(s), do: s
+  defp normalize_s(s), do: s
+
+  # R shouldn't be negative. but you can meet one in tx 251d9cc59d1fc23b0ec6e62aff6106f1890bf9ed4eb0b7df70319d3e555f4fd2
+  # It got through, interpreted as being encoded incorrectly, that is null byte missing at the beginning
+  defp normalize_r(<<b, bin :: binary>> = r) when (b &&& 0x80) == 0x80, do: <<0, r :: binary>>
+  defp normalize_r(r), do: r
 
 end
