@@ -46,19 +46,33 @@ defmodule Bitcoin.TxTest do
     Process.exit(storage_pid, :kill)
   end
 
+  # Mainnet transactions
+  File.read!("test/data/tx_mainnet.json") |> Poison.decode!(keys: :atoms)
+  |> Enum.each(fn  %{tx: hash, data: data} ->
+    @data data
+    test "mainnet tx #{hash}" do
+      run_test_case(@data)
+    end
+  end)
+
+  # Automatically saved test cases
   with {:ok, list} <- File.ls("test/data/auto/#{@network}")
   do
     list |> Enum.each(fn filename ->
       @data "test/data/auto/#{@network}/#{filename}" |> File.read! |> Poison.decode!
       test "auto case #{filename}" do
-        [prevouts, tx_serialized, flags] = @data
-        flags = flags |> flags_string_to_map
-
-        tx = tx_serialized |> Binary.from_hex |> Messages.Tx.parse
-        parser = fn pk -> pk |> Binary.from_hex end
-        assert Bitcoin.Tx.validate(tx, %{previous_outputs: prepare_prevouts(prevouts, parser), flags: flags}) == :ok
+        run_test_case(@data)
       end
     end)
+  end
+
+  def run_test_case(tx_data) do
+    [prevouts, tx_serialized, flags] = tx_data
+    flags = flags |> flags_string_to_map
+
+    tx = tx_serialized |> Binary.from_hex |> Messages.Tx.parse
+    parser = fn pk -> pk |> Binary.from_hex end
+    assert Bitcoin.Tx.validate(tx, %{previous_outputs: prepare_prevouts(prevouts, parser), flags: flags}) == :ok
   end
 
   def prepare_prevouts(prevouts, prevout_parser)  do

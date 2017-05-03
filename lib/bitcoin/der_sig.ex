@@ -30,12 +30,14 @@ defmodule Bitcoin.DERSig do
 
   use Bitwise
 
+  alias Bitcoin.Secp256k1
+
   defstruct [:length, :r_type, :r, :s_type, :s, :type]
 
   @type t :: %__MODULE__{}
 
   # Upper bound for what's considered a low S value, inclusive (see BIP62)
-  @low_s_max 0x7FFFFFFF_FFFFFFFF_FFFFFFFF_FFFFFFFF_5D576E73_57A4501D_DFE92F46_681B20A0
+  @low_s_max Secp256k1.params[:n] / 2
 
   @doc """
   Parse binary signature into %DERSig{} struct.
@@ -58,8 +60,9 @@ defmodule Bitcoin.DERSig do
   @doc """
   Normalize DER signature.
 
-  Which in our case means only removing leading null bytes from R and S
-  and fixing the total_length if it's incorrect.
+  * remove leading null bytes from R and S
+  * fix total_length if it's incorrect
+  * fix negative S
   """
   @spec normalize(t | binary) :: t | binary
   def normalize(sig)
@@ -72,8 +75,8 @@ defmodule Bitcoin.DERSig do
   end
 
   def normalize(%__MODULE__{} = der) do
-    r = trim(der.r)
-    s = trim(der.s)
+    r = der.r |> trim
+    s = der.s |> trim |> fix_negative
     der
     |> Map.put(:r, r)
     |> Map.put(:s, s)
@@ -180,11 +183,21 @@ defmodule Bitcoin.DERSig do
       s: s
     }
   end
+
   # Trim leading null bytes
   # But we need to be careful because if the null byte is followed by a byte with 0x80 bit set,
   # removing the null byte would change the number sign.
   defp trim(<<0, b, _bin :: binary>> = sig) when (b &&& 0x80) == 0x80, do: sig
   defp trim(<<0, bin :: binary>>), do: trim(bin)
   defp trim(bin), do: bin
+
+  # S should not be negative. But you can find it negative e.g in tx 70f7c15c6f62139cc41afa858894650344eda9975b46656d893ee59df8914a3d
+  # OpenSSL accepted it, so now we have to deal with this
+  defp fix_negative(<<b, bin :: binary>> = s) when (b &&& 0x80) == 0x80 do
+    s = Binary.to_integer(s)
+    s = Secp256k1.params[:n] - s # poor man's modulo, rem/2 returns negative values
+    Binary.from_integer(s)
+  end
+  defp fix_negative(s), do: s
 
 end
