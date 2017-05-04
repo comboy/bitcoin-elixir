@@ -93,7 +93,7 @@ defmodule Bitcoin.DERSig do
   @spec low_s?(t | binary) :: boolean
   def low_s?(sig)
   def low_s?(sig) when is_binary(sig), do: sig |> parse |> low_s?
-  def low_s?(der), do: der.s <= @low_s_max
+  def low_s?(der), do: Binary.to_integer(der.s) <= @low_s_max
 
   @doc """
   Check if the signature is a strict DER signature (BIP66)
@@ -194,8 +194,9 @@ defmodule Bitcoin.DERSig do
   defp trim(bin), do: bin
 
   # Ensure that the low S value is used
-  defp low_s(s) when s > @low_s_max, do: (Secp256k1.params[:n] - Binary.to_integer(s)) |> Binary.from_integer
-  defp low_s(s), do: s
+  defp low_s(s), do: s |> Binary.to_integer |> low_s_num |> Binary.from_integer
+  defp low_s_num(s) when s > @low_s_max, do: Secp256k1.params[:n] - s
+  defp low_s_num(s), do: s
 
   # S should not be negative. But you can find it negative e.g in tx 70f7c15c6f62139cc41afa858894650344eda9975b46656d893ee59df8914a3d
   # You can also find negative R in tx 251d9cc59d1fc23b0ec6e62aff6106f1890bf9ed4eb0b7df70319d3e555f4fd2
