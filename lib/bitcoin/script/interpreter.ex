@@ -388,7 +388,7 @@ defmodule Bitcoin.Script.Interpreter do
   # to do it. Ah, and OP_CODESEPARATOR in unexecuted OP_IF branch doesn't count.
   # Leaving it until the script rewrite, with some more complex state, then we can have something similar
   # to pbegincodehash
-  def sub_script(%{script: script} = opts, sigs) do
+  def sub_script(%{script: script} = _opts, sigs) do
     idx = script |> Enum.find_index(& &1 == :OP_CODESEPARATOR)
     script
     |> Enum.split(idx || 0)
@@ -485,6 +485,9 @@ defmodule Bitcoin.Script.Interpreter do
     with n when is_number(n) <- num(n, opts),
       do: if n >= 0, do: Enum.at(stack, n), else: {:error, :index_outside_stack}
   end
+
+  @spec verify_signature(binary, binary, map) :: boolean
+  def verify_signature(sig, pk, opts)
 
   # these two cases are only necessary because we can keep some numebrs on the stack intsead of binary exclusively
   # and can be romevod when that's fixed

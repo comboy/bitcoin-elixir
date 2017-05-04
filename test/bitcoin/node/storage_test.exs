@@ -3,6 +3,7 @@ defmodule Bitcoin.Node.StorageTest do
 
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Node.Storage
+  alias Bitcoin.Util
 
   test "store first bitcoin blocks" do
     {:ok, pid} = Storage.start_link
@@ -37,21 +38,40 @@ defmodule Bitcoin.Node.StorageTest do
     Process.exit(pid, :kill)
   end
 
-  # There's a commented line in the Dummy storage that saves all blocks to the tmp directory
-  # Thanks to that it's easy to do a rerun of the validations and storage on the blockchain
-  # without fetching it each time. It can also be used to do some perf tests later.
-  #@tag timeout: 60_000*60*24
-  #test "store bitcoin blocks" do
-    #{:ok, pid} = Storage.start_link
-    #(1..124_200) |> Enum.map(fn num ->
-      #block = File.read!("tmp/block_#{num}.dat") |> Messages.Block.parse
-      #assert Storage.store(block) == :ok
-      #if (block.transactions |> length) > 1 do
-        #IO.puts "TX count: #{block.transactions |> length}"
-      #end
-      ##IO.puts Storage.max_height
-    #end)
-    #Process.exit(pid, :kill)
-  #end
+  # When you enable Dummy storage persistance, this will try to store all blocks that are saved
+  # in the tmp directory. Handy to rerun validations or to do a lame performance check
+  # without fetching them each time. To run the test you can use this command:
+  #
+  #     mix test --include dummy_data
+  #
+  @tag dummy_data: true, timeout: 60_000*60*24
+  test "store bitcoin blocks" do
+    {:ok, pid} = Storage.start_link
+    t = fn -> Util.militime end
+
+    t0 = t.()
+    start_validation_at = 1 # block number
+
+    store_block = fn (num, fun) ->
+      path = Storage.Engine.Dummy.block_path(num)
+      if File.exists?(path) do
+        block = File.read!(path) |> Messages.Block.parse
+        t1 = t.()
+
+        assert Storage.store(block, validate: num > start_validation_at) == :ok
+
+        dt = t.() - t1
+        tt = t.() - t0
+        IO.puts("#{num} .#{block.transactions |> length} \t dt = #{round(dt*100) / 100}s \t T = #{round(tt)}s")
+
+        fun.(num+1, fun)
+      else
+        :ok
+      end
+    end
+
+    store_block.(1, store_block)
+    Process.exit(pid, :kill)
+  end
 
 end

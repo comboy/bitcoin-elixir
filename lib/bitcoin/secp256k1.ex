@@ -3,25 +3,24 @@ defmodule Bitcoin.Secp256k1 do
   @moduledoc """
   ECDSA Secp256k1 curve operations.
 
-  We are currentnly using :crypto.verify (openssl), which behaviour does not seem to match
-  bitcoin-core/libsecp256k1.
+  By default erlang's :crypto.verify is used to make it less problematic when using
+  as a library (no need for gcc when you just want to parse something).
 
-  We could switch to NIF but keeping native imlpmentation has its advantages:
-  * NIFs bring some mess, gcc must present, make is different on different platforms,
-    libsecp256k1 configure may fail, i.e. there's a lot of things that can go wrong when
-    somebody is trying to run the project or use it as a lib.
-  * One of the points of the whole project is to learn more about Bitcoin, trying to recreate
-    libsecp256k1 behaviour may be an interesting lesson
-  * Error in NIF (error in the library is much less likely) would bring the whole VM down
-    (not just the running process)
+  However, if :libsecp256k1 NIF is available, it's used. To enable it just uncomment
+  appropriate line in mix.exs deps.
 
-  That said, NIF would bring a lot of speedup and it's better consensus-wise.
+  libsecp256k1: https://github.com/bitcoin-core/secp256k1
 
-  I haven't yet prepared a proper lib, if you want to compare libsecp256k1 behaviour,
-  check out this gist: https://gist.github.com/comboy/018e15c574d44b2bbc0992d4e42a119d
+  If gcc and git dependencies are not a problem, use NIF. It's much faster and it's
+  the proper way to do it consensus-wise. Do note that even though it's unlikely, an error
+  in the NIF or libsecp256k1 will bring the whole erlang VM down (not just the process)
   """
 
   alias Bitcoin.DERSig
+
+  require Logger
+
+  @using_nif Code.ensure_loaded? :libsecp256k1
 
   @doc """
   Verify signed message.
@@ -32,7 +31,7 @@ defmodule Bitcoin.Secp256k1 do
   """
   @spec verify(binary, binary, binary) :: boolean
   def verify(msg, sig, pk) do
-    :crypto.verify(:ecdsa, :sha256, {:digest, msg}, sig |> DERSig.normalize, [pk, :secp256k1])
+    do_verify(msg, DERSig.normalize(sig), pk)
   end
 
   @doc """
@@ -51,4 +50,19 @@ defmodule Bitcoin.Secp256k1 do
       h: 0x01
     }
   end
+
+  if @using_nif do
+    Logger.info "Using libsecp256k1 NIF for ECDSA operations."
+
+    @spec do_verify(binary, binary, binary) :: boolean
+    defp do_verify(msg, sig, pk), do: :libsecp256k1.ecdsa_verify(msg, sig, pk) == :ok
+
+  else
+    Logger.info "Using erlang implementation for ECDSA operations."
+
+    @spec do_verify(binary, binary, binary) :: boolean
+    defp do_verify(msg, sig, pk), do: :crypto.verify(:ecdsa, :sha256, {:digest, msg}, sig, [pk, :secp256k1])
+
+  end
+
 end

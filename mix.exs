@@ -3,7 +3,7 @@ defmodule Bitcoin.Mixfile do
 
   def project do
     [app: :bitcoin,
-     version: "0.0.1",
+     version: "0.0.2",
      elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -48,11 +48,13 @@ defmodule Bitcoin.Mixfile do
      # Binary handling
      {:binary, "0.0.4"},
      # JSON library, used to decode test cases
-     {:poison, "~> 3.0", only: :test},
+     {:poison, "~> 3.0", only: [:dev, :test]},
      # Docs generator
      {:ex_doc, "~> 0.14", only: :dev, runtime: false},
      # Static type analysis
-     {:dialyxir, "~> 0.5", only: :dev, runtime: false}
+     {:dialyxir, "~> 0.5", only: :dev, runtime: false},
+     # bitcoin/libsecpy256k1 NIF
+     {:libsecp256k1, [github: "mbrix/libsecp256k1", manager: :rebar, optional: true]},
     ]
   end
 

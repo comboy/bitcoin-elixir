@@ -28,14 +28,14 @@ defmodule Bitcoin.Node.Storage do
     end
   end
 
-  def store(%Messages.Block{} = block), do: store_block(block)
+  def store(%Messages.Block{} = block, opts \\ []), do: store_block(block, opts)
 
   def max_height, do: @engine.max_height()
 
   def get_blocks_with_height(height) when is_number(height) and height >= 0, do: @engine.get_blocks_with_height(height)
 
   @spec store_block(Messages.Block.t) :: :ok | {:error, term}
-  def store_block(%Messages.Block{} = block) do
+  def store_block(%Messages.Block{} = block, opts \\ []) do
     # TODO do we do validationo here or elsewhere?
     # To ensure consistency it would be good to have validation here. If Node.Storage is a genserver,
     # (Node.Storage is not currently)
@@ -52,7 +52,11 @@ defmodule Bitcoin.Node.Storage do
         :error ->
           {:error, :no_parent}
         height when is_number(height) ->
-          case block |> Bitcoin.Block.validate(%{height: height})  do
+          validation = cond do
+            opts[:validate] == false -> :ok
+            true -> Bitcoin.Block.validate(block, %{height: height})
+          end
+          case validation do
             :ok ->
                # TODO also add hash to the struct, we need the storage struct
                @engine.store_block(block |> Map.put(:height, height))

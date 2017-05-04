@@ -23,13 +23,18 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
   # * height
   # * which chain (or maybe store that info somewhere else?)
 
+  @default_timeout 60_000
+
   def start_link(opts \\ %{}), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
-  def store_block(%Messages.Block{} = block), do: GenServer.call(__MODULE__, {:store_block, block})
-  def store_tx(%Messages.Tx{} = block), do: GenServer.call(__MODULE__, {:store_tx, block})
-  def get_block(hash), do: GenServer.call(__MODULE__, {:get_block, hash})
-  def get_tx(hash), do: GenServer.call(__MODULE__, {:get_tx, hash})
-  def max_height(), do: GenServer.call(__MODULE__, :max_height)
-  def get_blocks_with_height(height), do: GenServer.call(__MODULE__, {:get_blocks_with_height, height})
+
+  def call(arg), do: GenServer.call(__MODULE__, arg, @default_timeout)
+
+  def store_block(%Messages.Block{} = block), do: call {:store_block, block}
+  def store_tx(%Messages.Tx{} = block), do: call {:store_tx, block}
+  def get_block(hash), do: call {:get_block, hash}
+  def get_tx(hash), do: call {:get_tx, hash}
+  def max_height(), do: call :max_height
+  def get_blocks_with_height(height), do: call {:get_blocks_with_height, height}
 
   def init(opts) do
     state = %{

@@ -11,7 +11,7 @@ protocol parsers and DNS peer discovery.
 ## Current status
 
 * Full protocol parser and serialization
-* Basic script interpreter, but still missing many BIPs (currently 1021/1193 of bitcoin core script tests json)
+* Basic script interpreter, but still missing many BIPs (currently 1096/1170 of bitcoin core script tests json)
 * Connecting and accepting connections from other peers
 * Fetching blockchain to a temporary memory storage (but only with very lacking blcoks and tx validation)
 
@@ -27,9 +27,22 @@ protocol parsers and DNS peer discovery.
 
 ## Why?
 
-It's handy to have Bitcoin tools for operatino on addresss, transactions and scripts in the language of your choice.
+It's handy to have Bitcoin tools for operations on addresses, signatures, transactions and scripts in the language of your choice.
 Regarding full node, because it's fun. Given that Bitcoin protocol is defined by the reference client, playing with your
-own implementation is one of a very few ways to truly understand how Bitcoin works. It is not meant to be used as a wallet.
+own implementation is one of a very few ways to truly understand how Bitcoin works. **It is not meant to be used as a wallet.**
+
+## Usage
+
+To use as a library, add it to your deps:
+
+    {:bitcoin, "~> 0.0.2"}
+
+`:libsecp256k1` is an optional dependency (because it requires c++ compilation), which means that when `bitcoin-elixir`
+is used as a lib, it won't be automatically added. If you want to use it, just add it in your deps:
+
+    {:libsecp256k1, [github: "mbrix/libsecp256k1", manager: :rebar]}
+
+When it's not present, erlang's `:crypto` module is used.
 
 ## Running the node
 
