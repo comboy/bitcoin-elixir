@@ -26,9 +26,8 @@ defmodule Bitcoin.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [mod: { Bitcoin, [] },
-     applications: [
-       :logger
-       ]
+     applications: [:logger]
+     # :ecto and :postgrex apps are started by the Postgres storage engine when necessary
     ]
   end
 
@@ -44,17 +43,27 @@ defmodule Bitcoin.Mixfile do
   defp deps do
     [
      # Socket acceptor pool
-     {:reagent, "~> 0.1.5"},
+     # using github version instead of hex because of the recent dializer fix which is not yet in hex
+     {:reagent, github: "meh/reagent"},
+
      # Binary handling
      {:binary, "0.0.4"},
+
      # JSON library, used to decode test cases
      {:poison, "~> 3.0", only: [:dev, :test]},
+
      # Docs generator
      {:ex_doc, "~> 0.14", only: :dev, runtime: false},
+
      # Static type analysis
      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
+
      # bitcoin/libsecpy256k1 NIF
      {:libsecp256k1, [github: "mbrix/libsecp256k1", manager: :rebar, optional: true]},
+
+     # Node postgres storage engine
+     {:ecto, github: "elixir-ecto/ecto", optional: true}, # can be switched to hex once 2.2 is out
+     {:postgrex, "~> 0.13", optional: true}
     ]
   end
 

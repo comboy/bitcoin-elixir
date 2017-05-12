@@ -12,6 +12,15 @@ defmodule Bitcoin.Util do
     1.0e6*megas + s + milis * 1.0e-6
   end
 
+  # Measure execution time of the function
+  # Returns {result, time_in_seconds}
+  def measure_time(fun) do
+    t0 = militime()
+    result = fun.()
+    dt = militime() - t0
+    {result, dt}
+  end
+
   # Helper to run series of functions as a validation.
   # It returns :ok if all functions return :ok
   # Otherwise, first encountered error is returned.

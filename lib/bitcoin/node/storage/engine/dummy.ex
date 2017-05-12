@@ -5,13 +5,14 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
 
   use GenServer
   use Bitcoin.Common
+  use Bitcoin.Node.Storage.EngineBehaviour
 
   require Logger
 
   alias Bitcoin.Protocol.Messages
 
   # warning: this storage is really dumb, it will take some inodes (each block is a separate file)
-  @persistence true
+  @persistence false
   @persistence_dir "tmp/blocks/#{@network}"
 
   # I don't like it here, I don't know how to avoid it without impacting performance
@@ -29,9 +30,14 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
 
   def call(arg), do: GenServer.call(__MODULE__, arg, @default_timeout)
 
-  def store_block(%Messages.Block{} = block), do: call {:store_block, block}
+  def store_block(%Messages.Block{} = block, %{height: _height} = opts), do: call {:store_block, block, opts}
   def store_tx(%Messages.Tx{} = block), do: call {:store_tx, block}
   def get_block(hash), do: call {:get_block, hash}
+  def get_block_height(@genesis_hash), do: 0
+  def get_block_height(hash) do
+    block = get_block(hash)
+    block && block.height
+  end
   def get_tx(hash), do: call {:get_tx, hash}
   def max_height(), do: call :max_height
   def get_blocks_with_height(height), do: call {:get_blocks_with_height, height}
@@ -44,7 +50,7 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
       block_by_height: %{}, # we even have an index!
       tx: %{}
     }
-    state = if @persistence do
+    state = if persistence?() do
       File.mkdir_p(@persistence_dir)
       state |> load_stored
     else
@@ -60,8 +66,8 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
     {:reply, blocks, state}
   end
 
-  def handle_call({:store_block, %Messages.Block{} = block}, _from, state) do
-    {:reply, :ok, state |> store_block(block)}
+  def handle_call({:store_block, %Messages.Block{} = block, opts}, _from, state) do
+    {:reply, :ok, state |> store_block(block, opts)}
   end
 
   def handle_call({:store_tx, %Messages.Tx{} = tx}, _from, state) do
@@ -80,15 +86,16 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
     {:reply, state.max_height, state}
   end
 
-  defp store_block(state, block, opts \\ []) do
+  defp persistence?, do: @persistence
+
+  defp store_block(state, %Messages.Block{} = block, %{height: height} = opts) do
     hash = block |> Bitcoin.Block.hash
-    Logger.info "Storing block #{block.height} | #{hash |> Bitcoin.Util.hash_to_hex} #{opts[:loading] && "(loading stored)" || ""}"
-    if !opts[:loading] && @persistence, do: File.write(block.height |> block_path, block |> Messages.Block.serialize)
+    if !opts[:loading] && persistence?(), do: File.write(height |> block_path, block |> Messages.Block.serialize)
     block.transactions
     |> Enum.reduce(state, fn(tx, state) -> state |> store_tx(tx)  end)
-    |> put_in([:block, hash], block) # TODO block sholud only store tx hashes
-    |> put_in([:block_by_height, block.height], [hash | (state.block_by_height[block.height] || [])])
-    |> Map.put(:max_height, max(block.height, state.max_height) || block.height)
+    |> put_in([:block, hash], block |> Map.put(:height, height)) # TODO block sholud only store tx hashes
+    |> put_in([:block_by_height, height], [hash | (state.block_by_height[height] || [])])
+    |> Map.put(:max_height, max(height, state.max_height) || height)
   end
 
   defp load_stored(state), do: load_stored(state, 0)
@@ -96,9 +103,9 @@ defmodule Bitcoin.Node.Storage.Engine.Dummy do
   defp load_stored(state, height) do
     case height |> block_path |> File.read do
       {:ok, block_data} ->
-        block = Messages.Block.parse(block_data) |> Map.put(:height, height)
+        block = Messages.Block.parse(block_data)
         state
-        |> store_block(block, loading: true)
+        |> store_block(block, %{loading: true, height: height})
         |> load_stored(height + 1)
       {:error, _} -> state
     end

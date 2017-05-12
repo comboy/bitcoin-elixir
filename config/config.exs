@@ -2,6 +2,12 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+# Ecto raises in case adapter config is missing even if we don't
+# start :ecto app and don't use it at all, so here goes:
+config :bitcoin, ecto_repos: [Bitcoin.Node.Storage.Engine.Postgres.Repo]
+config :bitcoin, Bitcoin.Node.Storage.Engine.Postgres.Repo, adapter: Ecto.Adapters.Postgres
+
+
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
 # file won't be loaded nor affect the parent project. For this reason,
@@ -53,6 +59,19 @@ use Mix.Config
 #   # Directory where known addrs and blockchain are kept
 #   data_directory: Path.expand("~/.bitcoin-elixir/#{@network}"),
 # ]
+#
+# Example of using Postgres storage backend:
+#
+# config :bitcoin, Bitcoin.Node.Storage.Engine.Postgres.Repo,
+#  adapter: Ecto.Adapters.Postgres,
+#  database: "bitcoin_elixir_dev",
+#  username: "bitcoin_elixir",
+#  password: "bitcoin_elixir",
+#  hostname: "localhost"
+#
+# config :bitcoin, :node,
+#   modules: [storage_engine: Bitcoin.Node.Storage.Engine.Postgres]
+
 
 import_config "#{Mix.env}.exs"
 

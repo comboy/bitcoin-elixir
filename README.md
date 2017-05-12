@@ -13,16 +13,17 @@ protocol parsers and DNS peer discovery.
 * Full protocol parser and serialization
 * Basic script interpreter, but still missing many BIPs (currently 1096/1170 of bitcoin core script tests json)
 * Connecting and accepting connections from other peers
-* Fetching blockchain to a temporary memory storage (but only with very lacking blcoks and tx validation)
+* Syncing blockchain into a postgres database (or temporary memory storage)
+* Using [libsecp256k1](https://github.com/bitcoin-core/secp256k1) for validation
+* Configurable modules (you can plug in your own peer handler, connection manager, storage engine etc.)
 
 ## Roadmap
 
-* Some decent storage backend (postgres or mnesia)
-* More strict validation
+* Storage properly handling reorgs and optimizations
 * Mempool
+* Add missing validations
 * BIPs implementation and script fixes to be able to pass all bitcoin core script and transaction tests
 * Pass TheBlueMatt's [test-scripts](https://github.com/TheBlueMatt/test-scripts)
-* Make sure the architecture allows to easily plug in custom modules so that blockchain / bitcoin network stats can be collected
 * Allow it to run across multiple nodes
 
 ## Why?
@@ -55,6 +56,8 @@ To avoid abusing the network you may want to only connect to your local node e.g
     config :bitcoin, :node, [
       connect: [{127,0,0,1}]
     ]
+
+Check (config.exs)[config/config.exs] for more details.
 
 ## License
 

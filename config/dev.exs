@@ -12,3 +12,19 @@ use Mix.Config
 config :logger,
   level: :info,
   truncate: :infinity
+
+# Example configuration for running the node with postgres backend
+# (database should already be created)
+#
+# config :bitcoin, :node,
+#   modules: [
+#     storage_engine: Bitcoin.Node.Storage.Engine.Postgres
+# ]
+#
+# config :bitcoin, Bitcoin.Node.Storage.Engine.Postgres.Repo,
+#   adapter: Ecto.Adapters.Postgres,
+#   database: "bitcoin_elixir_dev",
+#   username: "bitcoin_elixir",
+#   password: "bitcoin_elixir",
+#   hostname: "localhost"
+

@@ -16,6 +16,8 @@ defmodule Bitcoin.Node.Storage do
 
   alias Bitcoin.Protocol.Messages
 
+  require Logger
+
   @engine @modules[:storage_engine]
 
   @spec start_link(map) :: {:ok, pid} | {:error, term}
@@ -49,44 +51,45 @@ defmodule Bitcoin.Node.Storage do
       :ok # or should it be {:error, :already_stored} ?
     else
       case block |> block_height() do
-        :error ->
+        nil ->
           {:error, :no_parent}
         height when is_number(height) ->
-          validation = cond do
-            opts[:validate] == false -> :ok
-            true -> Bitcoin.Block.validate(block, %{height: height})
+          {validation, validation_time} = cond do
+            opts[:validate] == false -> {:ok, 0}
+            true ->
+              Bitcoin.Util.measure_time fn ->
+                Bitcoin.Block.validate(block, %{height: height})
+              end
           end
-          case validation do
+          {result, store_time} = case validation do
             :ok ->
                # TODO also add hash to the struct, we need the storage struct
-               @engine.store_block(block |> Map.put(:height, height))
-            {:error, reason} -> {:error, reason}
+               Bitcoin.Util.measure_time fn ->
+                 @engine.store_block(block, %{height: height, hash: hash})
+               end
+            {:error, reason} -> {{:error, reason}, 0}
           end
+          Logger.info("Stored block ##{height} | #{hash |> Bitcoin.Util.hash_to_hex} | v: #{round(validation_time * 100) / 100.0}s s: #{round(store_time * 100) / 100.0}s")
+          result
       end
     end
   end
 
   @spec block_height(Bitcoin.Block.t_hash | Messages.Block.t) :: non_neg_integer | :error
-  def block_height(block_hash)
+  def block_height(block)
 
   def block_height(@genesis_hash), do: 0
   def block_height(@genesis_block), do: 0
-  def block_height(block_hash) when is_binary(block_hash), do: get_block(block_hash) |> block_height
+  def block_height(block_hash) when is_binary(block_hash), do: @engine.get_block_height(block_hash)
   def block_height(%{height: height} = _block) when height != nil, do: height
   def block_height(block) do
-    case get_block(block.previous_block) do
-      nil   ->
-        if Bitcoin.Block.hash(block) == @genesis_hash do
-          0
-        else
-          :error
-        end
-      block -> block_height(block) + 1
-    end
+    prev_height = block_height(block.previous_block)
+    prev_height && (prev_height + 1)
   end
 
-  # TODO proper has_block?
-  def has_block?(hash), do: @engine.get_block(hash) != nil
+  def prepare(opts), do: @engine.prepare(opts)
+
+  def has_block?(hash), do: @engine.has_block?(hash)
   def get_block(hash), do: @engine.get_block(hash)
   def get_tx(hash), do: @engine.get_tx(hash)
 end

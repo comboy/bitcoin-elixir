@@ -1,5 +1,5 @@
 ExUnit.start()
-ExUnit.configure(exclude: [dummy_data: true])
+ExUnit.configure(exclude: [dummy_data: true, postgres: true])
 
 defmodule Test.Helper do
 
