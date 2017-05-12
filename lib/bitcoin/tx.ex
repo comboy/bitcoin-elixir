@@ -123,7 +123,7 @@ defmodule Bitcoin.Tx do
   defp find_previous_output(input, opts) do
     %{hash: hash, index: index} = input.previous_output
     # TODO maybe storage should offer some get_output function so that it can optimize fetching from UTXO
-    case Bitcoin.Node.Storage.get_tx(hash) do
+    case Bitcoin.Node.Storage.get_txout(hash, index) do
       # Not found in storage, let's check in the curretn block
       nil ->
         # TODO the struct that storage returns should already have hash field (because storage already has it)
@@ -135,8 +135,7 @@ defmodule Bitcoin.Tx do
             prev_tx.outputs |> Enum.at(index)
         end
       # Found it in storage
-      prev_tx ->
-        prev_tx.outputs |> Enum.at(index)
+      prev_out -> prev_out
     end
   end
 

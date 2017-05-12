@@ -69,7 +69,7 @@ defmodule Bitcoin.Node.Storage do
                end
             {:error, reason} -> {{:error, reason}, 0}
           end
-          Logger.info("Stored block ##{height} | #{hash |> Bitcoin.Util.hash_to_hex} | v: #{round(validation_time * 100) / 100.0}s s: #{round(store_time * 100) / 100.0}s")
+          Logger.info("Stored block ##{height} | #{hash |> Bitcoin.Util.hash_to_hex} | vt: #{round(validation_time * 100) / 100.0}s st: #{round(store_time * 100) / 100.0}s tx: #{block.transactions |> length}")
           result
       end
     end
@@ -92,4 +92,6 @@ defmodule Bitcoin.Node.Storage do
   def has_block?(hash), do: @engine.has_block?(hash)
   def get_block(hash), do: @engine.get_block(hash)
   def get_tx(hash), do: @engine.get_tx(hash)
+  def get_txout(hash, index), do: @engine.get_txout(hash, index)
+  def get_txouts(list), do: @engine.get_txouts(list)
 end

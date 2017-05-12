@@ -16,14 +16,25 @@ defmodule Bitcoin.Node.Storage.EngineBehaviour do
     quote location: :keep do
       @behaviour unquote(__MODULE__)
 
+      def get_txout(hash, index) do
+        case get_tx(hash) do
+          nil -> nil
+           tx -> tx.outputs |> Enum.at(index)
+        end
+      end
+      defoverridable get_txout: 2
+
+
       def has_block?(hash), do: !! get_block(hash)
 
       defoverridable has_block?: 1
+
 
       # Returns true if the storage engine has transaction index enabled
       def tx_index?, do: false
 
       defoverridable tx_index?: 0
+
 
       # Called by mix storage.prepare task, place for an engine to prepare the schema etc.
       def prepare(opts), do: :ok

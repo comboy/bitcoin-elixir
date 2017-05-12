@@ -154,6 +154,17 @@ defmodule Bitcoin.Node.Storage.Engine.Postgres do
     end
   end
 
+  def get_txout(hash, index) do
+    import Ecto.Query
+
+    txout =
+      Models.TxOutput
+      |> where(tx_hash: ^hash)
+      |> where(index: ^index)
+      |> Repo.one
+    txout && load_output(txout)
+  end
+
   def prepare(_) do
     {:ok, _} = Application.ensure_all_started(:ecto)
     {:ok, _} = Application.ensure_all_started(:postgrex)

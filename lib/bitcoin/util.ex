@@ -21,6 +21,27 @@ defmodule Bitcoin.Util do
     {result, dt}
   end
 
+  def pmap(collection, fun) do
+    collection
+    |> Enum.map(&(Task.async(fn -> fun.(&1) end)))
+    |> Enum.map(&Task.await/1)
+  end
+
+  def pmap_reduce(collection, map_fun, acc, reduce_fun) do
+    collection
+    |> pmap(map_fun)
+    |> Enum.reduce(acc, reduce_fun)
+  end
+
+  def pmap_reduce(collection, map_fun) do
+    pmap_reduce(collection, map_fun, :ok, fn (ret, result) ->
+      case result do
+        :ok -> ret
+        {:error, err}  -> {:error, err}
+      end
+    end)
+  end
+
   # Helper to run series of functions as a validation.
   # It returns :ok if all functions return :ok
   # Otherwise, first encountered error is returned.

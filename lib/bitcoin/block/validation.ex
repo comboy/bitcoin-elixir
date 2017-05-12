@@ -47,13 +47,9 @@ defmodule Bitcoin.Block.Validation do
   @spec transactions(Block.t) :: :ok | {:error, term}
   def transactions(%Block{} = block, opts \\ %{}) do
     [_coinbase | transactions] = block.transactions
-    transactions
-    |> Enum.reduce(:ok, fn (tx, result) ->
-      case result do
-        :ok -> tx |> Bitcoin.Tx.validate(opts |> Map.put(:block, block))
-        {:error, err}  -> {:error, err}
-      end
-    end)
+    opts = opts |> Map.put(:block, block)
+
+    Bitcoin.Util.pmap_reduce(transactions, fn tx -> Bitcoin.Tx.validate(tx, opts) end)
   end
 
   @spec block_size(Block.t) :: :ok | {:error, term}
