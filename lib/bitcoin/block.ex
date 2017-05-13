@@ -31,11 +31,13 @@ defmodule Bitcoin.Block do
   Returns sum of all transaction fees in the provided block message
   """
   @spec total_fees(Messages.Block.t) :: number
-  def total_fees(%Messages.Block{} = block) do
+  def total_fees(%Messages.Block{} = block, opts \\ %{}) do
     [_coinbase | transactions ] = block.transactions
-    transactions |> Enum.reduce(0, fn (tx, acc) ->
-      acc + Bitcoin.Tx.fee(tx, %{block: block})
-    end)
+   opts = opts |> Map.put(:block, block)
+
+   transactions
+   |> Bitcoin.Util.pmap(fn tx -> Bitcoin.Tx.fee(tx, opts) end)
+   |> Enum.sum
   end
 
   @doc """
@@ -56,7 +58,7 @@ defmodule Bitcoin.Block do
 
   def validate(%Messages.Block{} = block, opts) do
     flags = validation_flags(block, opts)
-    opts = %{flags: flags} |> Map.merge(opts)
+    opts = %{flags: flags, block: block} |> Map.merge(opts)
     [
       &Validation.has_parent/1,
       &Validation.merkle_root/1,

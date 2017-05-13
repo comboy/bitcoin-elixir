@@ -37,7 +37,7 @@ defmodule Bitcoin.Block.Validation do
     height = context[:height] || (Bitcoin.Node.Storage.block_height(block.previous_block) + 1)
 
     # OPTIMIZE: total fees expensive because we need to fetch all prevouts (which are alse fetched for tx validations)
-    if Bitcoin.Tx.total_output_value(coinbase) <= (max_subsidy_for_height(height) + Bitcoin.Block.total_fees(block)) do
+    if Bitcoin.Tx.total_output_value(coinbase) <= (max_subsidy_for_height(height) + Bitcoin.Block.total_fees(block, context)) do
       :ok
     else
       {:error, :reward_too_high}
