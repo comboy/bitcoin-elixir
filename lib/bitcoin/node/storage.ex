@@ -20,6 +20,14 @@ defmodule Bitcoin.Node.Storage do
 
   @engine @modules[:storage_engine]
 
+
+  defdelegate prepare(opts),          to: @engine
+  defdelegate has_block?(hash),       to: @engine
+  defdelegate get_block(hash),        to: @engine
+  defdelegate get_tx(hash),           to: @engine
+  defdelegate get_txout(hash, index), to: @engine
+  defdelegate get_txouts(list),       to: @engine
+
   @spec start_link(map) :: {:ok, pid} | {:error, term}
   def start_link(opts \\ %{}) do
     case @engine.start_link(opts) do
@@ -54,22 +62,25 @@ defmodule Bitcoin.Node.Storage do
         nil ->
           {:error, :no_parent}
         height when is_number(height) ->
-          {validation, validation_time} = cond do
-            opts[:validate] == false -> {:ok, 0}
-            true ->
-              Bitcoin.Util.measure_time fn ->
-                Bitcoin.Block.validate(block, %{height: height})
-              end
+
+          # Validate and measure the time
+          {validation, vt} = Bitcoin.Util.measure_time fn ->
+            cond do
+              opts[:validate] == false -> :ok
+              true -> validate_block(block, %{height: height})
+            end
           end
-          {result, store_time} = case validation do
-            :ok ->
-               # TODO also add hash to the struct, we need the storage struct
-               Bitcoin.Util.measure_time fn ->
-                 @engine.store_block(block, %{height: height, hash: hash})
-               end
-            {:error, reason} -> {{:error, reason}, 0}
+
+          # Persist and measure the time
+          {result, st} = Bitcoin.Util.measure_time fn ->
+            case validation do
+              :ok -> @engine.store_block(block, %{height: height, hash: hash})
+              {:error, reason} -> {{:error, reason}, 0}
+            end
           end
-          Logger.info("Stored block ##{height} | #{hash |> Bitcoin.Util.hash_to_hex} | vt: #{round(validation_time * 100) / 100.0}s st: #{round(store_time * 100) / 100.0}s tx: #{block.transactions |> length}")
+
+          Logger.info("Storing block #{height} #{result |> inspect} | #{hash |> Bitcoin.Util.hash_to_hex}" <>
+                      "| vt: #{Float.round(vt, 2)}s st: #{Float.round(st, 2)}s tx: #{block.transactions |> length}")
           result
       end
     end
@@ -81,17 +92,28 @@ defmodule Bitcoin.Node.Storage do
   def block_height(@genesis_hash), do: 0
   def block_height(@genesis_block), do: 0
   def block_height(block_hash) when is_binary(block_hash), do: @engine.get_block_height(block_hash)
-  def block_height(%{height: height} = _block) when height != nil, do: height
   def block_height(block) do
     prev_height = block_height(block.previous_block)
     prev_height && (prev_height + 1)
   end
 
-  def prepare(opts), do: @engine.prepare(opts)
+  defp validate_block(block, opts) do
+    # By fetching all previous outputs here and passing them in opts we are giving
+    # the storage engine chance for optimization (e.g. fetching them all in a single SQL query)
+    prev_outs =
+      block.transactions
+      |> Enum.map(fn tx ->
+        tx.inputs |> Enum.map(fn input ->
+          %{hash: hash, index: index} = input.previous_output
+          {hash, index}
+        end)
+      end)
+      |> List.flatten
+      |> get_txouts
 
-  def has_block?(hash), do: @engine.has_block?(hash)
-  def get_block(hash), do: @engine.get_block(hash)
-  def get_tx(hash), do: @engine.get_tx(hash)
-  def get_txout(hash, index), do: @engine.get_txout(hash, index)
-  def get_txouts(list), do: @engine.get_txouts(list)
+    opts = opts |> Map.put(:previous_outputs, prev_outs)
+
+    Bitcoin.Block.validate(block, opts)
+  end
+
 end

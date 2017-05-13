@@ -16,6 +16,15 @@ defmodule Bitcoin.Node.Storage.EngineBehaviour do
     quote location: :keep do
       @behaviour unquote(__MODULE__)
 
+      def get_txouts(list) do
+        list
+        |> Enum.map(fn {hash, index} ->
+          {{hash, index}, get_txout(hash, index)}
+        end)
+        |> Enum.into(%{})
+      end
+      defoverridable get_txouts: 1
+
       def get_txout(hash, index) do
         case get_tx(hash) do
           nil -> nil

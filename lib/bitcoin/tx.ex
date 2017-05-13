@@ -78,7 +78,6 @@ defmodule Bitcoin.Tx do
   """
   @spec validate(Messages.Tx.t, map) :: :ok | {:error, term}
   def validate(%Messages.Tx{} = tx, %{} = opts \\ %{}) do
-    # OPTIMIZE fetch previous outputs only once
     Bitcoin.Util.run_validations([
       # Validate scripts
       fn ->
@@ -112,21 +111,19 @@ defmodule Bitcoin.Tx do
     end
   end
 
-  defp find_previous_output(input, %{previous_outputs: previous_outputs}) do
+  defp find_previous_output(input, %{previous_outputs: previous_outputs} = opts) do
     %{hash: hash, index: index} = input.previous_output
     case previous_outputs[{hash, index}] do
-      nil -> {:error, :no_prevout}
+      nil -> find_previous_output(input, opts |> Map.delete(:previous_outputs))
       prevout -> prevout
     end
   end
 
   defp find_previous_output(input, opts) do
     %{hash: hash, index: index} = input.previous_output
-    # TODO maybe storage should offer some get_output function so that it can optimize fetching from UTXO
     case Bitcoin.Node.Storage.get_txout(hash, index) do
       # Not found in storage, let's check in the curretn block
       nil ->
-        # TODO the struct that storage returns should already have hash field (because storage already has it)
         case opts[:block] && Enum.find(opts[:block].transactions, fn tx -> Bitcoin.Tx.hash(tx) == hash end) do
           # Not found in the current block either
           nil ->

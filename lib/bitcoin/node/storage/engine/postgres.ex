@@ -165,6 +165,11 @@ defmodule Bitcoin.Node.Storage.Engine.Postgres do
     txout && load_output(txout)
   end
 
+  # TODO get_txouts
+  # no idea how to do whene (a,b) in ((a1,b1), (a2,b2)) in ecto
+  # (plus a is binary so we don't want to concatenate strings since postgrex is
+  # using binary protocol
+
   def prepare(_) do
     {:ok, _} = Application.ensure_all_started(:ecto)
     {:ok, _} = Application.ensure_all_started(:postgrex)
