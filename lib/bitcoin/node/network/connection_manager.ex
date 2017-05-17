@@ -35,16 +35,23 @@ defmodule Bitcoin.Node.Network.ConnectionManager do
       peers: []
     }
 
-    {:ok, _pid} = Reagent.start_link(ReagentHandler, port: state.config[:listen_port])
+    port = state.config[:listen_port]
 
-    # If connect option is specified in the node config, only connect to the specified peers
-    case state.config[:connect] do
-      nil -> self() |> send(:periodical_connectivity_check)
-      # TODO allow ip:port, actually it will only accept IP as a tuple currently
-      list -> list |> Enum.each(fn ip -> connect(ip) end)
+    case Reagent.start(ReagentHandler, port: port) do
+      {:ok, pid} ->
+        Process.link(pid)
+        # If connect option is specified in the node config, only connect to the specified peers
+        case state.config[:connect] do
+          nil -> self() |> send(:periodical_connectivity_check)
+          # TODO allow ip:port, actually it will only accept IP as a tuple currently
+          list -> list |> Enum.each(&connect/1)
+        end
+        {:ok, state}
+
+      {:error, :eaddrinuse} ->
+        Logger.error("Node listen port #{port} is already in use")
+        {:stop, :eaddrinuse}
     end
-
-    {:ok, state}
   end
 
   def handle_info(:periodical_connectivity_check, state) do
