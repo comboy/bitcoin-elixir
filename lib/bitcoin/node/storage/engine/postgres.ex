@@ -10,6 +10,10 @@ defmodule Bitcoin.Node.Storage.Engine.Postgres do
 
   require Logger
 
+  # TODO use postgresql COPY to insert rows
+  # initial implemenatation: https://gist.github.com/comboy/a0f13c7f183bc0c8f236e32bc2a1fdcf
+  # (will need changes to properly encode full transactions)
+
   def start_link(_) do
     {:ok, _} = Application.ensure_all_started(:ecto)
     {:ok, _} = Application.ensure_all_started(:postgrex)
@@ -31,7 +35,7 @@ defmodule Bitcoin.Node.Storage.Engine.Postgres do
     hash = opts[:hash] || Bitcoin.Block.hash(block_msg)
 
     Repo.transaction fn ->
-      tx_with_hashes = block_msg.transactions |> Enum.map(fn tx ->
+      tx_with_hashes = block_msg.transactions |> Bitcoin.Util.pmap(fn tx ->
         {Bitcoin.Tx.hash(tx), tx}
       end)
 
