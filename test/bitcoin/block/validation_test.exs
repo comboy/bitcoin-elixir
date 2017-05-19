@@ -14,10 +14,10 @@ defmodule Bitcoin.Block.ValidationTest do
     block = @block1 |> Map.put(:transactions, @block1.transactions |> Enum.take(1))
 
     # TODO test that is using storage and checks if transaction fees are taken into account
-    assert block |> Bitcoin.Block.Validation.coinbase_value(height: 100_000) == :ok
-    assert block |> Bitcoin.Block.Validation.coinbase_value(height: 209_999) == :ok
-    assert block |> Bitcoin.Block.Validation.coinbase_value(height: 210_000) == {:error, :reward_too_high}
-    assert block |> Bitcoin.Block.Validation.coinbase_value(height: 250_000) == {:error, :reward_too_high}
+    assert block |> Bitcoin.Block.Validation.coinbase_value(%{height: 100_000}) == :ok
+    assert block |> Bitcoin.Block.Validation.coinbase_value(%{height: 209_999}) == :ok
+    assert block |> Bitcoin.Block.Validation.coinbase_value(%{height: 210_000}) == {:error, :reward_too_high}
+    assert block |> Bitcoin.Block.Validation.coinbase_value(%{height: 250_000}) == {:error, :reward_too_high}
   end
 
   test "merkle root" do
