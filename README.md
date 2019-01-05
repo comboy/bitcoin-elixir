@@ -1,11 +1,11 @@
-# bitcoin-elixir
+# bitcoinsv-elixir
 
 Bitcoin script and protocol tools plus a full node implementation written in Elxir.
 
 It's still work in progress, not suitable for any kind of usage. Contributions and comments are of course very much welcome,
 but if you want to jump in, I'd suggest to get in touch (through github issues) because all APIs are still evolving.
 
-Project is a fork of Justin Lynn's [Bitcoin-Ex](https://github.com/justinlynn/bitcoin-ex) which contained excellent 
+Project is a fork of Justin Lynn's [Bitcoin-Ex](https://github.com/justinlynn/bitcoin-ex) which contained excellent
 protocol parsers and DNS peer discovery.
 
 ## Current status
